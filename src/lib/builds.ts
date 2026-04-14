@@ -503,7 +503,7 @@ export const ALL_BUILDS: BuildEntry[] = [
   ...PRIMITIVES,
 ];
 
-export const CATEGORIES = Array.from(new Set(ALL_BUILDS.map(b => b.category)));
+export const CATEGORIES = ["All", ...Array.from(new Set(ALL_BUILDS.map(b => b.category)))];
 
 export function getBuild(key: string): BuildEntry | undefined {
   return ALL_BUILDS.find(b => b.key === key);

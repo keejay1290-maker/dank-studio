@@ -15,9 +15,9 @@
 //   • Per-material roughness/metalness by object type (PBR-lite)
 //   • Fog tuned to sky haze (not dark)
 // ─────────────────────────────────────────────────────────────────────────────
-import { useRef, useEffect, useMemo, forwardRef } from "react";
+import { useRef, useEffect, useMemo, forwardRef, memo } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
-import { OrbitControls, Grid, Sky, ContactShadows } from "@react-three/drei";
+import { OrbitControls, Grid, ContactShadows } from "@react-three/drei";
 import * as THREE from "three";
 import type { Point3D } from "../lib/types";
 import { getMimic } from "../lib/mimic";
@@ -25,26 +25,37 @@ import { getMimic } from "../lib/mimic";
 const MIN_DISTANCE = 15;
 const MAX_DISTANCE = 4000;
 
-// ── Material properties by object class ──────────────────────────────────────
+// ── Material properties by object class (cached) ─────────────────────────────
+const _matCache = new Map<string, { roughness: number; metalness: number }>();
+
 function getMaterialProps(classname: string): { roughness: number; metalness: number } {
-  const k = (classname ?? "").toLowerCase();
+  const key = classname ?? "";
+  const hit = _matCache.get(key);
+  if (hit) return hit;
+
+  const k = key.toLowerCase();
+  let result: { roughness: number; metalness: number };
   if (k.includes("container") || k.includes("tank"))
-    return { roughness: 0.38, metalness: 0.62 };
-  if (k.includes("barrel"))
-    return { roughness: 0.28, metalness: 0.72 };
-  if (k.includes("indcnc") || k.includes("cncsmall") || k.includes("_cnc"))
-    return { roughness: 0.90, metalness: 0.02 };
-  if (k.includes("stone") || k.includes("castle"))
-    return { roughness: 0.97, metalness: 0.0 };
-  if (k.includes("mil"))
-    return { roughness: 0.72, metalness: 0.18 };
-  if (k.includes("bridge") || k.includes("pier") || k.includes("timber"))
-    return { roughness: 0.92, metalness: 0.0 };
-  if (k.includes("bunker"))
-    return { roughness: 0.85, metalness: 0.04 };
-  if (k.includes("platform"))
-    return { roughness: 0.88, metalness: 0.06 };
-  return { roughness: 0.82, metalness: 0.05 };
+    result = { roughness: 0.38, metalness: 0.62 };
+  else if (k.includes("barrel"))
+    result = { roughness: 0.28, metalness: 0.72 };
+  else if (k.includes("indcnc") || k.includes("cncsmall") || k.includes("_cnc"))
+    result = { roughness: 0.90, metalness: 0.02 };
+  else if (k.includes("stone") || k.includes("castle"))
+    result = { roughness: 0.97, metalness: 0.0 };
+  else if (k.includes("mil"))
+    result = { roughness: 0.72, metalness: 0.18 };
+  else if (k.includes("bridge") || k.includes("pier") || k.includes("timber"))
+    result = { roughness: 0.92, metalness: 0.0 };
+  else if (k.includes("bunker"))
+    result = { roughness: 0.85, metalness: 0.04 };
+  else if (k.includes("platform"))
+    result = { roughness: 0.88, metalness: 0.06 };
+  else
+    result = { roughness: 0.82, metalness: 0.05 };
+
+  _matCache.set(key, result);
+  return result;
 }
 
 // ── Auto-frame camera on build extent ────────────────────────────────────────
@@ -87,15 +98,11 @@ function AutoFrame({ points }: { points: Point3D[] }) {
 }
 
 // ── Single DayZ object rendered as a box ─────────────────────────────────────
-function BuildObject({ pt }: { pt: Point3D }) {
+const BuildObject = memo(function BuildObject({ pt }: { pt: Point3D }) {
   const mimic   = getMimic(pt.name ?? "");
-  const matProps = useMemo(() => getMaterialProps(pt.name ?? ""), [pt.name]);
+  const matProps = getMaterialProps(pt.name ?? "");
 
   const euler = useMemo(() => {
-    // DayZ yaw is CW from North. Three.js Y is CCW.
-    // Y-rotation matrix: +Z face → (sin θ, 0, cos θ).
-    // At θ=+π/2 face points to +X (East). DayZ yaw=90° = East ✓.
-    // So use +yawRad (not negated).
     const yawRad   = ((pt.yaw   ?? 0) * Math.PI) / 180;
     const pitchRad = ((pt.pitch ?? 0) * Math.PI) / 180;
     const rollRad  = ((pt.roll  ?? 0) * Math.PI) / 180;
@@ -123,7 +130,7 @@ function BuildObject({ pt }: { pt: Point3D }) {
       />
     </mesh>
   );
-}
+});
 
 // ── OrbitControls with ref capture + hard zoom limits ────────────────────────
 const ControlsRef = forwardRef<any, object>(function Controls(_, ref) {
@@ -139,89 +146,91 @@ const ControlsRef = forwardRef<any, object>(function Controls(_, ref) {
   );
 });
 
-// ── Sun position shared between Sky and directionalLight ─────────────────────
-// Raw world position (NOT normalised). Drei's <Sky> projects this onto its sphere.
-const SUN: [number, number, number] = [150, 200, 100];
-
 function Scene({ points, ctrlRef }: { points: Point3D[]; ctrlRef: React.Ref<any> }) {
   return (
     <>
       <AutoFrame points={points} />
       <ControlsRef ref={ctrlRef} />
 
-      {/* ── Sky / atmosphere ─────────────────────────────────────── */}
-      {/* distance must be < camera.far or the sky mesh is clipped → white! */}
-      <Sky
-        distance={4500}
-        sunPosition={SUN}
-        turbidity={8}
-        rayleigh={2.2}
-        mieCoefficient={0.005}
-        mieDirectionalG={0.92}
-      />
+      {/* ── Sky — NWAF clear blue ─────────────────────────────────── */}
+      <color attach="background" args={["#a8cce8"]} />
 
-      {/* Fallback blue in case Sky fails to render */}
-      <color attach="background" args={["#7faed6"]} />
-
-      {/* Subtle atmospheric haze that matches the sky colour */}
-      <fog attach="fog" args={["#aec8e8", 800, 3500]} />
-
-      {/* ── Lighting ──────────────────────────────────────────────── */}
-      {/* Warm sky / cool-earth hemisphere fill */}
-      <hemisphereLight args={["#c8dff5", "#4a3d28", 0.55]} />
-
-      {/* Key sun — soft shadows */}
+      {/* ── Lighting — bright daylight ────────────────────────────── */}
+      <hemisphereLight args={["#c8e0ff", "#4a7a30", 1.0]} />
       <directionalLight
-        position={[150, 200, 100]}
-        intensity={2.0}
+        position={[200, 300, 100]}
+        intensity={1.8}
+        color="#fff8f0"
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
         shadow-camera-near={0.5}
-        shadow-camera-far={1200}
-        shadow-camera-left={-300}
-        shadow-camera-right={300}
-        shadow-camera-top={300}
-        shadow-camera-bottom={-300}
+        shadow-camera-far={1500}
+        shadow-camera-left={-400}
+        shadow-camera-right={400}
+        shadow-camera-top={400}
+        shadow-camera-bottom={-400}
         shadow-bias={-0.0004}
       />
 
-      {/* Cool fill light from opposite side — simulates sky bounce */}
-      <directionalLight
-        position={[-100, 80, -120]}
-        intensity={0.45}
-        color="#7aabff"
-      />
+      {/* ── Grass ground ─────────────────────────────────────────── */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]} receiveShadow>
+        <planeGeometry args={[4000, 4000]} />
+        <meshStandardMaterial color="#4a7a30" roughness={1.0} metalness={0.0} />
+      </mesh>
 
-      {/* ── Ground ────────────────────────────────────────────────── */}
-      {/* Infinite grid — 8m cells matching wall widths */}
+      {/* ── Tarmac road — runs East-West (X axis) ────────────────── */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 60]} receiveShadow>
+        <planeGeometry args={[4000, 28]} />
+        <meshStandardMaterial color="#5a5a5a" roughness={0.9} metalness={0.0} />
+      </mesh>
+      {/* Yellow centre line dashes */}
+      {Array.from({ length: 40 }, (_, i) => i - 20).map(i => (
+        <mesh key={i} rotation={[-Math.PI / 2, 0, 0]} position={[i * 20, 0.03, 60]}>
+          <planeGeometry args={[10, 0.4]} />
+          <meshStandardMaterial color="#e8c830" roughness={0.8} />
+        </mesh>
+      ))}
+      {/* Road edge lines */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 46]}>
+        <planeGeometry args={[4000, 0.3]} />
+        <meshStandardMaterial color="#e8e8e8" roughness={0.8} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 74]}>
+        <planeGeometry args={[4000, 0.3]} />
+        <meshStandardMaterial color="#e8e8e8" roughness={0.8} />
+      </mesh>
+
+      {/* ── Concrete build pad under the objects ─────────────────── */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} receiveShadow>
+        <planeGeometry args={[120, 120]} />
+        <meshStandardMaterial color="#787878" roughness={0.95} metalness={0.0} />
+      </mesh>
       <Grid
-        args={[2000, 2000]}
+        args={[120, 120]}
         cellSize={8}
-        cellThickness={0.4}
-        cellColor="#8aaa7a"
+        cellThickness={0.5}
+        cellColor="#606060"
         sectionSize={40}
-        sectionThickness={0.8}
-        sectionColor="#6a8a5a"
-        fadeDistance={800}
+        sectionThickness={1.0}
+        sectionColor="#909090"
+        fadeDistance={300}
         fadeStrength={1.5}
-        infiniteGrid
-        position={[0, -0.01, 0]}
+        position={[0, 0.02, 0]}
       />
 
-      {/* Soft contact shadows directly under the build */}
       <ContactShadows
-        position={[0, 0, 0]}
-        opacity={0.45}
-        scale={600}
+        position={[0, 0.03, 0]}
+        opacity={0.5}
+        scale={300}
         blur={2.5}
         far={60}
-        color="#1a1a0a"
+        color="#000000"
       />
 
       {/* ── Build objects ─────────────────────────────────────────── */}
       {points.map((pt, i) => (
-        <BuildObject key={i} pt={pt} />
+        <BuildObject key={`${pt.name}_${pt.x}_${pt.y}_${pt.z}_${i}`} pt={pt} />
       ))}
     </>
   );

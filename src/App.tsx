@@ -2,7 +2,7 @@
 // DANK STUDIO — Main App
 // 3-mode layout: Library (generate builds) | Draw (free canvas) | Panel (grid)
 // ─────────────────────────────────────────────────────────────────────────────
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useMemo } from "react";
 import type { Point3D, DrawnWall, DrawnObject, AppMode } from "./lib/types";
 import { generate } from "./lib/generators/index";
 import { exportGeneratorPoints, exportDrawnWalls, exportDrawnObjects } from "./lib/exporter";
@@ -13,12 +13,21 @@ import { PanelBuilder, panelStateToPoints, type PanelState } from "./components/
 import { ObjectPicker } from "./components/ObjectPicker";
 import type { DrawCanvasHandle } from "./components/DrawCanvas";
 
+// ── Shared helper: DrawnWall[] → Point3D[] midpoints for 3D preview ──────────
+function wallsToPoints(ws: DrawnWall[]): Point3D[] {
+  return ws.map(w => ({
+    x: (w.x1 + w.x2) / 2, y: 0, z: (w.z1 + w.z2) / 2,
+    yaw: Math.atan2(w.x2 - w.x1, w.z2 - w.z1) * 180 / Math.PI + 90,
+    name: w.classname,
+  }));
+}
+
 // ── App ───────────────────────────────────────────────────────────────────────
 export default function App() {
   const [mode, setMode] = useState<AppMode>("library");
 
   // ── Library state ─────────────────────────────────────────────────────────
-  const [selectedCategory, setSelectedCategory] = useState<string>(CATEGORIES[0]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [selectedBuild, setSelectedBuild] = useState<BuildEntry | null>(null);
   const [params, setParams] = useState<Record<string, number>>({});
   const [points, setPoints] = useState<Point3D[]>([]);
@@ -55,9 +64,10 @@ export default function App() {
     setCode(exportGeneratorPoints(pts, { label: build.label, originX, originY, originZ }));
   }
 
-  function handleGenerate() {
+  function handleGenerate(overrideParams?: Record<string, number>) {
     if (!selectedBuild) return;
-    const pts = generate(selectedBuild.key, params);
+    const p = overrideParams ?? params;
+    const pts = generate(selectedBuild.key, p);
     setPoints(pts);
     setCode(exportGeneratorPoints(pts, { label: selectedBuild.label, originX, originY, originZ }));
   }
@@ -68,6 +78,28 @@ export default function App() {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     });
+  }
+
+  function handleDownloadJSON() {
+    if (!points.length) return;
+    const label = selectedBuild?.label ?? "build";
+    const ox = originX, oy = originY, oz = originZ;
+    const payload = {
+      Objects: pts.map(p => ({
+        name:  p.name ?? "staticobj_castle_wall3",
+        pos:   [+(ox + p.x).toFixed(3), +(oy + p.y).toFixed(3), +(oz + p.z).toFixed(3)],
+        ypr:   [+(p.yaw ?? 0).toFixed(3), +(p.pitch ?? 0).toFixed(3), +(p.roll ?? 0).toFixed(3)],
+        scale: +(p.scale ?? 1).toFixed(4),
+        enableCEPersistency: 0,
+      })),
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href     = url;
+    a.download = `${label.replace(/\s+/g, "_").toLowerCase()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   // ── Draw: CRUD ────────────────────────────────────────────────────────────
@@ -84,20 +116,18 @@ export default function App() {
   const replaceObject = useCallback((id: string, cls: string) =>
     setObjects(prev => prev.map(o => o.id === id ? { ...o, classname: cls } : o)), []);
 
+  function applyExport(ws: DrawnWall[], os: DrawnObject[]) {
+    const wallCode = exportDrawnWalls(ws,  { originX, originY, originZ });
+    const objCode  = exportDrawnObjects(os, { originX, originY, originZ });
+    setCode([wallCode, objCode].filter(s => s.trim().length > 20).join("\n\n"));
+    setPoints([
+      ...wallsToPoints(ws),
+      ...os.map(o => ({ x: o.x, y: o.y, z: o.z, yaw: o.yaw, name: o.classname })),
+    ]);
+  }
+
   function exportDraw() {
-    const wallCode = exportDrawnWalls(walls,    { originX, originY, originZ });
-    const objCode  = exportDrawnObjects(objects, { originX, originY, originZ });
-    const full = [wallCode, objCode].filter(s => s.trim().length > 20).join("\n\n");
-    setCode(full);
-    const wallPts: Point3D[] = walls.map(w => ({
-      x: (w.x1 + w.x2) / 2, y: 0, z: (w.z1 + w.z2) / 2,
-      yaw: Math.atan2(w.x2 - w.x1, w.z2 - w.z1) * 180 / Math.PI + 90,
-      name: w.classname,
-    }));
-    const objPts: Point3D[] = objects.map(o => ({
-      x: o.x, y: o.y, z: o.z, yaw: o.yaw, name: o.classname,
-    }));
-    setPoints([...wallPts, ...objPts]);
+    applyExport(walls, objects);
   }
 
   // ── Panel: export ─────────────────────────────────────────────────────────
@@ -105,21 +135,15 @@ export default function App() {
     const { walls: pw, objects: po } = panelStateToPoints(state);
     setWalls(pw);
     setObjects(po);
-    const wallCode = exportDrawnWalls(pw,  { originX, originY, originZ });
-    const objCode  = exportDrawnObjects(po, { originX, originY, originZ });
-    const full = [wallCode, objCode].filter(s => s.trim().length > 20).join("\n\n");
-    setCode(full);
-    const wallPts: Point3D[] = pw.map(w => ({
-      x: (w.x1 + w.x2) / 2, y: 0, z: (w.z1 + w.z2) / 2,
-      yaw: Math.atan2(w.x2 - w.x1, w.z2 - w.z1) * 180 / Math.PI + 90,
-      name: w.classname,
-    }));
-    const objPts: Point3D[] = po.map(o => ({ x: o.x, y: o.y, z: o.z, name: o.classname }));
-    setPoints([...wallPts, ...objPts]);
+    applyExport(pw, po);
     setMode("library");
   }
 
-  const categoryBuilds = ALL_BUILDS.filter(b => b.category === selectedCategory);
+  const spawnCount = useMemo(() => (code.match(/SpawnObject/g) ?? []).length, [code]);
+  const categoryBuilds = useMemo(
+    () => selectedCategory === "All" ? ALL_BUILDS : ALL_BUILDS.filter(b => b.category === selectedCategory),
+    [selectedCategory],
+  );
 
   return (
     <div className="h-screen w-screen flex flex-col bg-zinc-950 text-zinc-200 overflow-hidden select-none">
@@ -274,23 +298,46 @@ export default function App() {
 
           {mode === "library" && selectedBuild && selectedBuild.params.length > 0 && (
             <div className="flex items-center gap-4 px-4 py-2 border-b border-zinc-800 flex-shrink-0 overflow-x-auto">
-              {selectedBuild.params.map(pd => (
-                <label key={pd.key} className="flex items-center gap-2 flex-shrink-0">
-                  <span className="text-xs text-zinc-400 whitespace-nowrap">{pd.label}</span>
-                  <input
-                    type="range"
-                    min={pd.min} max={pd.max} step={pd.step}
-                    value={params[pd.key] ?? pd.default}
-                    onChange={e => setParams(p => ({ ...p, [pd.key]: Number(e.target.value) }))}
-                    onMouseUp={handleGenerate}
-                    onTouchEnd={handleGenerate}
-                    className="w-28 accent-indigo-500"
-                  />
-                  <span className="text-xs text-zinc-500 w-8 text-right">{params[pd.key] ?? pd.default}</span>
-                </label>
-              ))}
+              {selectedBuild.params.map(pd => {
+                const val = params[pd.key] ?? pd.default;
+                const clamp = (v: number) => Math.max(pd.min, Math.min(pd.max, Math.round(v / pd.step) * pd.step));
+                const applyVal = (newVal: number) => {
+                  const clamped = clamp(newVal);
+                  const newParams = { ...params, [pd.key]: clamped };
+                  setParams(newParams);
+                  handleGenerate(newParams);
+                };
+                return (
+                  <div key={pd.key} className="flex items-center gap-1.5 flex-shrink-0">
+                    <span className="text-xs text-zinc-400 whitespace-nowrap">{pd.label}</span>
+                    <button
+                      onClick={() => applyVal(val - pd.step)}
+                      className="w-5 h-5 bg-zinc-700 hover:bg-zinc-600 text-zinc-300 rounded text-xs font-bold flex items-center justify-center"
+                    >−</button>
+                    <input
+                      type="range"
+                      min={pd.min} max={pd.max} step={pd.step}
+                      value={val}
+                      onChange={e => setParams(p => ({ ...p, [pd.key]: Number(e.target.value) }))}
+                      onMouseUp={() => handleGenerate()}
+                      onTouchEnd={() => handleGenerate()}
+                      className="w-28 accent-indigo-500"
+                    />
+                    <button
+                      onClick={() => applyVal(val + pd.step)}
+                      className="w-5 h-5 bg-zinc-700 hover:bg-zinc-600 text-zinc-300 rounded text-xs font-bold flex items-center justify-center"
+                    >+</button>
+                    <span className="text-xs text-zinc-300 w-8 text-right tabular-nums">{val}</span>
+                    <button
+                      onClick={() => applyVal(pd.default)}
+                      className="text-xs px-1.5 py-0.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-500 hover:text-zinc-300 rounded"
+                      title="Reset to default"
+                    >↺</button>
+                  </div>
+                );
+              })}
               <button
-                onClick={handleGenerate}
+                onClick={() => handleGenerate()}
                 className="text-xs px-3 py-1 bg-indigo-700 hover:bg-indigo-600 text-white rounded font-semibold flex-shrink-0"
               >Generate</button>
             </div>
@@ -344,12 +391,19 @@ export default function App() {
                 >Export</button>
               )}
               {code && (
-                <button
-                  onClick={() => handleCopy(code)}
-                  className="text-xs px-2 py-0.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded"
-                >
-                  {copied ? "Copied!" : "Copy"}
-                </button>
+                <>
+                  <button
+                    onClick={() => handleCopy(code)}
+                    className="text-xs px-2 py-0.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded"
+                  >
+                    {copied ? "Copied!" : "Copy"}
+                  </button>
+                  <button
+                    onClick={handleDownloadJSON}
+                    className="text-xs px-2 py-0.5 bg-green-800 hover:bg-green-700 text-white rounded"
+                    title="Download DayZ Object Builder JSON"
+                  >JSON</button>
+                </>
               )}
             </div>
           </div>
@@ -368,7 +422,7 @@ export default function App() {
 
           {code && (
             <div className="px-3 py-1.5 border-t border-zinc-800 text-xs text-zinc-600 flex-shrink-0">
-              {(code.match(/SpawnObject/g) ?? []).length.toLocaleString()} SpawnObject() calls
+              {spawnCount.toLocaleString()} SpawnObject() calls
             </div>
           )}
         </aside>
