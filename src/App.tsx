@@ -2,7 +2,7 @@
 // DANK STUDIO — Main App
 // 3-mode layout: Library (generate builds) | Draw (free canvas) | Panel (grid)
 // ─────────────────────────────────────────────────────────────────────────────
-import { useState, useCallback, useRef, useMemo } from "react";
+import { useState, useCallback, useRef, useMemo, useEffect } from "react";
 import type { Point3D, DrawnWall, DrawnObject, AppMode } from "./lib/types";
 import { generate } from "./lib/generators/index";
 import { exportGeneratorPoints, exportDrawnWalls, exportDrawnObjects } from "./lib/exporter";
@@ -54,6 +54,15 @@ export default function App() {
     floorClass: "staticobj_platform1_block",
   });
 
+  // ── Search ────────────────────────────────────────────────────────────────
+  const [search, setSearch] = useState("");
+
+  // ── Origin auto-regenerate: re-export code when origin changes ────────────
+  useEffect(() => {
+    if (!selectedBuild || !points.length) return;
+    setCode(exportGeneratorPoints(points, { label: selectedBuild.label, originX, originY, originZ }));
+  }, [originX, originY, originZ]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Library: select + generate ────────────────────────────────────────────
   function selectBuild(build: BuildEntry) {
     setSelectedBuild(build);
@@ -85,7 +94,9 @@ export default function App() {
     const label = selectedBuild?.label ?? "build";
     const ox = originX, oy = originY, oz = originZ;
     const payload = {
-      Objects: pts.map(p => ({
+      label,
+      objectCount: points.length,
+      Objects: points.map(p => ({
         name:  p.name ?? "staticobj_castle_wall3",
         pos:   [+(ox + p.x).toFixed(3), +(oy + p.y).toFixed(3), +(oz + p.z).toFixed(3)],
         ypr:   [+(p.yaw ?? 0).toFixed(3), +(p.pitch ?? 0).toFixed(3), +(p.roll ?? 0).toFixed(3)],
@@ -97,7 +108,7 @@ export default function App() {
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement("a");
     a.href     = url;
-    a.download = `${label.replace(/\s+/g, "_").toLowerCase()}.json`;
+    a.download = `${label.replace(/\s+/g, "_").toLowerCase()}_${points.length}obj.json`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -140,10 +151,18 @@ export default function App() {
   }
 
   const spawnCount = useMemo(() => (code.match(/SpawnObject/g) ?? []).length, [code]);
-  const categoryBuilds = useMemo(
-    () => selectedCategory === "All" ? ALL_BUILDS : ALL_BUILDS.filter(b => b.category === selectedCategory),
-    [selectedCategory],
-  );
+  const categoryBuilds = useMemo(() => {
+    const base = selectedCategory === "All"
+      ? ALL_BUILDS
+      : ALL_BUILDS.filter(b => b.category === selectedCategory);
+    if (!search.trim()) return base;
+    const q = search.toLowerCase();
+    return base.filter(b =>
+      b.label.toLowerCase().includes(q) ||
+      b.category.toLowerCase().includes(q) ||
+      (b.description ?? "").toLowerCase().includes(q),
+    );
+  }, [selectedCategory, search]);
 
   return (
     <div className="h-screen w-screen flex flex-col bg-zinc-950 text-zinc-200 overflow-hidden select-none">
@@ -198,7 +217,7 @@ export default function App() {
                 {CATEGORIES.map(cat => (
                   <button
                     key={cat}
-                    onClick={() => setSelectedCategory(cat)}
+                    onClick={() => { setSelectedCategory(cat); setSearch(""); }}
                     className={`text-xs px-2 py-0.5 rounded ${
                       selectedCategory === cat
                         ? "bg-indigo-700 text-white"
@@ -208,21 +227,55 @@ export default function App() {
                 ))}
               </div>
 
+              <div className="px-2 py-1.5 border-b border-zinc-800">
+                <input
+                  type="text"
+                  placeholder="Search builds…"
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  className="w-full bg-zinc-800 text-zinc-300 text-xs rounded px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500 placeholder-zinc-600"
+                />
+              </div>
+
               <div className="flex-1 overflow-y-auto py-1">
-                {categoryBuilds.map(build => (
-                  <button
-                    key={build.key}
-                    onClick={() => selectBuild(build)}
-                    className={`w-full text-left px-3 py-2 hover:bg-zinc-800 transition-colors ${
-                      selectedBuild?.key === build.key ? "bg-zinc-800/80 text-indigo-300" : "text-zinc-300"
-                    }`}
-                  >
-                    <span className="block text-sm">{build.label}</span>
-                    {build.description && (
-                      <span className="block text-xs text-zinc-600 truncate">{build.description}</span>
-                    )}
-                  </button>
-                ))}
+                {selectedCategory === "All" && !search.trim()
+                  ? CATEGORIES.slice(1).map(cat => {
+                      const catBuilds = ALL_BUILDS.filter(b => b.category === cat);
+                      return (
+                        <div key={cat}>
+                          <div className="px-3 pt-2 pb-0.5 text-[10px] font-semibold uppercase tracking-widest text-zinc-600">{cat}</div>
+                          {catBuilds.map(build => (
+                            <button
+                              key={build.key}
+                              onClick={() => selectBuild(build)}
+                              className={`w-full text-left px-3 py-1.5 hover:bg-zinc-800 transition-colors ${
+                                selectedBuild?.key === build.key ? "bg-zinc-800/80 text-indigo-300" : "text-zinc-300"
+                              }`}
+                            >
+                              <span className="block text-sm">{build.label}</span>
+                              {build.description && (
+                                <span className="block text-xs text-zinc-600 truncate">{build.description}</span>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      );
+                    })
+                  : categoryBuilds.map(build => (
+                      <button
+                        key={build.key}
+                        onClick={() => selectBuild(build)}
+                        className={`w-full text-left px-3 py-2 hover:bg-zinc-800 transition-colors ${
+                          selectedBuild?.key === build.key ? "bg-zinc-800/80 text-indigo-300" : "text-zinc-300"
+                        }`}
+                      >
+                        <span className="block text-sm">{build.label}</span>
+                        {build.description && (
+                          <span className="block text-xs text-zinc-600 truncate">{build.description}</span>
+                        )}
+                      </button>
+                    ))
+                }
               </div>
             </>
           )}

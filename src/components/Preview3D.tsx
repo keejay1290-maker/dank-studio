@@ -171,6 +171,34 @@ const MAT_TREES    = new THREE.MeshStandardMaterial({ color: "#354e1a", roughnes
 // Rotation shared by all ground planes
 const GROUND_ROT = new THREE.Euler(-Math.PI / 2, 0, 0);
 
+// Hangar geometry — re-used for all 3 hangars
+const HANGAR_BODY_GEO = new THREE.BoxGeometry(56, 14, 38);
+const HANGAR_RIDGE_GEO = new THREE.BoxGeometry(56, 3, 6);
+
+// Control tower geometry
+const TOWER_SHAFT_GEO = new THREE.BoxGeometry(11, 34, 11);
+const TOWER_OBS_GEO   = new THREE.BoxGeometry(15, 5, 13);
+const TOWER_MAST_GEO  = new THREE.BoxGeometry(0.8, 8, 0.8);
+
+// Tree geometry — precomputed with deterministic heights (never change at runtime)
+// North treeline: 22 trees, heights = 7 + ((i*7919)%9)
+const NORTH_TREES: { x: number; h: number }[] = Array.from({ length: 22 }, (_, i) => ({
+  x: -520 + i * 50,
+  h: 7 + ((i * 7919) % 9),
+}));
+// West treeline: 14 trees, heights = 6 + ((i*4001)%10)
+const WEST_TREES: { z: number; h: number }[] = Array.from({ length: 14 }, (_, i) => ({
+  z: -480 + i * 40,
+  h: 6 + ((i * 4001) % 10),
+}));
+// Individual geometries per unique height (avoids per-frame allocation)
+const _treeGeoCache = new Map<number, THREE.BoxGeometry>();
+function getTreeGeo(h: number): THREE.BoxGeometry {
+  let geo = _treeGeoCache.get(h);
+  if (!geo) { geo = new THREE.BoxGeometry(7, h, 7); _treeGeoCache.set(h, geo); }
+  return geo;
+}
+
 function Scene({ points, ctrlRef }: { points: Point3D[]; ctrlRef: React.Ref<any> }) {
   return (
     <>
@@ -260,54 +288,26 @@ function Scene({ points, ctrlRef }: { points: Point3D[]; ctrlRef: React.Ref<any>
       {/* ── Hangars (3) — Soviet-era NWAF style ──────────────────────── */}
       {([-120, 10, 140] as const).map((x, i) => (
         <group key={i} position={[x, 0, -145]}>
-          {/* Main hangar box */}
-          <mesh geometry={new THREE.BoxGeometry(56, 14, 38)} material={MAT_HANGAR} position={[0, 7, 0]} castShadow receiveShadow />
-          {/* Roof ridge */}
-          <mesh geometry={new THREE.BoxGeometry(56, 3, 6)} material={MAT_TOWER} position={[0, 15.5, 0]} />
+          <mesh geometry={HANGAR_BODY_GEO}  material={MAT_HANGAR} position={[0, 7, 0]} castShadow receiveShadow />
+          <mesh geometry={HANGAR_RIDGE_GEO} material={MAT_TOWER}  position={[0, 15.5, 0]} />
         </group>
       ))}
 
       {/* ── Control tower — tall Soviet concrete block ───────────────── */}
       <group position={[-230, 0, -110]}>
-        {/* Main shaft */}
-        <mesh castShadow receiveShadow position={[0, 17, 0]}>
-          <boxGeometry args={[11, 34, 11]} />
-          <primitive object={MAT_TOWER} attach="material" />
-        </mesh>
-        {/* Glass observation level */}
-        <mesh castShadow position={[0, 36, 0]}>
-          <boxGeometry args={[15, 5, 13]} />
-          <primitive object={MAT_TOWER_TOP} attach="material" />
-        </mesh>
-        {/* Antenna mast */}
-        <mesh position={[0, 42, 0]}>
-          <boxGeometry args={[0.8, 8, 0.8]} />
-          <primitive object={MAT_TOWER} attach="material" />
-        </mesh>
+        <mesh geometry={TOWER_SHAFT_GEO} material={MAT_TOWER}     castShadow receiveShadow position={[0, 17, 0]} />
+        <mesh geometry={TOWER_OBS_GEO}   material={MAT_TOWER_TOP} castShadow              position={[0, 36, 0]} />
+        <mesh geometry={TOWER_MAST_GEO}  material={MAT_TOWER}                             position={[0, 42, 0]} />
       </group>
 
-      {/* ── Tree line — background, E-W along north edge ─────────────── */}
-      {Array.from({ length: 22 }, (_, i) => {
-        const x = -520 + i * 50;
-        const h = 7 + ((i * 7919) % 9);
-        return (
-          <mesh key={i} position={[x, h / 2, -510]} castShadow>
-            <boxGeometry args={[7, h, 7]} />
-            <primitive object={MAT_TREES} attach="material" />
-          </mesh>
-        );
-      })}
-      {/* Tree line — west side */}
-      {Array.from({ length: 14 }, (_, i) => {
-        const z = -480 + i * 40;
-        const h = 6 + ((i * 4001) % 10);
-        return (
-          <mesh key={i} position={[-510, h / 2, z]} castShadow>
-            <boxGeometry args={[7, h, 7]} />
-            <primitive object={MAT_TREES} attach="material" />
-          </mesh>
-        );
-      })}
+      {/* ── Tree line — E-W along north edge ────────────────────────── */}
+      {NORTH_TREES.map((t, i) => (
+        <mesh key={i} geometry={getTreeGeo(t.h)} material={MAT_TREES} position={[t.x, t.h / 2, -510]} castShadow />
+      ))}
+      {/* Tree line — west side ──────────────────────────────────────── */}
+      {WEST_TREES.map((t, i) => (
+        <mesh key={i} geometry={getTreeGeo(t.h)} material={MAT_TREES} position={[-510, t.h / 2, t.z]} castShadow />
+      ))}
 
       {/* ── Soft ground shadows on apron ─────────────────────────────── */}
       <ContactShadows
