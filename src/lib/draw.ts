@@ -167,7 +167,7 @@ export function drawSphere(
   const panelH  = typeof wallClass === "string"
     ? (getObjectDef(wallClass)?.height ?? panelW)
     : panelW;
-  const ringStep = panelH * 0.80;   // 20% vertical overlap for gap-free coverage
+  const ringStep = panelH * 0.75;   // 25% vertical overlap — guarantees flush   // 20% vertical overlap for gap-free coverage
   const nRings   = Math.max(6, Math.round((Math.PI * r) / ringStep));
   const wallName = typeof wallClass === "string" ? wallClass : DEFAULT_WALL;
 
@@ -178,8 +178,8 @@ export function drawSphere(
     const phi    = (i / nRings) * Math.PI;
     const sinP   = Math.sin(phi);
     const ringR  = r * sinP;
-    // Skip only the very tips where ring radius is negligibly small
-    if (ringR < panelW * 0.15) continue;
+    // Skip rings too small to fit 4 full-width panels — stops scale<1 gaps near poles
+    if (2 * Math.PI * ringR < panelW * 4) continue;
 
     const ringY   = r * Math.cos(phi);
     const circ    = 2 * Math.PI * ringR;
@@ -227,7 +227,7 @@ export function drawDome(
   const panelH  = typeof wallClass === "string"
     ? (getObjectDef(wallClass)?.height ?? panelW)
     : panelW;
-  const ringStep = panelH * 0.80;
+  const ringStep = panelH * 0.75;   // 25% vertical overlap — guarantees flush
   const nRings   = Math.max(4, Math.round(((Math.PI / 2) * r) / ringStep));
   const wallName = typeof wallClass === "string" ? wallClass : DEFAULT_WALL;
 
@@ -265,9 +265,53 @@ export function drawDome(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// drawSphereBudgeted
+// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * Draw a sphere that fits inside an object budget by auto-picking the largest
+ * panel class from `candidates` whose estimated count is ≤ budget.
+ *
+ * Estimate formula (derived from ∫sin φ dφ × 2πr/panelW × πr/ringStep):
+ *     total ≈ 5 · π · r² / (panelW · panelH · 0.75)  ≈ 20.9 r² / (W·H)
+ *
+ * Returns the classname chosen (useful for matching decorations).
+ */
+export function drawSphereBudgeted(
+  pts:        Point3D[],
+  cx: number, cy: number, cz: number,
+  r:          number,
+  budget:     number,
+  candidates: string[] = [
+    "staticobj_wall_indcnc_10",     // 8.75 × 10  — biggest (5× coverage)
+    "staticobj_wall_indcnc4_8",     // 8.00 × 8
+    "staticobj_wall_indcnch_10",    // 8.75 × 5
+    "staticobj_wall_stone",         // 8.00 × 3.5
+    "staticobj_wall_cncsmall_8",    // 8.00 × 3
+  ],
+): string {
+  for (const c of candidates) {
+    const def = getObjectDef(c);
+    if (!def) continue;
+    const est = (20.9 * r * r) / (def.width * def.height);
+    if (est <= budget) {
+      drawSphere(pts, cx, cy, cz, r, c);
+      return c;
+    }
+  }
+  // None fit — use largest and let caller/applyLimit deal with it
+  const fallback = candidates[0];
+  drawSphere(pts, cx, cy, cz, r, fallback);
+  return fallback;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // applyLimit
 // ─────────────────────────────────────────────────────────────────────────────
-/** Trim to object limit, preserving full silhouette by uniform sub-sampling. */
+/**
+ * Trim to object limit. For gap-sensitive geometry (spheres, domes) sub-sampling
+ * creates visible holes — generators should use drawSphereBudgeted to AVOID
+ * hitting this. applyLimit is only a last-resort safety net.
+ */
 export function applyLimit(pts: Point3D[], limit = MAX_OBJECTS): Point3D[] {
   if (pts.length <= limit) return pts;
   const step = pts.length / limit;

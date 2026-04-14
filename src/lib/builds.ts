@@ -25,10 +25,10 @@ export interface BuildEntry {
 const SCI_FI: BuildEntry[] = [
   {
     key: "death_star", label: "Death Star", category: "Sci-Fi",
-    description: "Imperial battle station with equatorial trench and dish",
-    defaultParams: { r: 80, wall: 0 },
+    description: "Imperial battle station — superlaser dish, equatorial trench, panelled hull",
+    defaultParams: { r: 72 },
     params: [
-      { key: "r", label: "Radius (m)", min: 30, max: 150, step: 5, default: 80 },
+      { key: "r", label: "Radius (m)", min: 40, max: 140, step: 4, default: 72 },
     ],
   },
   {

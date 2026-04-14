@@ -14,7 +14,7 @@
 //  2. Add an import + case in generators/index.ts
 // ─────────────────────────────────────────────────────────────────────────────
 import type { Point3D } from "../types";
-import { drawWall, drawRing, drawRect, drawDisk, drawSphere, drawDome } from "../draw";
+import { drawWall, drawRing, drawRect, drawDisk, drawSphere, drawDome, drawSphereBudgeted } from "../draw";
 
 export type GenParams = Record<string, number>;
 
@@ -54,12 +54,14 @@ void _TIN5;
 export function gen_death_star(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
   const R     = p.r ?? 72;           // radius — 144m diameter sphere
-  const panelW = 8.0;                // CNC8 face width
-  const panelH = 3.0;                // CNC8 height — ring step matches this
+  // IND10 = 8.75m × 10m tall. 5× coverage per panel vs CNC8 → fits in 1200.
+  // Estimate: ~19.6·R² / (W·H) = 19.6·5184 / 87.5 ≈ 1161 panels ✓
+  const panelW = 8.75;               // IND10 face width
+  const panelH = 10.0;               // IND10 height
 
   // ── Materials ─────────────────────────────────────────────────────────────
-  const MAT_MAIN  = CNC8;            // main hull plates — mid grey
-  const MAT_BAND  = MILCNC;          // darker band every 3 rings
+  const MAT_MAIN  = IND10;           // main hull plates — 8.75×10 industrial
+  const MAT_BAND  = "staticobj_wall_indcnc4_8"; // 8m × 8m darker band
   const MAT_TRENCH= CNC4;            // trench floor panels
   const MAT_RIM   = STONE;           // trench wall rim — dark grey
 
@@ -118,7 +120,10 @@ export function gen_death_star(p: GenParams): Point3D[] {
   }
 
   // ── Sphere scan ───────────────────────────────────────────────────────────
-  const ringStep = panelH * 0.95;    // slight overlap — no gaps between rings
+  // Ring step uses panel HEIGHT with 25% overlap. Panels are flat tangent
+  // rectangles; the overlap ensures their top/bottom edges cross the sphere
+  // surface INSIDE the adjacent ring's extent → zero visible gaps.
+  const ringStep = panelH * 0.75;
   const nRings   = Math.max(10, Math.round((Math.PI * R) / ringStep));
 
   for (let i = 1; i < nRings; i++) {
@@ -126,13 +131,15 @@ export function gen_death_star(p: GenParams): Point3D[] {
     const sinP = Math.sin(phi);
     const cosP = Math.cos(phi);
     const ringR = R * sinP;
-    if (ringR < panelW * 0.3) continue;   // skip tiny polar caps
+    // Skip rings too small to fit 4 full-width panels (keeps scale ≥ 1)
+    if (2 * Math.PI * ringR < panelW * 4) continue;
 
     // ── Skip main trench band (creates visible gap) ───────────────────────
     if (Math.abs(phi - trenchPhi) < trenchHalf) continue;
 
     const circ    = 2 * Math.PI * ringR;
-    const nPanels = Math.max(4, Math.round(circ / panelW));
+    // floor() → scale always ≥ 1 → panels always overlap, never gap horizontally
+    const nPanels = Math.max(4, Math.floor(circ / panelW));
     const arcStep = (2 * Math.PI) / nPanels;
     const scale   = (circ / nPanels) / panelW;
 
@@ -203,6 +210,10 @@ export function gen_death_star(p: GenParams): Point3D[] {
     }
   }
 
+  // ── Polar caps — close the bare holes at top/bottom ─────────────────────
+  pts.push({ x: 0, y: R + R,  z: 0, yaw: 0, pitch: -90, name: MAT_MAIN });
+  pts.push({ x: 0, y: R - R,  z: 0, yaw: 0, pitch:  90, name: MAT_MAIN });
+
   // ── Trench floor — rings at reduced radius inside the trench gap ──────────
   const trenchFloorR = R - trenchDepth;
   const trenchRings  = 8;
@@ -210,7 +221,7 @@ export function gen_death_star(p: GenParams): Point3D[] {
     const phi  = trenchPhi - trenchHalf * 0.85 + (ti / (trenchRings - 1)) * trenchHalf * 1.7;
     const sinP = Math.sin(phi);
     const circ    = 2 * Math.PI * trenchFloorR * sinP;
-    const nPanels = Math.max(4, Math.round(circ / 4.0));   // 4m panels for detail
+    const nPanels = Math.max(4, Math.floor(circ / 4.0));   // 4m panels for detail
     const arcStep = (2 * Math.PI) / nPanels;
     const pitch   = (phi - Math.PI / 2) * 180 / Math.PI;
 
@@ -1508,7 +1519,12 @@ export function gen_dragon(p: GenParams): Point3D[] {
 
 export function gen_sphere(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  drawSphere(pts, 0, p.radius??20, 0, p.radius??20, p.wallClass ? String(p.wallClass) : CNC8);
+  const r = p.radius ?? 20;
+  if (p.wallClass) {
+    drawSphere(pts, 0, r, 0, r, String(p.wallClass));
+  } else {
+    drawSphereBudgeted(pts, 0, r, 0, r, 1150);
+  }
   return pts;
 }
 
