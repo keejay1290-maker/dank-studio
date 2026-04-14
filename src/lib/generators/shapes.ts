@@ -374,8 +374,8 @@ export function gen_millennium_falcon(p: GenParams): Point3D[] {
  */
 export function gen_star_destroyer(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const L = p.length ?? 160;
-  const S = L / 160;
+  const S = Math.max(0.5, p.scale ?? 1);
+  const L = 160 * S;
 
   // Wedge hull — triangular plan, builds from stern to bow
   for (let z = -L/2; z <= L/2; z += 8*S) {
@@ -399,7 +399,7 @@ export function gen_star_destroyer(p: GenParams): Point3D[] {
  */
 export function gen_stargate_portal(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const r = p.radius ?? 14;
+  const r = p.r ?? 14;
   // Ring
   for (let dr = 0; dr < 2; dr++) {
     drawRing(pts, 0, 0, 0, r + dr, IND10);
@@ -536,7 +536,7 @@ export function gen_stark_tower(p: GenParams): Point3D[] {
  */
 export function gen_cyberpunk(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const h = p.height ?? 80, w = p.width ?? 20;
+  const S = Math.max(0.5, p.scale ?? 1), h = 80*S, w = 20*S;
   for (let y = 0; y <= h; y += 4) {
     drawRect(pts, 0, y, 0, w/2, w/2, y % 8 === 0 ? IND10 : CNC8);
     if (y % 16 === 0) drawRing(pts, 0, y, 0, w/2 + 4, MILCNC);
@@ -549,7 +549,7 @@ export function gen_cyberpunk(p: GenParams): Point3D[] {
  */
 export function gen_saturn(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const r = p.radius ?? 35;
+  const r = p.r ?? 35;
   // Core sphere
   drawSphere(pts, 0, r, 0, r * 0.5, IND10);
   // Rings at different heights
@@ -563,7 +563,7 @@ export function gen_saturn(p: GenParams): Point3D[] {
 
 export function gen_xwing(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const S = Math.max(0.5, (p.length ?? 13) / 13);
+  const S = Math.max(0.5, p.scale ?? 1);
   // Fuselage
   for (let z = -6*S; z <= 6*S; z += 2*S) drawRing(pts, 0, 0, z, 1.2*S, CNC8);
   drawRing(pts, 0, 0, -6*S, 1.5*S, CNC8);
@@ -599,8 +599,7 @@ export function gen_xwing(p: GenParams): Point3D[] {
  */
 export function gen_eiffel_tower(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const h = p.height ?? 150;
-  const S = h / 150;
+  const S = Math.max(0.5, p.scale ?? 1);
 
   // 4 legs — each a tapered curve from wide base to central shaft
   const legSegs = 20;
@@ -640,7 +639,7 @@ export function gen_eiffel_tower(p: GenParams): Point3D[] {
  */
 export function gen_taj_mahal(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const S = Math.max(0.5, (p.width ?? 80) / 80);
+  const S = Math.max(0.5, p.scale ?? 1);
   const W = 30*S, D = 26*S, BH = 10*S;
 
   // Main plinth
@@ -680,9 +679,9 @@ export function gen_taj_mahal(p: GenParams): Point3D[] {
  */
 export function gen_colosseum(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const outerR = p.width   ?? 100;
+  const outerR = p.r       ?? 100;
   const tiers  = p.tiers   ?? 4;
-  const tierH  = p.tierH   ?? 8;
+  const tierH  = 8;
 
   for (let t = 0; t < tiers; t++) {
     const r = outerR - t * 10;
@@ -707,7 +706,7 @@ export function gen_colosseum(p: GenParams): Point3D[] {
  */
 export function gen_pyramid(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const base = p.width  ?? 120;
+  const base = p.base   ?? 120;
   const h    = p.height ?? 80;
   const S    = base / 120;
   const step = 4 * S;
@@ -727,8 +726,8 @@ export function gen_pyramid(p: GenParams): Point3D[] {
  */
 export function gen_stonehenge(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const r  = p.radius ?? 25;
-  const n  = p.stones ?? 30;
+  const r  = p.r ?? 25;
+  const n  = 30;
   for (let i = 0; i < n; i++) {
     const a   = (i / n) * Math.PI * 2;
     const x   = r * Math.cos(a), z = r * Math.sin(a);
@@ -760,8 +759,7 @@ export function gen_stonehenge(p: GenParams): Point3D[] {
  */
 export function gen_big_ben(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const targetH = p.height ?? 96;
-  const S  = targetH / 96;
+  const S  = Math.max(0.5, p.scale ?? 1);
   const hw = 7.6 * S;
 
   const rect = (y: number, half: number) => drawRect(pts, 0, y, 0, half, half, STONE2);
@@ -819,7 +817,7 @@ export function gen_big_ben(p: GenParams): Point3D[] {
  */
 export function gen_statue_liberty(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const S = Math.max(0.5, (p.height ?? 93) / 93);
+  const S = Math.max(0.5, p.scale ?? 1);
 
   // Fort Wood star base
   const oR = 22*S, iR = 14*S;
@@ -868,7 +866,7 @@ export function gen_statue_liberty(p: GenParams): Point3D[] {
  */
 export function gen_christ_redeemer(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const S = Math.max(0.5, (p.height ?? 38) / 38);
+  const S = Math.max(0.5, p.scale ?? 1);
   const pw = 8*S;
 
   // Pedestal
@@ -899,7 +897,7 @@ export function gen_christ_redeemer(p: GenParams): Point3D[] {
  */
 export function gen_parthenon(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const S = Math.max(0.5, (p.width ?? 70) / 70);
+  const S = Math.max(0.5, p.scale ?? 1);
   const L = 35*S, W = 16*S, colH = 10*S, colR = 1.2*S, sp = 4.5*S;
 
   // Stepped platform
@@ -934,7 +932,7 @@ export function gen_parthenon(p: GenParams): Point3D[] {
  */
 export function gen_arc_triomphe(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const S  = Math.max(0.5, (p.height ?? 50) / 50);
+  const S  = Math.max(0.5, p.scale ?? 1);
   const hw = 13*S, hd = 7*S, h = 50*S, archR = 10*S;
 
   // 4 solid piers
@@ -965,7 +963,7 @@ export function gen_arc_triomphe(p: GenParams): Point3D[] {
  */
 export function gen_sydney_opera(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const S = Math.max(0.5, (p.width ?? 120) / 120);
+  const S = Math.max(0.5, p.scale ?? 1);
 
   // Podium
   for (let y = 0; y <= 6*S; y += 3*S) drawRect(pts, 0, y, 0, 50*S, 30*S, CNC8);
@@ -997,7 +995,7 @@ export function gen_sydney_opera(p: GenParams): Point3D[] {
  */
 export function gen_cn_tower(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const h = p.height ?? 180, S = h / 180;
+  const S = Math.max(0.5, p.scale ?? 1), h = 180 * S;
 
   // Tripod base
   for (let i = 0; i < 3; i++) {
@@ -1026,7 +1024,7 @@ export function gen_cn_tower(p: GenParams): Point3D[] {
  */
 export function gen_space_needle(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const h = p.height ?? 184, S = h/184;
+  const S = Math.max(0.5, p.scale ?? 1), h = 184 * S;
   for (let i = 0; i < 3; i++) {
     const a = (i/3)*Math.PI*2;
     for (let s = 0; s < 10; s++) {
@@ -1050,8 +1048,9 @@ export function gen_space_needle(p: GenParams): Point3D[] {
  */
 export function gen_pisa(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const h = p.height ?? 56, tilt = (p.pitch ?? 4) * Math.PI/180;
-  const r = 7, S = h/56;
+  const S = Math.max(0.5, p.scale ?? 1), h = 56 * S;
+  const tilt = 4 * Math.PI/180;  // 4° lean, fixed
+  const r = 7;
   for (let y = 0; y <= h; y += 3*S) {
     const lean = Math.sin(tilt) * y;
     drawRing(pts, lean, y, 0, r*S, STONE2);
@@ -1072,7 +1071,7 @@ export function gen_pisa(p: GenParams): Point3D[] {
 
 export function gen_hogwarts(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const S = Math.max(0.5, (p.width ?? 150) / 150);
+  const S = Math.max(0.5, p.scale ?? 1);
   const mw = 30*S, md = 20*S;
 
   // Main block
@@ -1115,7 +1114,7 @@ export function gen_hogwarts(p: GenParams): Point3D[] {
 
 export function gen_minas_tirith(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const baseR = p.width ?? 120, totalH = p.height ?? 100, tiers = 7;
+  const S = Math.max(0.5, p.scale ?? 1), baseR = 120 * S, totalH = 100 * S, tiers = 7;
   const stepH = totalH / tiers;
 
   for (let i = 0; i < tiers; i++) {
@@ -1140,7 +1139,7 @@ export function gen_minas_tirith(p: GenParams): Point3D[] {
 
 export function gen_helms_deep(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const S = Math.max(0.5, (p.width ?? 200) / 200);
+  const S = Math.max(0.5, p.scale ?? 1);
   const wallL = 80*S, wallH = 24*S;
 
   // Deeping Wall
@@ -1163,17 +1162,17 @@ export function gen_helms_deep(p: GenParams): Point3D[] {
 
 export function gen_the_wall(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const L = p.length ?? 300, h = p.height ?? 60, S = h/60;
-  for (let y = 0; y <= h; y += 8*S) drawWall(pts, -L/2, y, 0, L/2, y, 0, IND10);
+  const L = p.length ?? 300, h = 60;
+  for (let y = 0; y <= h; y += 8) drawWall(pts, -L/2, y, 0, L/2, y, 0, IND10);
   // Castles along top
   for (let x = -L/2 + 20; x <= L/2; x += 60)
-    for (let y = h; y <= h+16*S; y += 8*S) drawRect(pts, x, y, 0, 6*S, 6*S, IND10);
+    for (let y = h; y <= h+16; y += 8) drawRect(pts, x, y, 0, 6, 6, IND10);
   return pts;
 }
 
 export function gen_azkaban(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const S = Math.max(0.5, (p.width ?? 80)/80);
+  const S = Math.max(0.5, p.scale ?? 1);
   const r = 30*S;
   // Triangular keep — 3 sides
   for (let i = 0; i < 3; i++) {
@@ -1189,7 +1188,7 @@ export function gen_azkaban(p: GenParams): Point3D[] {
 
 export function gen_eye_of_sauron(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const h = p.height ?? 90, tw = p.towerWidth ?? 28, er = p.eyeRadius ?? 22;
+  const r = p.r ?? 50, h = r * 1.8, tw = r * 0.56, er = r * 0.44;
   for (let y = 0; y <= h; y += 8) {
     const t = 1-(y/h);
     drawRing(pts, 0, y, 0, tw*(t*0.7+0.3), IND10);
@@ -1207,7 +1206,7 @@ export function gen_eye_of_sauron(p: GenParams): Point3D[] {
 
 export function gen_fortress_solitude(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const r = p.width ?? 60;
+  const S = Math.max(0.5, p.scale ?? 1), r = 60 * S;
   for (let i = 0; i < 30; i++) {
     const cx = ((i*7919)%100/100 - 0.5)*r, cz = ((i*4001)%100/100 - 0.5)*r;
     const ch = 20 + (i*13)%80;
@@ -1234,7 +1233,7 @@ export function gen_fortress_solitude(p: GenParams): Point3D[] {
 
 export function gen_bunker(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const w = p.width ?? 40, d = p.depth ?? 30, floors = p.floors ?? 3;
+  const S = Math.max(0.5, p.scale ?? 1), w = 40*S, d = 30*S, floors = 3;
   for (let f = 0; f < floors; f++) {
     const y = f * 5;
     drawRect(pts, 0, y, 0, w/2, d/2, IND10);
@@ -1249,7 +1248,7 @@ export function gen_bunker(p: GenParams): Point3D[] {
 
 export function gen_pentagon(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const r = p.width ?? 100, rings = 5;
+  const r = p.r ?? 100, rings = 5;
   for (let ri = 0; ri < rings; ri++) {
     const rr = r*(1-ri*0.15);
     for (let i = 0; i < 5; i++) {
@@ -1263,7 +1262,7 @@ export function gen_pentagon(p: GenParams): Point3D[] {
 
 export function gen_star_fort(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const r = p.radius ?? 60, pts2 = p.points ?? 5;
+  const r = p.r ?? 60, pts2 = p.points ?? 5;
   const inner = r*0.6;
   for (let i = 0; i < pts2*2; i++) {
     const a1 = (i/(pts2*2))*Math.PI*2, a2 = ((i+1)/(pts2*2))*Math.PI*2;
@@ -1276,7 +1275,7 @@ export function gen_star_fort(p: GenParams): Point3D[] {
 
 export function gen_arena_fort(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const r = p.radius ?? 50, h = p.height ?? 20;
+  const r = p.r ?? 50, h = 20;
   for (let y = 0; y <= h; y += 4) drawRing(pts, 0, y, 0, r, IND10);
   // Towers at 4 points
   for (let i = 0; i < 4; i++) {
@@ -1288,8 +1287,7 @@ export function gen_arena_fort(p: GenParams): Point3D[] {
 
 export function gen_gatehouse(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const w = p.width ?? 32, h = p.height ?? 22;
-  const S = h/22;
+  const S = Math.max(0.5, p.scale ?? 1), w = 32*S, h = 22*S;
 
   // Two flanking towers
   for (let tx = -w/2; tx <= w/2; tx += w) {
@@ -1421,7 +1419,7 @@ export function gen_pirate_ship(p: GenParams): Point3D[] {
 
 export function gen_bridge_truss(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const L = p.length ?? 80, H = p.height ?? 12, W = p.width ?? 8;
+  const L = p.length ?? 80, H = 12, W = 8;
   const deckZ = W/2;
   // Top chords
   drawWall(pts, -L/2, H, -deckZ,  L/2, H, -deckZ, IND10);
@@ -1448,7 +1446,7 @@ export function gen_bridge_truss(p: GenParams): Point3D[] {
 
 export function gen_celtic_ring(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const r = p.radius ?? 30, h = p.height ?? 8, count = p.stoneCount ?? 24;
+  const r = p.r ?? 30, h = 8, count = 24;
   for (let i = 0; i < count; i++) {
     const a = 2*Math.PI*i/count;
     const x = r*Math.cos(a), z = r*Math.sin(a);
@@ -1465,7 +1463,7 @@ export function gen_celtic_ring(p: GenParams): Point3D[] {
 
 export function gen_dna_helix(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const h = p.height ?? 60, r = p.radius ?? 8, turns = p.turns ?? 4;
+  const h = p.height ?? 60, r = p.r ?? 8, turns = p.turns ?? 4;
   for (let i = 0; i < 200; i++) {
     const t  = i/200;
     const a1 = t*turns*Math.PI*2;
@@ -1482,8 +1480,8 @@ export function gen_dna_helix(p: GenParams): Point3D[] {
 
 export function gen_amphitheater(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const tiers = p.tiers ?? 8, baseR = p.radius ?? 40, tierD = p.tierDepth ?? 4, stepH = p.stepHeight ?? 1.5;
-  const sweepAngle = (p.sweepAngle ?? 180) * Math.PI / 180;
+  const tiers = p.tiers ?? 8, baseR = p.r ?? 40, tierD = 4, stepH = 1.5;
+  const sweepAngle = Math.PI; // fixed 180°
   for (let t = 0; t < tiers; t++) {
     const r = baseR + t * tierD, y = t * stepH;
     const n = Math.max(8, Math.round(r * sweepAngle / 8));
@@ -1499,8 +1497,8 @@ export function gen_amphitheater(p: GenParams): Point3D[] {
 
 export function gen_aqueduct(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const L = p.length ?? 120, h = p.height ?? 20, archSpan = 12;
-  const nArches = Math.round(L / archSpan);
+  const nArches = p.arches ?? 8, L = p.length ?? 120;
+  const archSpan = L / nArches, h = Math.max(8, archSpan * 0.8);
 
   // Upper channel
   drawWall(pts, -L/2, h,   -1, L/2, h,   -1, STONE2);
@@ -1525,7 +1523,7 @@ export function gen_aqueduct(p: GenParams): Point3D[] {
 
 export function gen_gothic_arch(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const nArches = p.arches ?? 5, aw = p.archWidth ?? 8, ah = p.archHeight ?? 12, pillarH = ah * 0.6;
+  const S = Math.max(0.5, p.scale ?? 1), nArches = 5, aw = 8*S, ah = 12*S, pillarH = ah * 0.6;
   for (let i = 0; i < nArches; i++) {
     const x = i * (aw + 2);
     // Pillars
@@ -1573,7 +1571,7 @@ export function gen_dragon(p: GenParams): Point3D[] {
 
 export function gen_sphere(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const r = p.radius ?? 20;
+  const r = p.r ?? 20;
   if (p.wallClass) {
     drawSphere(pts, 0, r, 0, r, String(p.wallClass));
   } else {
@@ -1584,14 +1582,14 @@ export function gen_sphere(p: GenParams): Point3D[] {
 
 export function gen_ring(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const r = p.radius ?? 20, h = p.height ?? 8;
+  const r = p.r ?? 20, h = 8;
   for (let y = 0; y <= h; y += 4) drawRing(pts, 0, y, 0, r, CNC8);
   return pts;
 }
 
 export function gen_cylinder(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const r = p.radius ?? 10, h = p.height ?? 20;
+  const r = p.r ?? 10, h = p.h ?? 20;
   for (let y = 0; y <= h; y += 4) drawRing(pts, 0, y, 0, r, CNC8);
   drawDisk(pts, 0, 0, 0, r, CNC8);
   drawDisk(pts, 0, h, 0, r, CNC8);
@@ -1604,7 +1602,7 @@ export function gen_pyramid_basic(p: GenParams): Point3D[] {
 
 export function gen_torus(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const R = p.radius ?? 20, r = p.tubeRadius ?? 5;
+  const R = p.R ?? 20, r = p.r ?? 5;
   const nMaj = Math.max(8, Math.round(2*Math.PI*R / 8));
   for (let i = 0; i < nMaj; i++) {
     const a = (i/nMaj)*Math.PI*2;
@@ -1625,7 +1623,7 @@ export function gen_cube(p: GenParams): Point3D[] {
 
 export function gen_dome(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const r = p.radius ?? 20;
+  const r = p.r ?? 20;
   const mat = p.wallClass ? String(p.wallClass) : CNC8;
   drawDome(pts, 0, 0, 0, r, mat);
   // Base disk floor
@@ -1635,7 +1633,7 @@ export function gen_dome(p: GenParams): Point3D[] {
 
 export function gen_spiral(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const h = p.height ?? 40, r = p.radius ?? 8, turns = p.turns ?? 3;
+  const h = p.height ?? 40, r = p.r ?? 8, turns = p.turns ?? 3;
   for (let i = 0; i < 100; i++) {
     const t   = i/99;
     const a   = t*turns*Math.PI*2;
@@ -1655,7 +1653,7 @@ export function gen_wall_line(p: GenParams): Point3D[] {
 
 export function gen_arc(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const r = p.radius ?? 20, angle = (p.angle ?? 180)*Math.PI/180, h = p.height ?? 8;
+  const r = p.r ?? 20, angle = (p.angle ?? 180)*Math.PI/180, h = 8;
   for (let y = 0; y <= h; y += 4) {
     const n = Math.max(4, Math.round(r*angle/8));
     for (let i = 0; i <= n; i++) {
