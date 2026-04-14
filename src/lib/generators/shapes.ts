@@ -14,7 +14,7 @@
 //  2. Add an import + case in generators/index.ts
 // ─────────────────────────────────────────────────────────────────────────────
 import type { Point3D } from "../types";
-import { drawWall, drawRing, drawRect, drawDisk, drawSphere } from "../draw";
+import { drawWall, drawRing, drawRect, drawDisk, drawSphere, drawDome } from "../draw";
 
 export type GenParams = Record<string, number>;
 
@@ -35,81 +35,163 @@ void _TIN5;
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * 🛰️ DEATH STAR — Fixed V2
- * Root cause of old bug: sphere panels had no pitch, so poles faced wrong way.
- * Fix: every panel gets yaw = atan2(x,z) AND pitch = (phi-π/2)*180/π
- * Dish cutout: panels within dishArea cone are sunken / coloured red.
+ * 🛰️ DEATH STAR — V3 Screen-accurate rebuild
+ *
+ * Research:
+ *  • Superlaser dish: northern hemisphere, ~23% of diameter, large concave bowl
+ *    with 8 tributary emitter channels and central focus lens (barrel_red)
+ *  • Equatorial trench: full ring, visually wide and deep with trench floor panels
+ *  • Surface: grey gridded tile panels in alternating bands (CNC8 + MILCNC)
+ *  • Two secondary sub-trenches flank the main trench
+ *
+ * Panel rotation:
+ *  yaw   = atan2(x, z) * 180/π  → faces panel tangent in XZ plane
+ *  pitch = (phi - π/2) * 180/π  → tilts face to point radially outward
+ *    phi=0 (N pole)   → pitch=-90 (lies flat, faces up)
+ *    phi=π/2 (equator)→ pitch=0  (stands vertical)
+ *    phi=π (S pole)   → pitch=90 (lies flat, faces down)
  */
 export function gen_death_star(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const R        = p.radius  ?? 48;
-  const panelW   = 8.75;    // IND10 face width
-  const MAT      = IND10;
-  const MAT_ALT  = CNC8;
+  const R     = p.r ?? 72;           // radius — 144m diameter sphere
+  const panelW = 8.0;                // CNC8 face width
+  const panelH = 3.0;                // CNC8 height — ring step matches this
 
-  // ── dish config ──────────────────────────────────────────────────────────
-  const dishPhiDeg   = 90 - (p.dishLat ?? 30);   // polar angle of dish centre
-  const dishThetaDeg = p.dishLon ?? 45;
-  const dishPhi      = dishPhiDeg   * Math.PI / 180;
-  const dishTheta    = dishThetaDeg * Math.PI / 180;
-  const dishArea     = 0.52;   // cone half-angle (radians) — ~30° cone
-  const dishDepth    = 0.28 * R;
+  // ── Materials ─────────────────────────────────────────────────────────────
+  const MAT_MAIN  = CNC8;            // main hull plates — mid grey
+  const MAT_BAND  = MILCNC;          // darker band every 3 rings
+  const MAT_TRENCH= CNC4;            // trench floor panels
+  const MAT_RIM   = STONE;           // trench wall rim — dark grey
 
-  // unit vector pointing at dish centre
+  // ── Equatorial trench ─────────────────────────────────────────────────────
+  // Wide visible gap with a recessed floor ring
+  const trenchPhi   = Math.PI / 2;
+  const trenchHalf  = 0.13;          // ±7.5° either side — wide trench
+  const trenchDepth = 0.16 * R;      // ~11.5m deep
+
+  // Secondary sub-trenches either side of the main trench
+  const subOff   = 0.28;             // 16° from equator
+  const subHalf  = 0.04;
+  const subDepth = 0.05 * R;
+
+  // ── Superlaser dish ───────────────────────────────────────────────────────
+  // Northern hemisphere, roughly 20° above equator (phi ≈ 70° from N pole)
+  const dishPhi   = Math.PI * 0.39;  // ~70° from north pole = 20° above equator
+  const dishTheta = Math.PI * 0.55;  // arbitrary longitude — "side on" view angle
+  const dishCone  = 0.60;            // half-angle ~34° — large prominent bowl
+  const dishDepth = 0.40 * R;        // very deep concave depression
+
+  // Unit vector pointing at dish centre
   const dcx = Math.sin(dishPhi) * Math.cos(dishTheta);
   const dcy = Math.cos(dishPhi);
   const dcz = Math.sin(dishPhi) * Math.sin(dishTheta);
 
-  // ── equatorial trench ────────────────────────────────────────────────────
-  const trenchPhi  = Math.PI / 2;
-  const trenchW    = 0.08; // radians band either side of equator
-  const trenchDepth = 0.04 * R;
+  // ── 8 tributary emitter channels radiating from dish centre ──────────────
+  // Each is a narrow slot angled from centre to rim of dish
+  function inTributary(nx: number, ny: number, nz: number, dishAngle: number): boolean {
+    if (dishAngle > dishCone * 0.95) return false;
+    // Project onto the dish plane
+    const dot2 = nx * dcx + ny * dcy + nz * dcz;
+    const px = nx - dot2 * dcx, py = ny - dot2 * dcy, pz = nz - dot2 * dcz;
+    const pLen = Math.sqrt(px * px + py * py + pz * pz);
+    if (pLen < 0.001) return false;
+    // Angle of this panel in the dish plane (0–2π)
+    // Build a local X/Y axis in the dish plane
+    const upHint = Math.abs(dcy) < 0.99 ? [0, 1, 0] : [1, 0, 0];
+    const ax = dcy * upHint[2] - dcz * upHint[1];
+    const ay = dcz * upHint[0] - dcx * upHint[2];
+    const az = dcx * upHint[1] - dcy * upHint[0];
+    const aLen = Math.sqrt(ax * ax + ay * ay + az * az);
+    const a = Math.atan2(
+      (py * az - pz * ay) / aLen,
+      (px * ax + py * ay + pz * az) / aLen
+    );
+    // 8 channels: slot width ≈ 0.15 rad
+    const slotW = 0.15;
+    for (let ch = 0; ch < 8; ch++) {
+      const chAngle = (ch / 8) * Math.PI * 2;
+      let diff = Math.abs(a - chAngle);
+      if (diff > Math.PI) diff = Math.PI * 2 - diff;
+      if (diff < slotW) return true;
+    }
+    return false;
+  }
 
-  // ── sphere scan ─────────────────────────────────────────────────────────
-  const ringStep = panelW * 0.92;
-  const nRings   = Math.max(8, Math.round((Math.PI * R) / ringStep));
+  // ── Sphere scan ───────────────────────────────────────────────────────────
+  const ringStep = panelH * 0.95;    // slight overlap — no gaps between rings
+  const nRings   = Math.max(10, Math.round((Math.PI * R) / ringStep));
 
   for (let i = 1; i < nRings; i++) {
-    const phi   = (i / nRings) * Math.PI;
-    const ringR = R * Math.sin(phi);
-    if (ringR < panelW * 0.4) continue;
+    const phi  = (i / nRings) * Math.PI;
+    const sinP = Math.sin(phi);
+    const cosP = Math.cos(phi);
+    const ringR = R * sinP;
+    if (ringR < panelW * 0.3) continue;   // skip tiny polar caps
 
-    const circ     = 2 * Math.PI * ringR;
-    const nPanels  = Math.max(4, Math.round(circ / panelW));
-    const arcStep  = (2 * Math.PI) / nPanels;
-    const scale    = (circ / nPanels) / panelW;
+    // ── Skip main trench band (creates visible gap) ───────────────────────
+    if (Math.abs(phi - trenchPhi) < trenchHalf) continue;
 
-    // pitch so panel face points radially outward at this latitude
+    const circ    = 2 * Math.PI * ringR;
+    const nPanels = Math.max(4, Math.round(circ / panelW));
+    const arcStep = (2 * Math.PI) / nPanels;
+    const scale   = (circ / nPanels) / panelW;
+
+    // pitch: panel face points radially outward at this latitude
     const pitch = (phi - Math.PI / 2) * 180 / Math.PI;
+
+    // Band material — alternating every 3 rings for surface grid look
+    const bandMat = Math.floor(i / 3) % 2 === 0 ? MAT_MAIN : MAT_BAND;
+
+    // Near trench rims: use darker rim material
+    const nearTrench = Math.abs(phi - trenchPhi) < trenchHalf + 0.07;
+    const rimMat = nearTrench ? MAT_RIM : bandMat;
 
     for (let j = 0; j < nPanels; j++) {
       const theta = (j + 0.5) * arcStep;
-      const nx    = Math.sin(phi) * Math.cos(theta);
-      const ny    = Math.cos(phi);
-      const nz    = Math.sin(phi) * Math.sin(theta);
+      const nx    = sinP * Math.cos(theta);
+      const ny    = cosP;
+      const nz    = sinP * Math.sin(theta);
 
-      // angle from dish centre
-      const dot      = nx * dcx + ny * dcy + nz * dcz;
+      // Distance from dish centre
+      const dot       = nx * dcx + ny * dcy + nz * dcz;
       const dishAngle = Math.acos(Math.max(-1, Math.min(1, dot)));
 
       let curR = R;
-      let mat  = (i + j) % 2 === 0 ? MAT : MAT_ALT;
+      let mat  = rimMat;
 
-      // dish depression
-      if (dishAngle < dishArea) {
-        const t  = dishAngle / dishArea;
-        curR = R - dishDepth * (1 - t * t);
-        mat  = t < 0.15 ? "barrel_red" : "barrel_yellow";
+      // Sub-trenches (slight depression)
+      if (Math.abs(phi - (trenchPhi - subOff)) < subHalf) {
+        curR -= subDepth;
+        mat = MAT_BAND;
+      } else if (Math.abs(phi - (trenchPhi + subOff)) < subHalf) {
+        curR -= subDepth;
+        mat = MAT_BAND;
       }
 
-      // equatorial trench
-      if (Math.abs(phi - trenchPhi) < trenchW) {
-        curR -= trenchDepth * (1 - Math.abs(phi - trenchPhi) / trenchW);
+      // Superlaser dish
+      if (dishAngle < dishCone) {
+        const t = dishAngle / dishCone;
+        // Concave bowl: deep at centre, blends to surface at rim
+        curR = R - dishDepth * Math.pow(1 - t, 1.6);
+
+        // Tributary channels — exposed dark recessed slot
+        if (inTributary(nx, ny, nz, dishAngle) && t > 0.08) {
+          mat  = MAT_BAND;
+          curR = R - dishDepth * 0.7 * (1 - t);
+        } else if (t < 0.06) {
+          mat = "barrel_red";   // central focus lens
+        } else if (t < 0.18) {
+          mat = "barrel_yellow"; // inner emitter ring
+        } else if (t < 0.35) {
+          mat = "staticobj_roadblock_cncblock"; // mid collector ring
+        } else {
+          mat = MILCNC;          // outer dish hull
+        }
       }
 
-      const x   = curR * Math.sin(phi) * Math.cos(theta);
-      const y   = curR * Math.cos(phi);
-      const z   = curR * Math.sin(phi) * Math.sin(theta);
+      const x   = curR * sinP * Math.cos(theta);
+      const y   = curR * cosP;
+      const z   = curR * sinP * Math.sin(theta);
       const yaw = Math.atan2(x, z) * 180 / Math.PI;
 
       pts.push({
@@ -120,6 +202,32 @@ export function gen_death_star(p: GenParams): Point3D[] {
       });
     }
   }
+
+  // ── Trench floor — rings at reduced radius inside the trench gap ──────────
+  const trenchFloorR = R - trenchDepth;
+  const trenchRings  = 8;
+  for (let ti = 0; ti < trenchRings; ti++) {
+    const phi  = trenchPhi - trenchHalf * 0.85 + (ti / (trenchRings - 1)) * trenchHalf * 1.7;
+    const sinP = Math.sin(phi);
+    const circ    = 2 * Math.PI * trenchFloorR * sinP;
+    const nPanels = Math.max(4, Math.round(circ / 4.0));   // 4m panels for detail
+    const arcStep = (2 * Math.PI) / nPanels;
+    const pitch   = (phi - Math.PI / 2) * 180 / Math.PI;
+
+    for (let j = 0; j < nPanels; j++) {
+      const theta = (j + 0.5) * arcStep;
+      const x   = trenchFloorR * sinP * Math.cos(theta);
+      const y   = trenchFloorR * Math.cos(phi);
+      const z   = trenchFloorR * sinP * Math.sin(theta);
+      const yaw = Math.atan2(x, z) * 180 / Math.PI;
+      pts.push({
+        x, y: R + y, z, yaw,
+        pitch: +pitch.toFixed(2),
+        name: ti % 2 === 0 ? MAT_TRENCH : MAT_BAND,
+      });
+    }
+  }
+
   return pts;
 }
 
@@ -1448,12 +1556,10 @@ export function gen_cube(p: GenParams): Point3D[] {
 export function gen_dome(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
   const r = p.radius ?? 20;
-  for (let i = 0; i <= 10; i++) {
-    const phi = (i/10)*Math.PI/2; // 0 to 90° (hemisphere)
-    const rr  = r*Math.cos(phi), y = r*Math.sin(phi);
-    drawRing(pts, 0, y, 0, rr, CNC8);
-  }
-  drawDisk(pts, 0, 0, 0, r, CNC8);
+  const mat = p.wallClass ? String(p.wallClass) : CNC8;
+  drawDome(pts, 0, 0, 0, r, mat);
+  // Base disk floor
+  drawDisk(pts, 0, 0, 0, r, mat);
   return pts;
 }
 

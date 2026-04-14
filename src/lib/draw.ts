@@ -4,29 +4,26 @@
 // DayZ coordinate system: X = East, Y = Up, Z = North (left-handed)
 // Yaw 0 = facing North (+Z). Increases clockwise: 90=East, 180=South, 270=West
 //
-// drawWall  — places panels along a straight line, flush with no gaps
-// drawRing  — places panels around a circle, tangent to the ring
-// drawDisk  — fills a flat disk with concentric rings
+// drawWall   — panels along a straight line, flush with no gaps
+// drawRing   — panels around a circle, tangent to the ring
+// drawDisk   — fills a flat disk with concentric rings
+// drawRect   — four-sided rectangular enclosure
+// drawSphere — sphere surface with correct yaw+pitch and zero gaps
+// drawDome   — upper hemisphere only (phi 0 → π/2)
 // ─────────────────────────────────────────────────────────────────────────────
 import type { Point3D } from "./types";
-import { getObjectWidth, MAX_OBJECTS } from "./constants";
+import { getObjectWidth, getObjectDef, MAX_OBJECTS } from "./constants";
 
-// Default wall class used when none is specified
 const DEFAULT_WALL = "staticobj_castle_wall3";
-const DEFAULT_W    = 8; // metres — castle_wall3 face width
+const DEFAULT_W    = 8;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// drawWall
+// ─────────────────────────────────────────────────────────────────────────────
 /**
  * Place wall panels from (x1,y1,z1) to (x2,y2,z2).
- *
- * HOW SPACING WORKS (mirrors the kingalobar wall-maker approach):
- *   1. Measure the wall length in metres.
- *   2. Round to nearest integer panel count (not ceil — avoids over-dense placement).
- *   3. Scale each panel slightly so they fill the wall perfectly with no gaps.
- *      objectScale = requiredSegmentLength / objectWidth
- *      (panels scale by at most ~0–15% in practice — invisible in-game)
- *
- * @param wallClass  DayZ class name — width is looked up from OBJECT_CATALOGUE.
- *                   Pass a number to override spacing explicitly (legacy).
+ * Uses kingalobar wall-maker approach: round to nearest panel count then
+ * scale each panel so they fill the wall perfectly with no gaps.
  */
 export function drawWall(
   pts:       Point3D[],
@@ -38,23 +35,19 @@ export function drawWall(
   const len = Math.sqrt(dx * dx + dy * dy + dz * dz);
   if (len < 0.01) return;
 
-  // --- determine panel width & name ---
-  let name      = DEFAULT_WALL;
-  let panelW    = DEFAULT_W;
+  let name   = DEFAULT_WALL;
+  let panelW = DEFAULT_W;
   if (typeof wallClass === "string") {
     name   = wallClass;
     panelW = getObjectWidth(wallClass);
   } else if (typeof wallClass === "number") {
-    panelW = wallClass;              // explicit spacing override
+    panelW = wallClass;
   }
 
-  // --- yaw & pitch of this wall segment ---
   const yaw   =  Math.atan2(dx, dz) * 180 / Math.PI + 90;
   const pitch = -Math.atan2(dy, Math.sqrt(dx * dx + dz * dz)) * 180 / Math.PI;
-
-  // --- how many panels fit? ---
   const nPanels = Math.max(1, Math.round(len / panelW));
-  const scale   = (len / nPanels) / panelW; // near-1.0 fill scale
+  const scale   = (len / nPanels) / panelW;
 
   for (let i = 0; i < nPanels; i++) {
     const t = (i + 0.5) / nPanels;
@@ -70,9 +63,12 @@ export function drawWall(
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// drawRing
+// ─────────────────────────────────────────────────────────────────────────────
 /**
- * Place panels around a circle, each tangent to the ring.
- * Produces perfectly flush rings — circumference / panelWidth panels, scaled to fit.
+ * Place panels around a horizontal circle, each tangent to the ring.
+ * Uses floor() so scale is always ≥ 1 — panels always overlap, never gap.
  */
 export function drawRing(
   pts: Point3D[],
@@ -88,13 +84,14 @@ export function drawRing(
   else if (typeof wallClass === "number") panelW = wallClass;
 
   const circ    = 2 * Math.PI * r;
-  const nPanels = Math.max(4, Math.round(circ / panelW));
+  // floor() → scale always ≥ 1 → no horizontal gaps ever
+  const nPanels = Math.max(4, Math.floor(circ / panelW));
   const arcStep = (2 * Math.PI) / nPanels;
   const scale   = (circ / nPanels) / panelW;
 
   for (let i = 0; i < nPanels; i++) {
     const a   = (i + 0.5) * arcStep;
-    const yaw = -a * 180 / Math.PI + 90;          // tangent to ring
+    const yaw = -a * 180 / Math.PI + 90;
     pts.push({
       x: cx + r * Math.cos(a),
       y: cy,
@@ -106,9 +103,9 @@ export function drawRing(
   }
 }
 
-/**
- * Fill a horizontal disk with concentric rings.
- */
+// ─────────────────────────────────────────────────────────────────────────────
+// drawDisk
+// ─────────────────────────────────────────────────────────────────────────────
 export function drawDisk(
   pts: Point3D[],
   cx: number, cy: number, cz: number,
@@ -121,55 +118,76 @@ export function drawDisk(
   }
 }
 
-/**
- * Place a rectangular ring of walls (4 sides).
- * hw = half-width (X), hd = half-depth (Z).
- * wallClass applied to all 4 sides.
- */
+// ─────────────────────────────────────────────────────────────────────────────
+// drawRect
+// ─────────────────────────────────────────────────────────────────────────────
 export function drawRect(
   pts: Point3D[],
   cx: number, cy: number, cz: number,
   hw: number, hd: number,
   wallClass: string | number = DEFAULT_WALL,
 ) {
-  drawWall(pts, cx - hw, cy, cz - hd,  cx + hw, cy, cz - hd, wallClass); // North
-  drawWall(pts, cx + hw, cy, cz - hd,  cx + hw, cy, cz + hd, wallClass); // East
-  drawWall(pts, cx + hw, cy, cz + hd,  cx - hw, cy, cz + hd, wallClass); // South
-  drawWall(pts, cx - hw, cy, cz + hd,  cx - hw, cy, cz - hd, wallClass); // West
+  drawWall(pts, cx - hw, cy, cz - hd,  cx + hw, cy, cz - hd, wallClass);
+  drawWall(pts, cx + hw, cy, cz - hd,  cx + hw, cy, cz + hd, wallClass);
+  drawWall(pts, cx + hw, cy, cz + hd,  cx - hw, cy, cz + hd, wallClass);
+  drawWall(pts, cx - hw, cy, cz + hd,  cx - hw, cy, cz - hd, wallClass);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// drawSphere
+// ─────────────────────────────────────────────────────────────────────────────
 /**
- * Place panels along the surface of a sphere.
- * Fixes the Death Star problem: every panel gets correct yaw AND pitch.
+ * Place panels across the full surface of a sphere. Zero-gap tiling:
  *
- * yaw   = atan2(x, z)  → panel faces outward in XZ plane
- * pitch = (phi - π/2) * 180/π  → tilts panel to face outward at all latitudes
- *   phi=0  (north pole): pitch = -90°  (lies flat, roof tile)
- *   phi=90 (equator):    pitch =   0°  (stands vertical)
+ *  • Ring step uses panel HEIGHT (vertical dimension), not face width.
+ *    e.g. CNC8 (8 m wide × 3 m tall): step = 2.4 m → rings overlap 20%
+ *    — this compensates for curved-surface edge divergence.
+ *
+ *  • Each ring uses Math.floor(circ/panelW) panels so scale ≥ 1.
+ *    Panels are always slightly wider than the arc gap → no seam lines.
+ *
+ *  • Polar caps: a flat panel (pitch=±90°) caps each pole.
+ *
+ * Rotation conventions (DayZ left-handed, Y-up):
+ *   yaw   = atan2(x, z) * 180/π   → panel faces radially outward in XZ plane
+ *   pitch = (phi - π/2) * 180/π   → tilts face to point outward at latitude phi
+ *     phi=0  (N pole) → pitch=-90  (lies flat, faces up)
+ *     phi=π/2 (equator) → pitch=0  (stands vertical)
+ *     phi=π  (S pole) → pitch=+90  (lies flat, faces down)
  */
 export function drawSphere(
-  pts:      Point3D[],
+  pts:       Point3D[],
   cx: number, cy: number, cz: number,
-  r:        number,
+  r:         number,
   wallClass: string | number = DEFAULT_WALL,
 ) {
-  const panelW  = typeof wallClass === "number" ? wallClass : getObjectWidth(wallClass as string);
-  const ringStep = panelW * 0.95;           // slight overlap for no gaps
+  const panelW = typeof wallClass === "number" ? wallClass : getObjectWidth(wallClass as string);
+  // Use panel HEIGHT for ring spacing — not face width.
+  // CNC8: h=3 m → step=2.4 m (20% overlap). IND10: h=10 m → step=8 m.
+  const panelH  = typeof wallClass === "string"
+    ? (getObjectDef(wallClass)?.height ?? panelW)
+    : panelW;
+  const ringStep = panelH * 0.80;   // 20% vertical overlap for gap-free coverage
   const nRings   = Math.max(6, Math.round((Math.PI * r) / ringStep));
+  const wallName = typeof wallClass === "string" ? wallClass : DEFAULT_WALL;
+
+  // North polar cap
+  pts.push({ x: cx, y: cy + r, z: cz, yaw: 0, pitch: -90, name: wallName });
 
   for (let i = 1; i < nRings; i++) {
     const phi    = (i / nRings) * Math.PI;
-    const ringR  = r * Math.sin(phi);
-    if (ringR < panelW * 0.5) continue;     // skip tiny polar caps
+    const sinP   = Math.sin(phi);
+    const ringR  = r * sinP;
+    // Skip only the very tips where ring radius is negligibly small
+    if (ringR < panelW * 0.15) continue;
 
-    const ringY  = r * Math.cos(phi);
-    const circ   = 2 * Math.PI * ringR;
-    const nPanels = Math.max(4, Math.round(circ / panelW));
+    const ringY   = r * Math.cos(phi);
+    const circ    = 2 * Math.PI * ringR;
+    // floor() → scale always ≥ 1 → panels overlap slightly → no seam lines
+    const nPanels = Math.max(4, Math.floor(circ / panelW));
     const arcStep = (2 * Math.PI) / nPanels;
     const scale   = (circ / nPanels) / panelW;
-
-    // pitch: rotate panel to face outward at this latitude
-    const pitch = (phi - Math.PI / 2) * 180 / Math.PI;
+    const pitch   = (phi - Math.PI / 2) * 180 / Math.PI;
 
     for (let j = 0; j < nPanels; j++) {
       const theta = (j + 0.5) * arcStep;
@@ -181,13 +199,74 @@ export function drawSphere(
         x, y: cy + ringY, z,
         yaw,
         pitch: +pitch.toFixed(2),
-        scale: Math.abs(scale - 1) > 0.01 ? +scale.toFixed(4) : undefined,
-        name: typeof wallClass === "string" ? wallClass : DEFAULT_WALL,
+        scale: Math.abs(scale - 1) > 0.005 ? +scale.toFixed(4) : undefined,
+        name: wallName,
+      });
+    }
+  }
+
+  // South polar cap
+  pts.push({ x: cx, y: cy - r, z: cz, yaw: 0, pitch: 90, name: wallName });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// drawDome
+// ─────────────────────────────────────────────────────────────────────────────
+/**
+ * Upper hemisphere only (phi from 0 to π/2).
+ * Same gap-free algorithm as drawSphere.
+ * The equatorial ring at phi=π/2 (pitch=0) forms the base — sits at cy.
+ */
+export function drawDome(
+  pts:       Point3D[],
+  cx: number, cy: number, cz: number,
+  r:         number,
+  wallClass: string | number = DEFAULT_WALL,
+) {
+  const panelW  = typeof wallClass === "number" ? wallClass : getObjectWidth(wallClass as string);
+  const panelH  = typeof wallClass === "string"
+    ? (getObjectDef(wallClass)?.height ?? panelW)
+    : panelW;
+  const ringStep = panelH * 0.80;
+  const nRings   = Math.max(4, Math.round(((Math.PI / 2) * r) / ringStep));
+  const wallName = typeof wallClass === "string" ? wallClass : DEFAULT_WALL;
+
+  // North polar cap
+  pts.push({ x: cx, y: cy + r, z: cz, yaw: 0, pitch: -90, name: wallName });
+
+  for (let i = 1; i <= nRings; i++) {
+    const phi    = (i / nRings) * (Math.PI / 2);
+    const sinP   = Math.sin(phi);
+    const ringR  = r * sinP;
+    if (ringR < panelW * 0.15) continue;
+
+    const ringY   = r * Math.cos(phi);
+    const circ    = 2 * Math.PI * ringR;
+    const nPanels = Math.max(4, Math.floor(circ / panelW));
+    const arcStep = (2 * Math.PI) / nPanels;
+    const scale   = (circ / nPanels) / panelW;
+    const pitch   = (phi - Math.PI / 2) * 180 / Math.PI;
+
+    for (let j = 0; j < nPanels; j++) {
+      const theta = (j + 0.5) * arcStep;
+      const x     = cx + ringR * Math.cos(theta);
+      const z     = cz + ringR * Math.sin(theta);
+      const yaw   = Math.atan2(x - cx, z - cz) * 180 / Math.PI;
+
+      pts.push({
+        x, y: cy + ringY, z,
+        yaw,
+        pitch: +pitch.toFixed(2),
+        scale: Math.abs(scale - 1) > 0.005 ? +scale.toFixed(4) : undefined,
+        name: wallName,
       });
     }
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// applyLimit
+// ─────────────────────────────────────────────────────────────────────────────
 /** Trim to object limit, preserving full silhouette by uniform sub-sampling. */
 export function applyLimit(pts: Point3D[], limit = MAX_OBJECTS): Point3D[] {
   if (pts.length <= limit) return pts;
