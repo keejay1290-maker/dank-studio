@@ -146,89 +146,180 @@ const ControlsRef = forwardRef<any, object>(function Controls(_, ref) {
   );
 });
 
+// ── Pre-built geometry — avoids re-creating on every render ──────────────────
+const RUNWAY_GEO    = new THREE.PlaneGeometry(960, 46);
+const TAXIWAY_GEO   = new THREE.PlaneGeometry(960, 18);
+const APRON_GEO     = new THREE.PlaneGeometry(340, 200);
+const GRASS_GEO     = new THREE.PlaneGeometry(8000, 8000);
+const LINE_H_GEO    = new THREE.PlaneGeometry(960, 0.5);
+const DASH_RW_GEO   = new THREE.PlaneGeometry(24, 0.6);
+const DASH_TW_GEO   = new THREE.PlaneGeometry(20, 0.4);
+const THRESH_GEO    = new THREE.PlaneGeometry(2, 14);
+const CONNECTOR_GEO = new THREE.PlaneGeometry(18, 130);
+
+const MAT_GRASS    = new THREE.MeshStandardMaterial({ color: "#4e6b28", roughness: 1.0, metalness: 0 });
+const MAT_RUNWAY   = new THREE.MeshStandardMaterial({ color: "#525250", roughness: 0.98, metalness: 0 });
+const MAT_TAXIWAY  = new THREE.MeshStandardMaterial({ color: "#5c5c5a", roughness: 0.97, metalness: 0 });
+const MAT_APRON    = new THREE.MeshStandardMaterial({ color: "#747472", roughness: 0.95, metalness: 0 });
+const MAT_WHITE    = new THREE.MeshStandardMaterial({ color: "#d8d8d5", roughness: 0.85, metalness: 0 });
+const MAT_YELLOW   = new THREE.MeshStandardMaterial({ color: "#c8a018", roughness: 0.85, metalness: 0 });
+const MAT_HANGAR   = new THREE.MeshStandardMaterial({ color: "#68645e", roughness: 0.95, metalness: 0 });
+const MAT_TOWER    = new THREE.MeshStandardMaterial({ color: "#78746c", roughness: 0.93, metalness: 0 });
+const MAT_TOWER_TOP= new THREE.MeshStandardMaterial({ color: "#686460", roughness: 0.92, metalness: 0 });
+const MAT_TREES    = new THREE.MeshStandardMaterial({ color: "#354e1a", roughness: 1.0,  metalness: 0 });
+
+// Rotation shared by all ground planes
+const GROUND_ROT = new THREE.Euler(-Math.PI / 2, 0, 0);
+
 function Scene({ points, ctrlRef }: { points: Point3D[]; ctrlRef: React.Ref<any> }) {
   return (
     <>
       <AutoFrame points={points} />
       <ControlsRef ref={ctrlRef} />
 
-      {/* ── Sky — NWAF clear blue ─────────────────────────────────── */}
-      <color attach="background" args={["#a8cce8"]} />
+      {/* ── Sky — DayZ NWAF overcast blue ───────────────────────────── */}
+      <color attach="background" args={["#829db8"]} />
 
-      {/* ── Lighting — bright daylight ────────────────────────────── */}
-      <hemisphereLight args={["#c8e0ff", "#4a7a30", 1.0]} />
+      {/* ── Subtle distance haze matching NWAF atmosphere ───────────── */}
+      <fog attach="fog" args={["#9bb0c8", 600, 2800]} />
+
+      {/* ── Lighting — DayZ late-morning sun from SE ─────────────────── */}
+      <hemisphereLight args={["#b0c8e0", "#3a5820", 0.9]} />
       <directionalLight
-        position={[200, 300, 100]}
-        intensity={1.8}
-        color="#fff8f0"
+        position={[350, 450, 150]}
+        intensity={1.6}
+        color="#f0e8d8"
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
-        shadow-camera-near={0.5}
-        shadow-camera-far={1500}
-        shadow-camera-left={-400}
-        shadow-camera-right={400}
-        shadow-camera-top={400}
-        shadow-camera-bottom={-400}
-        shadow-bias={-0.0004}
+        shadow-camera-near={1}
+        shadow-camera-far={1200}
+        shadow-camera-left={-500}
+        shadow-camera-right={500}
+        shadow-camera-top={500}
+        shadow-camera-bottom={-500}
+        shadow-bias={-0.0005}
       />
 
-      {/* ── Grass ground ─────────────────────────────────────────── */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]} receiveShadow>
-        <planeGeometry args={[4000, 4000]} />
-        <meshStandardMaterial color="#4a7a30" roughness={1.0} metalness={0.0} />
-      </mesh>
+      {/* ── Grass — NWAF green ──────────────────────────────────────── */}
+      <mesh geometry={GRASS_GEO} material={MAT_GRASS} rotation={GROUND_ROT} position={[0, -0.02, 0]} receiveShadow />
 
-      {/* ── Tarmac road — runs East-West (X axis) ────────────────── */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 60]} receiveShadow>
-        <planeGeometry args={[4000, 28]} />
-        <meshStandardMaterial color="#5a5a5a" roughness={0.9} metalness={0.0} />
-      </mesh>
-      {/* Yellow centre line dashes */}
-      {Array.from({ length: 40 }, (_, i) => i - 20).map(i => (
-        <mesh key={i} rotation={[-Math.PI / 2, 0, 0]} position={[i * 20, 0.03, 60]}>
-          <planeGeometry args={[10, 0.4]} />
-          <meshStandardMaterial color="#e8c830" roughness={0.8} />
-        </mesh>
-      ))}
-      {/* Road edge lines */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 46]}>
-        <planeGeometry args={[4000, 0.3]} />
-        <meshStandardMaterial color="#e8e8e8" roughness={0.8} />
-      </mesh>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 74]}>
-        <planeGeometry args={[4000, 0.3]} />
-        <meshStandardMaterial color="#e8e8e8" roughness={0.8} />
-      </mesh>
+      {/* ── Main apron — where build objects spawn ───────────────────── */}
+      <mesh geometry={APRON_GEO} material={MAT_APRON} rotation={GROUND_ROT} position={[0, 0.01, 0]} receiveShadow />
 
-      {/* ── Concrete build pad under the objects ─────────────────── */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} receiveShadow>
-        <planeGeometry args={[120, 120]} />
-        <meshStandardMaterial color="#787878" roughness={0.95} metalness={0.0} />
-      </mesh>
+      {/* Apron yellow edge marking (front) */}
+      <mesh geometry={LINE_H_GEO} material={MAT_YELLOW} rotation={GROUND_ROT} position={[0, 0.03, 100]} />
+      <mesh geometry={LINE_H_GEO} material={MAT_YELLOW} rotation={GROUND_ROT} position={[0, 0.03, -100]} />
+
+      {/* ── Grid on central 120×120 build zone only ─────────────────── */}
       <Grid
         args={[120, 120]}
         cellSize={8}
         cellThickness={0.5}
-        cellColor="#606060"
+        cellColor="#555555"
         sectionSize={40}
         sectionThickness={1.0}
-        sectionColor="#909090"
-        fadeDistance={300}
-        fadeStrength={1.5}
+        sectionColor="#888888"
+        fadeDistance={280}
+        fadeStrength={1.2}
         position={[0, 0.02, 0]}
       />
 
+      {/* ── Connector taxiways (apron → taxiway) ─────────────────────── */}
+      <mesh geometry={CONNECTOR_GEO} material={MAT_TAXIWAY} rotation={GROUND_ROT} position={[-170, 0.01, -165]} />
+      <mesh geometry={CONNECTOR_GEO} material={MAT_TAXIWAY} rotation={GROUND_ROT} position={[ 170, 0.01, -165]} />
+
+      {/* ── Parallel taxiway ─────────────────────────────────────────── */}
+      <mesh geometry={TAXIWAY_GEO} material={MAT_TAXIWAY} rotation={GROUND_ROT} position={[0, 0.01, -230]} receiveShadow />
+      {/* Taxiway yellow centreline dashes */}
+      {Array.from({ length: 26 }, (_, i) => i - 13).map(i => (
+        <mesh key={i} geometry={DASH_TW_GEO} material={MAT_YELLOW} rotation={GROUND_ROT} position={[i * 36, 0.03, -230]} />
+      ))}
+
+      {/* ── Main runway ──────────────────────────────────────────────── */}
+      <mesh geometry={RUNWAY_GEO} material={MAT_RUNWAY} rotation={GROUND_ROT} position={[0, 0.01, -370]} receiveShadow />
+
+      {/* Runway edge lines */}
+      <mesh geometry={LINE_H_GEO} material={MAT_WHITE} rotation={GROUND_ROT} position={[0, 0.03, -370 - 22]} />
+      <mesh geometry={LINE_H_GEO} material={MAT_WHITE} rotation={GROUND_ROT} position={[0, 0.03, -370 + 22]} />
+
+      {/* Runway centreline dashes */}
+      {Array.from({ length: 20 }, (_, i) => i - 10).map(i => (
+        <mesh key={i} geometry={DASH_RW_GEO} material={MAT_WHITE} rotation={GROUND_ROT} position={[i * 46, 0.03, -370]} />
+      ))}
+
+      {/* Threshold bars — east end */}
+      {Array.from({ length: 6 }, (_, i) => (
+        <mesh key={i} geometry={THRESH_GEO} material={MAT_WHITE} rotation={GROUND_ROT} position={[-13 + i * 5.5, 0.03, -370 + 460]} />
+      ))}
+      {/* Threshold bars — west end */}
+      {Array.from({ length: 6 }, (_, i) => (
+        <mesh key={i} geometry={THRESH_GEO} material={MAT_WHITE} rotation={GROUND_ROT} position={[-13 + i * 5.5, 0.03, -370 - 460]} />
+      ))}
+
+      {/* ── Hangars (3) — Soviet-era NWAF style ──────────────────────── */}
+      {([-120, 10, 140] as const).map((x, i) => (
+        <group key={i} position={[x, 0, -145]}>
+          {/* Main hangar box */}
+          <mesh geometry={new THREE.BoxGeometry(56, 14, 38)} material={MAT_HANGAR} position={[0, 7, 0]} castShadow receiveShadow />
+          {/* Roof ridge */}
+          <mesh geometry={new THREE.BoxGeometry(56, 3, 6)} material={MAT_TOWER} position={[0, 15.5, 0]} />
+        </group>
+      ))}
+
+      {/* ── Control tower — tall Soviet concrete block ───────────────── */}
+      <group position={[-230, 0, -110]}>
+        {/* Main shaft */}
+        <mesh castShadow receiveShadow position={[0, 17, 0]}>
+          <boxGeometry args={[11, 34, 11]} />
+          <primitive object={MAT_TOWER} attach="material" />
+        </mesh>
+        {/* Glass observation level */}
+        <mesh castShadow position={[0, 36, 0]}>
+          <boxGeometry args={[15, 5, 13]} />
+          <primitive object={MAT_TOWER_TOP} attach="material" />
+        </mesh>
+        {/* Antenna mast */}
+        <mesh position={[0, 42, 0]}>
+          <boxGeometry args={[0.8, 8, 0.8]} />
+          <primitive object={MAT_TOWER} attach="material" />
+        </mesh>
+      </group>
+
+      {/* ── Tree line — background, E-W along north edge ─────────────── */}
+      {Array.from({ length: 22 }, (_, i) => {
+        const x = -520 + i * 50;
+        const h = 7 + ((i * 7919) % 9);
+        return (
+          <mesh key={i} position={[x, h / 2, -510]} castShadow>
+            <boxGeometry args={[7, h, 7]} />
+            <primitive object={MAT_TREES} attach="material" />
+          </mesh>
+        );
+      })}
+      {/* Tree line — west side */}
+      {Array.from({ length: 14 }, (_, i) => {
+        const z = -480 + i * 40;
+        const h = 6 + ((i * 4001) % 10);
+        return (
+          <mesh key={i} position={[-510, h / 2, z]} castShadow>
+            <boxGeometry args={[7, h, 7]} />
+            <primitive object={MAT_TREES} attach="material" />
+          </mesh>
+        );
+      })}
+
+      {/* ── Soft ground shadows on apron ─────────────────────────────── */}
       <ContactShadows
         position={[0, 0.03, 0]}
-        opacity={0.5}
-        scale={300}
-        blur={2.5}
-        far={60}
+        opacity={0.45}
+        scale={350}
+        blur={3.0}
+        far={80}
         color="#000000"
       />
 
-      {/* ── Build objects ─────────────────────────────────────────── */}
+      {/* ── Build objects ─────────────────────────────────────────────── */}
       {points.map((pt, i) => (
         <BuildObject key={`${pt.name}_${pt.x}_${pt.y}_${pt.z}_${i}`} pt={pt} />
       ))}

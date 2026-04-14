@@ -1,54 +1,76 @@
-# 🏗️ DANKVAULT™ COMPREHENSIVE SESSION HANDOVER (v2.51)
-# SESSION STATUS: ACTIVE RECONSTRUCTION / SANDBOX ENABLED
+# Dank Studio — Session Handover
+# Last updated: 2026-04-14
 
-## 📌 PRIMARY OBJECTIVE: INTERACTIVE SANDBOX & ARCHITECTURAL PERFECTION
-This session focused on transforming the DankVault Global Builder into an interactive sandbox while preparing the mathematical foundation to eliminate all geometric gaps in complex masterpieces.
-
----
-
-## 🛠️ COMPLETED CHANGES (Current Session)
-
-### 1. Interactive 3D Sandbox Overhaul (`PointCloud3D.tsx`)
-*   **The Change**: Enabled real-time interaction with the 3D point cloud.
-    *   **Raycasting Selection**: Objects in the preview are now clickable. Selecting an object opens a property editor in the HUD.
-    *   **Shift-Click Placement**: Holding `Shift` and clicking on the 3D ground grid/plane now allows manual point injection into the builder.
-    *   **Interactive Plane**: Added a transparent raycast-target plane (`planeGeometry`) to handle ground intersections for accurate point placement.
-
-### 2. Live Editor State Management (`App.tsx`)
-*   **The Change**: Implemented `manualNodes` and `nodeOverrides` states to handle user-driven edits.
-    *   **Object Swapping**: Users can click an object in the viewer and type a new classname (e.g., swapping a wood wall for metal) directly in the HUD. Pressing `Enter` updates the preview instantly.
-    *   **Manual Cache**: Placed points and overridden names are cached during the session, persisting through parameter changes until a full re-generation is forced.
-*   **Critical Stability Patch**: Fixed a `ReferenceError` where `packagingProfile` was being accessed before initialization, which caused the editor to crash on startup.
-
-### 3. Pipeline & HUD Upgrades
-*   **Fidelity Tracking**: Added a performance/fidelity badge to the HUD, grading builds (Tier S/A/B) based on object density and estimated cost.
-*   **Sandbox Intelligence**: Added a toggle to enable/disable the interactive logic and debug overlays.
+## Current state: STABLE — no known bugs
 
 ---
 
-## 📅 DUE TO CHANGE / ROADMAP (Architectural Perfection)
+## Completed this session
 
-The following items are the priority for the next phase to address the "holey" look of masterpieces like the Death Star:
+### 1. Preview3D — NWAF environment scene
+- Replaced generic road with a full North West Airfield layout:
+  - Extended apron (300×200m concrete) with yellow edge lines
+  - Parallel taxiway with yellow dashed centreline
+  - Main runway (960m, 46m wide) with threshold bars, edge lines, centreline dashes
+  - Connector taxiways from apron to taxiway
+  - 3 Soviet-era hangars in background
+  - Control tower (shaft + observation level + antenna mast)
+  - Tree line along north and west perimeter
+  - DayZ-accurate sky colour (#829db8), subtle distance fog, adjusted lighting
+- All static geometry created at module level (BoxGeometry, PlaneGeometry, MeshStandardMaterial)
+  so they are not recreated on every render
 
-### 1. The "Zero-Gap" Algorithmic Sweep
-*   **Dynamic Density Scaling**: Refactoring generators (Sphere, Torus, Death Star) to calculate panel counts based on actual circumference `(2 * PI * R) / (PanelWidth * Overlap)`.
-    *   **Goal**: Ensure zero visible gaps on all curved surfaces, regardless of radius.
-*   **Generator Consolidation**: Deprecating legacy `gen_deathstar` in favor of the recursive `gen_death_star` in `shapeMasterpieces.ts` to ensure 100% fidelity.
+### 2. Param mismatch fix (shapes.ts)
+- Every generator now reads the exact param key that builds.ts exposes
+- Previously: sliders silently did nothing because generators read p.radius, p.width, p.height
+  while builds.ts passed p.r, p.scale, etc.
+- Fixed 30+ generators across all categories
 
-### 2. Camera Controls (Zoom Fix)
-*   **The Issue**: The legacy drawing logic in `App.tsx` contains global `onWheel` event listeners that intercept scroll actions before they reach the 3D canvas `OrbitControls`.
-*   **The Fix**: Excise the `use3DCanvas` legacy code from `App.tsx` to restore native scroll-wheel zoom functionality.
+### 3. Code quality pass (previous session)
+- draw.ts: extracted _drawSphereRings (eliminated duplication in drawSphere/drawDome)
+- shapes.ts: derived HULL_HALF_H from getObjectDef; removed dead _TIN5; trench floor gap closed;
+  auditSphereCoverage gated behind p.debug
+- App.tsx: wallsToPoints helper; applyExport dedup; memoized categoryBuilds + spawnCount;
+  handleGenerate(override?) for ±buttons; ↺ reset per param; initial category = "All"
+- Preview3D.tsx: getMaterialProps cached in module Map; BuildObject wrapped in React.memo;
+  stable keys on points.map
+
+### 4. AI_GUIDE.md created
+- Comprehensive guide covering every system in the codebase
+- File map, DayZ coordinate system, draw function reference, param naming table,
+  step-by-step generator guide, object budget reference, common pitfalls
+- CLAUDE.md updated to reference it
 
 ---
 
-## 📜 GUIDE: HOW TO ACHIEVE MASTERY
+## Architecture summary
 
-The system logic is designed to be mathematically precise. To achieve a "Masterpiece" output:
+### Generator pipeline
+builds.ts → App.tsx (sidebar) → generate(key, params) in generators/index.ts
+  → generator function in generators/shapes.ts
+  → Point3D[] using draw.ts helpers
+  → applyLimit(1200) → Preview3D + export code
 
-1.  **Density is King**: If gaps appear, increase the `latSegs` or `lonSegs` (or wait for the upcoming Dynamic Density patch which will handle this automatically).
-2.  **Interaction**: Use **Shift + Click** to fill gaps manually in complex builds. Use **Click + HUD** to swap single objects for variants (e.g., doors, gates).
-3.  **High-Fidelity Scaling**: Large builds (>1200 objects) are normal for gapless spheres. Use the Nitrado-ready JSON parts for seamless in-game assembly.
+### Key constraints
+- MAX_OBJECTS = 1200 — hard cap from DayZ server limit
+- Param key in builds.ts MUST match p.xxx in generator exactly
+- drawRing uses Math.floor() for panel count → scale≥1 → never gaps
+- Sphere panels stored at y = surface - panelH/2 (pivot-bottom)
+- Three.js rotation.y = +yawRad (NOT negative)
 
 ---
-**BUILD SIGNATURE**: `DANKVAULT_SANDBOX_V1`
-**DATE**: 2026-04-09
+
+## Roadmap / next ideas
+
+### Quality improvements
+- Replace inline `new THREE.BoxGeometry()` in Scene hangars/tower/trees with module-level constants
+  (currently only a minor issue since Scene only re-renders on param change)
+- Add more builds to the library — users have requested: more military structures, vehicles
+- Improve generator fidelity for the weaker ones (Minas Tirith, Star Destroyer, etc.)
+
+### Features
+- DayZ rvmat material preview: show roughness/metalness/colour per object on click
+- Export to JSON format (for direct server injection via community tools)
+- "Save build" bookmarking per category
+
+### No known bugs as of this handover
