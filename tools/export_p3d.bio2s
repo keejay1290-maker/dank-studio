@@ -1,0 +1,8 @@
+// O2Script: Load a P3D (ODOL) and export to OBJ
+// Usage: O2Script export_p3d.bio2s "path_to_p3d" "output_obj"
+
+var p3d_path = _param;
+var obj_path = p3d_path + ".obj";
+
+LoadO2File(p3d_path);
+ExportOBJ(obj_path);

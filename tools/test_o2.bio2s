@@ -1,0 +1,4 @@
+console=openStandardIO;
+console<<"this type: "<<typename this<<eoln;
+console<<"this value: "<<str(this)<<eoln;
+0

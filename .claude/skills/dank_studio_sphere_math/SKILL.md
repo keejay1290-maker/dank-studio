@@ -23,11 +23,11 @@ Derived from:
 
 | Panel class                          | W    | H   | max r for 1200 budget |
 | ------------------------------------ | ---- | --- | --------------------- |
-| `staticobj_wall_indcnc_10`   (IND10) | 8.75 | 10  | **r ≤ 71**            |
-| `staticobj_wall_indcnc4_8`           | 8.00 | 8   | r ≤ 60                |
-| `staticobj_wall_indcnch_10`          | 8.75 | 5   | r ≤ 50                |
-| `staticobj_wall_stone`               | 8.00 | 3.5 | r ≤ 40                |
-| `staticobj_wall_cncsmall_8`  (CNC8)  | 8.00 | 3   | r ≤ 37                |
+| `staticobj_wall_indcnc_10`   (IND10) | 9.012 | 9.758 | **r ≤ 71**          |
+| `staticobj_wall_indcnc4_8`           | 8.044 | 3.004 | r ≤ 40              |
+| `staticobj_wall_indcnch_10`          | 9.608 | 1.113 | r ≤ 23 (horiz slab) |
+| `staticobj_wall_stone`               | 10.060 | 2.034 | r ≤ 35             |
+| `staticobj_wall_cncsmall_8`  (CNC8)  | 8.008 | 2.300 | r ≤ 33             |
 
 **Never call `drawSphere` with a radius that blows the budget** — use `drawSphereBudgeted(pts, cx,cy,cz, r, 1150)` and let it pick the panel class.
 

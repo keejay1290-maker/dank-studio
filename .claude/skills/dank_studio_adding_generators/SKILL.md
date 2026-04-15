@@ -72,7 +72,7 @@ Do the math in your head or a comment before hitting save. The hard limit is 120
 | `drawSphere`  | `20.9 · r² / (panelW · panelH)`                 |
 | `drawDome`    | half of drawSphere + drawDisk for the base      |
 
-If total > 1100, pick bigger panels (IND10 = 8.75×10m gives 5× coverage vs CNC8 = 8×3m), or reduce radius/size.
+If total > 1100, pick bigger panels (IND10 = 9.012×9.758m gives 5× coverage vs CNC8 = 8.008×2.300m), or reduce radius/size.
 
 ### 5. Test it visually
 
@@ -95,13 +95,13 @@ Open http://localhost:5174, Library tab, pick your build. Check:
 Constants exported from the top of `shapes.ts`:
 
 ```ts
-const CNC8     = "staticobj_wall_cncsmall_8";       // 8×3  grey concrete
-const CNC4     = "staticobj_wall_cncsmall_4";       // 4×3  grey concrete
-const IND10    = "staticobj_wall_indcnc_10";        // 8.75×10 industrial concrete
-const MILCNC   = "staticobj_wall_milcnc_4";         // 4×3  military concrete
-const STONE    = "staticobj_wall_stone";            // 8×3.5 dark stone
-const CASTLE   = "staticobj_castle_wall3";          // 8×2  castle
-const BUNKER   = "land_bunker1_double";             // 8×3.5 bunker panel
+const CNC8     = "staticobj_wall_cncsmall_8";       // 8.008×2.300 grey concrete
+const CNC4     = "staticobj_wall_cncsmall_4";       // 4.017×2.324 grey concrete
+const IND10    = "staticobj_wall_indcnc_10";        // 9.012×9.758 industrial concrete
+const MILCNC   = "staticobj_wall_milcnc_4";         // 4.052×4.744 military concrete
+const STONE    = "staticobj_wall_stone";            // 10.060×2.034 dark stone
+const CASTLE   = "staticobj_castle_wall3";          // ~8×2 castle
+const BUNKER   = "land_bunker1_double";             // 11.965×5.134×10.805 3D bunker module
 ```
 
 Mix them for visual interest — alternate rings, use different materials for trim/base/roof.

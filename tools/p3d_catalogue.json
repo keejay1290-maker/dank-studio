@@ -1,0 +1,4114 @@
+{
+  "land_airfield_hangar_green": {
+    "d": 51.593,
+    "file": "structures/military/airfield/airfield_hangar_green.p3d",
+    "h": 13.71,
+    "verified": true,
+    "w": 31.816
+  },
+  "land_airfield_radar_tall": {
+    "d": 46.398,
+    "file": "structures/military/airfield/airfield_radar_tall.p3d",
+    "h": 18.042,
+    "note": "horizontal pipe (long axis = depth/Z)",
+    "verified": true,
+    "w": 4.752
+  },
+  "land_airfield_servicehangar_l": {
+    "d": 50.185,
+    "file": "structures/military/airfield/airfield_servicehangar_l.p3d",
+    "h": 16.381,
+    "verified": true,
+    "w": 43.649
+  },
+  "land_airfield_servicehangar_r": {
+    "d": 49.582,
+    "file": "structures/military/airfield/airfield_servicehangar_r.p3d",
+    "h": 14.485,
+    "verified": true,
+    "w": 42.893
+  },
+  "land_bunker1_double": {
+    "d": 10.805,
+    "file": "structures_bliss/military/bunkers/bunker1_double.p3d",
+    "h": 5.134,
+    "verified": true,
+    "w": 11.965
+  },
+  "land_bunker1_left": {
+    "d": 8.789,
+    "file": "structures_bliss/military/bunkers/bunker1_left.p3d",
+    "h": 5.179,
+    "verified": true,
+    "w": 13.202
+  },
+  "land_bunker1_right": {
+    "d": 8.788,
+    "file": "structures_bliss/military/bunkers/bunker1_right.p3d",
+    "h": 5.179,
+    "verified": true,
+    "w": 13.109
+  },
+  "land_bunker2_double": {
+    "d": 10.805,
+    "file": "structures_bliss/military/bunkers/bunker2_double.p3d",
+    "h": 5.134,
+    "verified": true,
+    "w": 11.965
+  },
+  "land_bunker2_left": {
+    "d": 8.789,
+    "file": "structures_bliss/military/bunkers/bunker2_left.p3d",
+    "h": 5.179,
+    "verified": true,
+    "w": 13.202
+  },
+  "land_bunker2_right": {
+    "d": 8.788,
+    "file": "structures_bliss/military/bunkers/bunker2_right.p3d",
+    "h": 5.179,
+    "verified": true,
+    "w": 13.109
+  },
+  "land_castle_bastion": {
+    "d": 19.425,
+    "file": "structures/specific/castles/castle_bastion.p3d",
+    "h": 17.18,
+    "verified": true,
+    "w": 26.973
+  },
+  "land_castle_bergfrit": {
+    "d": 15.566,
+    "file": "structures/specific/castles/castle_bergfrit.p3d",
+    "h": 36.677,
+    "verified": true,
+    "w": 11.76
+  },
+  "land_castle_bergfrit2": {
+    "d": 15.585,
+    "file": "structures/specific/castles/castle_bergfrit2.p3d",
+    "h": 36.676,
+    "verified": true,
+    "w": 11.715
+  },
+  "land_castle_donjon": {
+    "d": 15.198,
+    "file": "structures/specific/castles/castle_donjon.p3d",
+    "h": 28.807,
+    "verified": true,
+    "w": 15.198
+  },
+  "land_castle_gate": {
+    "d": 21.289,
+    "file": "structures/specific/castles/castle_gate.p3d",
+    "h": 17.189,
+    "verified": true,
+    "w": 21.068
+  },
+  "land_castle_stairs": {
+    "d": 17.154,
+    "file": "structures/specific/castles/castle_stairs.p3d",
+    "h": 20.319,
+    "verified": true,
+    "w": 6.969
+  },
+  "land_castle_wall1_20": {
+    "d": 17.191,
+    "file": "structures/specific/castles/castle_wall1_20.p3d",
+    "h": 26.845,
+    "verified": true,
+    "w": 7.671
+  },
+  "land_castle_wall1_20_turn": {
+    "d": 17.194,
+    "file": "structures/specific/castles/castle_wall1_20_turn.p3d",
+    "h": 25.761,
+    "verified": true,
+    "w": 6.636
+  },
+  "land_castle_wall1_corner1": {
+    "d": 16.963,
+    "file": "structures/specific/castles/castle_wall1_corner1.p3d",
+    "h": 5.296,
+    "verified": true,
+    "w": 7.305
+  },
+  "land_castle_wall1_corner2": {
+    "d": 4.604,
+    "file": "structures/specific/castles/castle_wall1_corner2.p3d",
+    "h": 17.404,
+    "verified": true,
+    "w": 7.788
+  },
+  "land_castle_wall1_end1": {
+    "d": 16.963,
+    "file": "structures/specific/castles/castle_wall1_end1.p3d",
+    "h": 23.25,
+    "verified": true,
+    "w": 7.666
+  },
+  "land_castle_wall1_end2": {
+    "d": 4.663,
+    "file": "structures/specific/castles/castle_wall1_end2.p3d",
+    "h": 17.169,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 23.551
+  },
+  "land_castle_wall2_30": {
+    "d": 19.991,
+    "file": "structures/specific/castles/castle_wall2_30.p3d",
+    "h": 30.534,
+    "verified": true,
+    "w": 6.274
+  },
+  "land_castle_wall2_corner1": {
+    "d": 19.921,
+    "file": "structures/specific/castles/castle_wall2_corner1.p3d",
+    "h": 6.598,
+    "verified": true,
+    "w": 6.732
+  },
+  "land_castle_wall2_corner2": {
+    "d": 19.909,
+    "file": "structures/specific/castles/castle_wall2_corner2.p3d",
+    "h": 10.837,
+    "verified": true,
+    "w": 7.821
+  },
+  "land_castle_wall2_end1": {
+    "d": 23.915,
+    "file": "structures/specific/castles/castle_wall2_end1.p3d",
+    "h": 39.708,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 2.445
+  },
+  "land_castle_wall2_end2": {
+    "d": 19.924,
+    "file": "structures/specific/castles/castle_wall2_end2.p3d",
+    "h": 26.471,
+    "verified": true,
+    "w": 8.064
+  },
+  "land_castle_walls_10": {
+    "d": 5.3,
+    "file": "structures/specific/castles/castle_walls_10.p3d",
+    "h": 11.351,
+    "verified": true,
+    "w": 7.821
+  },
+  "land_castle_walls_end": {
+    "d": 5.007,
+    "file": "structures/specific/castles/castle_walls_end.p3d",
+    "h": 5.696,
+    "verified": true,
+    "w": 7.841
+  },
+  "land_container_1a": {
+    "d": 2.705,
+    "file": "structures/industrial/containers/container_1a.p3d",
+    "h": 2.661,
+    "verified": true,
+    "w": 6.714
+  },
+  "land_container_1aoh": {
+    "d": 10.0,
+    "file": "structures/industrial/containers/container_1aoh.p3d",
+    "h": 2.782,
+    "verified": true,
+    "w": 2.705
+  },
+  "land_container_1b": {
+    "d": 2.668,
+    "file": "structures/industrial/containers/container_1b.p3d",
+    "h": 2.661,
+    "verified": true,
+    "w": 6.714
+  },
+  "land_container_1bo": {
+    "d": 10.0,
+    "file": "structures/industrial/containers/container_1bo.p3d",
+    "h": 2.782,
+    "verified": true,
+    "w": 2.702
+  },
+  "land_container_1c": {
+    "d": 2.668,
+    "file": "structures/industrial/containers/container_1c.p3d",
+    "h": 2.661,
+    "verified": true,
+    "w": 6.714
+  },
+  "land_container_1d": {
+    "d": 2.668,
+    "file": "structures/industrial/containers/container_1d.p3d",
+    "h": 2.661,
+    "verified": true,
+    "w": 6.714
+  },
+  "land_container_1mo": {
+    "d": 10.0,
+    "file": "structures/industrial/containers/container_1mo.p3d",
+    "h": 2.782,
+    "verified": true,
+    "w": 2.702
+  },
+  "land_container_1moh": {
+    "d": 10.0,
+    "file": "structures/industrial/containers/container_1moh.p3d",
+    "h": 2.782,
+    "verified": true,
+    "w": 2.702
+  },
+  "land_container_1n": {
+    "d": 2.668,
+    "file": "structures/industrial/containers/container_1n.p3d",
+    "h": 2.661,
+    "verified": true,
+    "w": 6.714
+  },
+  "land_container_1nr": {
+    "d": 2.668,
+    "file": "structures/industrial/containers/container_1nr.p3d",
+    "h": 2.661,
+    "verified": true,
+    "w": 6.714
+  },
+  "land_container_1nr2": {
+    "d": 10.0,
+    "file": "structures/industrial/containers/container_1nr2.p3d",
+    "h": 2.782,
+    "verified": true,
+    "w": 2.705
+  },
+  "land_container_2a": {
+    "d": 5.227,
+    "file": "structures/industrial/containers/container_2a.p3d",
+    "h": 2.672,
+    "verified": true,
+    "w": 6.714
+  },
+  "land_container_2b": {
+    "d": 5.231,
+    "file": "structures/industrial/containers/container_2b.p3d",
+    "h": 2.889,
+    "verified": true,
+    "w": 6.669
+  },
+  "land_container_2c": {
+    "d": 5.321,
+    "file": "structures/industrial/containers/container_2c.p3d",
+    "h": 2.67,
+    "verified": true,
+    "w": 6.714
+  },
+  "land_container_2d": {
+    "d": 5.263,
+    "file": "structures/industrial/containers/container_2d.p3d",
+    "h": 2.755,
+    "verified": true,
+    "w": 6.714
+  },
+  "land_container_2e": {
+    "d": 5.321,
+    "file": "structures/industrial/containers/container_2e.p3d",
+    "h": 3.001,
+    "verified": true,
+    "w": 6.649
+  },
+  "land_containerlocked": {
+    "d": 10.0,
+    "file": "structures/industrial/containers/containerlocked.p3d",
+    "h": 2.782,
+    "verified": true,
+    "w": 2.702
+  },
+  "land_dieselpowerplant_building": {
+    "d": 42.02,
+    "file": "structures_bliss/industrial/dieselpowerplant/dieselpowerplant_building.p3d",
+    "h": 24.791,
+    "verified": true,
+    "w": 46.781
+  },
+  "land_dieselpowerplant_cooling": {
+    "d": 7.268,
+    "file": "structures_bliss/industrial/dieselpowerplant/dieselpowerplant_cooling.p3d",
+    "h": 7.631,
+    "verified": true,
+    "w": 10.103
+  },
+  "land_dieselpowerplant_tank_big": {
+    "d": 19.375,
+    "file": "structures_bliss/industrial/dieselpowerplant/dieselpowerplant_tank_big.p3d",
+    "h": 8.778,
+    "verified": true,
+    "w": 18.068
+  },
+  "land_dieselpowerplant_tank_small": {
+    "d": 12.42,
+    "file": "structures_bliss/industrial/dieselpowerplant/dieselpowerplant_tank_small.p3d",
+    "h": 7.868,
+    "verified": true,
+    "w": 6.066
+  },
+  "land_dieselpowerplant_transformer": {
+    "d": 4.502,
+    "file": "structures_bliss/industrial/dieselpowerplant/dieselpowerplant_transformer.p3d",
+    "h": 3.735,
+    "verified": true,
+    "w": 8.101
+  },
+  "land_mil_aircraftshelter": {
+    "d": 50.046,
+    "file": "structures/military/airfield/mil_aircraftshelter.p3d",
+    "h": 10.953,
+    "verified": true,
+    "w": 39.986
+  },
+  "land_mil_aircraftshelter_door_l": {
+    "d": 2.449,
+    "file": "structures/military/airfield/mil_aircraftshelter_door_l.p3d",
+    "h": 7.474,
+    "verified": true,
+    "w": 6.908
+  },
+  "land_mil_aircraftshelter_door_r": {
+    "d": 2.449,
+    "file": "structures/military/airfield/mil_aircraftshelter_door_r.p3d",
+    "h": 7.474,
+    "verified": true,
+    "w": 6.908
+  },
+  "land_mil_airfield_hq": {
+    "d": 22.522,
+    "file": "structures/military/airfield/mil_airfield_hq.p3d",
+    "h": 11.75,
+    "verified": true,
+    "w": 19.692
+  },
+  "land_mil_atc_big": {
+    "d": 42.51,
+    "file": "structures/military/airfield/mil_atc_big.p3d",
+    "h": 35.66,
+    "verified": true,
+    "w": 30.0
+  },
+  "land_mil_atc_small": {
+    "d": 15.183,
+    "file": "structures/military/airfield/mil_atc_small.p3d",
+    "h": 24.602,
+    "verified": true,
+    "w": 21.959
+  },
+  "land_mil_barracks1": {
+    "d": 11.116,
+    "file": "structures/military/houses/mil_barracks1.p3d",
+    "h": 7.902,
+    "verified": true,
+    "w": 18.33
+  },
+  "land_mil_barracks2": {
+    "d": 8.599,
+    "file": "structures/military/houses/mil_barracks2.p3d",
+    "h": 6.732,
+    "verified": true,
+    "w": 21.461
+  },
+  "land_mil_barracks3": {
+    "d": 15.117,
+    "file": "structures/military/houses/mil_barracks3.p3d",
+    "h": 7.662,
+    "verified": true,
+    "w": 18.784
+  },
+  "land_mil_barracks4": {
+    "d": 7.901,
+    "file": "structures/military/houses/mil_barracks4.p3d",
+    "h": 6.524,
+    "verified": true,
+    "w": 16.199
+  },
+  "land_mil_barracks5": {
+    "d": 20.704,
+    "file": "structures/military/houses/mil_barracks5.p3d",
+    "h": 15.62,
+    "verified": true,
+    "w": 32.752
+  },
+  "land_mil_barracks5_basement": {
+    "d": 41.886,
+    "file": "structures/military/houses/mil_barracks5_basement.p3d",
+    "h": 17.213,
+    "verified": true,
+    "w": 66.664
+  },
+  "land_mil_barracks6": {
+    "d": 16.085,
+    "file": "structures/military/houses/mil_barracks6.p3d",
+    "h": 11.836,
+    "verified": true,
+    "w": 31.508
+  },
+  "land_mil_barracks6_old": {
+    "d": 16.085,
+    "file": "structures/military/houses/mil_barracks6_old.p3d",
+    "h": 11.836,
+    "verified": true,
+    "w": 31.508
+  },
+  "land_mil_barracks_round": {
+    "d": 4.9,
+    "file": "structures/military/houses/mil_barracks_round.p3d",
+    "h": 6.142,
+    "verified": true,
+    "w": 4.361
+  },
+  "land_mil_blastcover1": {
+    "d": 23.874,
+    "file": "structures/military/airfield/mil_blastcover1.p3d",
+    "h": 3.982,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 35.001
+  },
+  "land_mil_blastcover1_grass": {
+    "d": 23.64,
+    "file": "structures/military/airfield/mil_blastcover1_grass.p3d",
+    "h": 4.347,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 34.571
+  },
+  "land_mil_blastcover2": {
+    "d": 16.185,
+    "file": "structures/military/airfield/mil_blastcover2.p3d",
+    "h": 4.087,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 34.665
+  },
+  "land_mil_blastcover2_grass": {
+    "d": 15.743,
+    "file": "structures/military/airfield/mil_blastcover2_grass.p3d",
+    "h": 4.216,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 34.493
+  },
+  "land_mil_blastcover3": {
+    "d": 23.697,
+    "file": "structures/military/airfield/mil_blastcover3.p3d",
+    "h": 4.022,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 27.297
+  },
+  "land_mil_blastcover3_grass": {
+    "d": 23.552,
+    "file": "structures/military/airfield/mil_blastcover3_grass.p3d",
+    "h": 5.217,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 26.876
+  },
+  "land_mil_blastcover4": {
+    "d": 16.07,
+    "file": "structures/military/airfield/mil_blastcover4.p3d",
+    "h": 4.152,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 53.04
+  },
+  "land_mil_controltower": {
+    "d": 10.118,
+    "file": "structures_bliss/military/houses/mil_controltower.p3d",
+    "h": 18.267,
+    "verified": true,
+    "w": 10.149
+  },
+  "land_mil_fortified_nest_big": {
+    "d": 11.02,
+    "file": "structures/military/improvised/mil_fortified_nest_big.p3d",
+    "h": 3.817,
+    "verified": true,
+    "w": 11.049
+  },
+  "land_mil_fortified_nest_small": {
+    "d": 4.583,
+    "file": "structures/military/improvised/mil_fortified_nest_small.p3d",
+    "h": 2.571,
+    "verified": true,
+    "w": 5.001
+  },
+  "land_mil_fortified_nest_watchtower": {
+    "d": 10.46,
+    "file": "structures/military/improvised/mil_fortified_nest_watchtower.p3d",
+    "h": 5.959,
+    "verified": true,
+    "w": 6.976
+  },
+  "land_mil_guardbox_brown": {
+    "d": 4.56,
+    "file": "structures_bliss/military/houses/mil_guardbox_brown.p3d",
+    "h": 5.566,
+    "verified": true,
+    "w": 2.646
+  },
+  "land_mil_guardbox_green": {
+    "d": 4.56,
+    "file": "structures_bliss/military/houses/mil_guardbox_green.p3d",
+    "h": 5.566,
+    "verified": true,
+    "w": 2.646
+  },
+  "land_mil_guardbox_smooth": {
+    "d": 4.56,
+    "file": "structures_bliss/military/houses/mil_guardbox_smooth.p3d",
+    "h": 5.566,
+    "verified": true,
+    "w": 2.646
+  },
+  "land_mil_guardhouse1": {
+    "d": 9.166,
+    "file": "structures/military/houses/mil_guardhouse1.p3d",
+    "h": 5.867,
+    "verified": true,
+    "w": 12.065
+  },
+  "land_mil_guardhouse2": {
+    "d": 9.081,
+    "file": "structures/military/houses/mil_guardhouse2.p3d",
+    "h": 4.78,
+    "verified": true,
+    "w": 14.843
+  },
+  "land_mil_guardhouse3": {
+    "d": 10.842,
+    "file": "structures_bliss/military/houses/mil_guardhouse3.p3d",
+    "h": 4.991,
+    "verified": true,
+    "w": 13.841
+  },
+  "land_mil_guardshed": {
+    "d": 2.063,
+    "file": "structures/military/improvised/mil_guardshed.p3d",
+    "h": 4.032,
+    "verified": true,
+    "w": 2.863
+  },
+  "land_mil_guardtower": {
+    "d": 12.635,
+    "file": "structures/military/houses/mil_guardtower.p3d",
+    "h": 13.518,
+    "verified": true,
+    "w": 5.327
+  },
+  "land_mil_radar_mobile1": {
+    "d": 14.817,
+    "file": "structures/military/airfield/mil_radar_mobile1.p3d",
+    "h": 13.968,
+    "verified": true,
+    "w": 4.253
+  },
+  "land_mil_radar_mobile2": {
+    "d": 11.339,
+    "file": "structures/military/airfield/mil_radar_mobile2.p3d",
+    "h": 12.28,
+    "verified": true,
+    "w": 16.504
+  },
+  "land_mil_radar_mobile3": {
+    "d": 8.582,
+    "file": "structures/military/airfield/mil_radar_mobile3.p3d",
+    "h": 9.805,
+    "verified": true,
+    "w": 5.097
+  },
+  "land_mil_reinforcedtank1": {
+    "d": 21.018,
+    "file": "structures/military/airfield/mil_reinforcedtank1.p3d",
+    "h": 6.684,
+    "verified": true,
+    "w": 21.312
+  },
+  "land_mil_reinforcedtank1_grass": {
+    "d": 16.091,
+    "file": "structures/military/airfield/mil_reinforcedtank1_grass.p3d",
+    "h": 2.86,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 16.246
+  },
+  "land_mil_reinforcedtank2": {
+    "d": 37.931,
+    "file": "structures/military/airfield/mil_reinforcedtank2.p3d",
+    "h": 11.954,
+    "verified": true,
+    "w": 37.931
+  },
+  "land_mil_reinforcedtank2_grass_top": {
+    "d": 37.163,
+    "file": "structures/military/airfield/mil_reinforcedtank2_grass_top.p3d",
+    "h": 10.278,
+    "verified": true,
+    "w": 37.406
+  },
+  "land_mil_tent_big1_1": {
+    "d": 7.704,
+    "file": "structures/military/improvised/mil_tent_big1_1.p3d",
+    "h": 3.298,
+    "verified": true,
+    "w": 6.181
+  },
+  "land_mil_tent_big2_1": {
+    "d": 6.012,
+    "file": "structures/military/improvised/mil_tent_big2_1.p3d",
+    "h": 4.494,
+    "verified": true,
+    "w": 10.27
+  },
+  "land_mil_tent_big3": {
+    "d": 21.081,
+    "file": "structures/military/improvised/mil_tent_big3.p3d",
+    "h": 4.212,
+    "note": "horizontal pipe (long axis = depth/Z)",
+    "verified": true,
+    "w": 15.671
+  },
+  "land_mil_tent_big4": {
+    "d": 4.947,
+    "file": "structures/military/improvised/mil_tent_big4.p3d",
+    "h": 12.282,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 1.18
+  },
+  "land_mil_tower_small": {
+    "d": 4.86,
+    "file": "structures/military/houses/mil_tower_small.p3d",
+    "h": 9.542,
+    "verified": true,
+    "w": 3.592
+  },
+  "land_model_plane_mig21": {
+    "d": 3.0,
+    "file": "structures/specific/statues/model_plane_mig21.p3d",
+    "h": 3.0,
+    "verified": true,
+    "w": 2.0
+  },
+  "land_modelmonument_mig21": {
+    "d": 7.128,
+    "file": "structures/specific/statues/modelmonument_mig21.p3d",
+    "h": 14.314,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 39.004
+  },
+  "land_monument_mig21": {
+    "d": 7.128,
+    "file": "structures/specific/statues/monument_mig21.p3d",
+    "h": 14.314,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 39.004
+  },
+  "land_prison_main": {
+    "d": 47.455,
+    "file": "structures/specific/prison/prison_main.p3d",
+    "h": 39.494,
+    "verified": true,
+    "w": 40.198
+  },
+  "land_prison_side": {
+    "d": 21.652,
+    "file": "structures/specific/prison/prison_side.p3d",
+    "h": 16.147,
+    "verified": true,
+    "w": 32.997
+  },
+  "land_prison_wall_large": {
+    "d": 11.673,
+    "file": "structures/specific/prison/prison_wall_large.p3d",
+    "h": 9.531,
+    "verified": true,
+    "w": 36.244
+  },
+  "land_prison_wall_small": {
+    "d": 9.562,
+    "file": "structures/specific/prison/prison_wall_small.p3d",
+    "h": 17.255,
+    "verified": true,
+    "w": 8.126
+  },
+  "land_smokestack_big": {
+    "d": 14.689,
+    "file": "structures/industrial/smokestacks/smokestack_big.p3d",
+    "h": 68.075,
+    "verified": true,
+    "w": 19.879
+  },
+  "land_smokestack_big_ruin_bottom": {
+    "d": 46.001,
+    "file": "structures_bliss/industrial/smokestacks/smokestack_big_ruin_bottom.p3d",
+    "h": 18.992,
+    "verified": true,
+    "w": 47.184
+  },
+  "land_smokestack_big_ruin_low": {
+    "d": 6.342,
+    "file": "structures_bliss/industrial/smokestacks/smokestack_big_ruin_low.p3d",
+    "h": 23.422,
+    "verified": true,
+    "w": 5.487
+  },
+  "land_smokestack_big_ruin_mid": {
+    "d": 6.233,
+    "file": "structures_bliss/industrial/smokestacks/smokestack_big_ruin_mid.p3d",
+    "h": 22.154,
+    "verified": true,
+    "w": 6.248
+  },
+  "land_smokestack_big_ruin_up": {
+    "d": 5.555,
+    "file": "structures_bliss/industrial/smokestacks/smokestack_big_ruin_up.p3d",
+    "h": 26.049,
+    "verified": true,
+    "w": 5.67
+  },
+  "land_smokestack_brick": {
+    "d": 7.683,
+    "file": "structures/industrial/smokestacks/smokestack_brick.p3d",
+    "h": 31.626,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 4.993
+  },
+  "land_smokestack_medium": {
+    "d": 9.552,
+    "file": "structures/industrial/smokestacks/smokestack_medium.p3d",
+    "h": 48.8,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 8.0
+  },
+  "land_smokestack_metal": {
+    "d": 7.038,
+    "file": "structures/industrial/smokestacks/smokestack_metal.p3d",
+    "h": 38.337,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 6.835
+  },
+  "land_statue_general": {
+    "d": 12.423,
+    "file": "structures/specific/statues/statue_general.p3d",
+    "h": 3.759,
+    "verified": true,
+    "w": 7.96
+  },
+  "land_tank_big": {
+    "d": 11.673,
+    "file": "structures/industrial/tanks/tank_big.p3d",
+    "h": 15.124,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 2.554
+  },
+  "land_tank_medium": {
+    "d": 1.887,
+    "file": "structures/industrial/tanks/tank_medium.p3d",
+    "h": 2.539,
+    "verified": true,
+    "w": 8.936
+  },
+  "land_tank_medium_stairs": {
+    "d": 2.365,
+    "file": "structures/industrial/tanks/tank_medium_stairs.p3d",
+    "h": 3.327,
+    "verified": true,
+    "w": 8.936
+  },
+  "land_tank_small_gas": {
+    "d": 2.499,
+    "file": "structures/industrial/tanks/tank_small_gas.p3d",
+    "h": 1.704,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 8.631
+  },
+  "land_tank_small_rusty": {
+    "d": 2.862,
+    "file": "structures/industrial/tanks/tank_small_rusty.p3d",
+    "h": 2.832,
+    "verified": true,
+    "w": 6.421
+  },
+  "land_tank_small_white": {
+    "d": 2.862,
+    "file": "structures/industrial/tanks/tank_small_white.p3d",
+    "h": 2.832,
+    "verified": true,
+    "w": 6.421
+  },
+  "land_tisy_airshaft": {
+    "d": 2.549,
+    "file": "structures/military/tisy/tisy_airshaft.p3d",
+    "h": 5.912,
+    "verified": true,
+    "w": 2.543
+  },
+  "land_tisy_barracks": {
+    "d": 14.338,
+    "file": "structures/military/tisy/tisy_barracks.p3d",
+    "h": 13.81,
+    "verified": true,
+    "w": 35.89
+  },
+  "land_tisy_base_cooler": {
+    "d": 5.759,
+    "file": "structures/military/tisy/tisy_base_cooler.p3d",
+    "h": 8.307,
+    "verified": true,
+    "w": 7.76
+  },
+  "land_tisy_garages": {
+    "d": 42.362,
+    "file": "structures/military/tisy/tisy_garages.p3d",
+    "h": 8.142,
+    "note": "horizontal pipe (long axis = depth/Z)",
+    "verified": true,
+    "w": 30.813
+  },
+  "land_tisy_garages2": {
+    "d": 43.35,
+    "file": "structures/military/tisy/tisy_garages2.p3d",
+    "h": 8.89,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 60.213
+  },
+  "land_tisy_hq": {
+    "d": 39.512,
+    "file": "structures/military/tisy/tisy_hq.p3d",
+    "h": 15.776,
+    "verified": true,
+    "w": 34.596
+  },
+  "land_tisy_kitchenroom": {
+    "d": 28.666,
+    "file": "structures/military/tisy/tisy_kitchenroom.p3d",
+    "h": 11.0,
+    "verified": true,
+    "w": 17.464
+  },
+  "land_tisy_radarb_antenna": {
+    "d": 36.029,
+    "file": "structures/military/tisy/tisy_radarb_antenna.p3d",
+    "h": 44.114,
+    "verified": true,
+    "w": 44.022
+  },
+  "land_tisy_radarb_base": {
+    "d": 24.748,
+    "file": "structures/military/tisy/tisy_radarb_base.p3d",
+    "h": 10.162,
+    "verified": true,
+    "w": 45.523
+  },
+  "land_tisy_radarplatform_bot": {
+    "d": 43.128,
+    "file": "structures/military/tisy/tisy_radarplatform_bot.p3d",
+    "h": 11.18,
+    "note": "horizontal pipe (long axis = depth/Z)",
+    "verified": true,
+    "w": 7.243
+  },
+  "land_tisy_radarplatform_mid": {
+    "d": 32.144,
+    "file": "structures/military/tisy/tisy_radarplatform_mid.p3d",
+    "h": 18.349,
+    "verified": true,
+    "w": 7.243
+  },
+  "land_tisy_radarplatform_top": {
+    "d": 41.297,
+    "file": "structures/military/tisy/tisy_radarplatform_top.p3d",
+    "h": 19.818,
+    "verified": true,
+    "w": 24.838
+  },
+  "land_tower_tc1": {
+    "d": 5.173,
+    "file": "structures/specific/towers/tower_tc1.p3d",
+    "h": 30.975,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 5.155
+  },
+  "land_tower_tc2_base": {
+    "d": 19.608,
+    "file": "structures/specific/towers/tower_tc2_base.p3d",
+    "h": 50.183,
+    "verified": true,
+    "w": 19.73
+  },
+  "land_tower_tc2_mid": {
+    "d": 8.727,
+    "file": "structures/specific/towers/tower_tc2_mid.p3d",
+    "h": 49.943,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 9.486
+  },
+  "land_tower_tc2_top": {
+    "d": 8.725,
+    "file": "structures/specific/towers/tower_tc2_top.p3d",
+    "h": 49.763,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 8.477
+  },
+  "land_tower_tc3_grey": {
+    "d": 11.5,
+    "file": "structures/specific/towers/tower_tc3_grey.p3d",
+    "h": 50.503,
+    "verified": true,
+    "w": 11.5
+  },
+  "land_tower_tc3_red": {
+    "d": 11.5,
+    "file": "structures/specific/towers/tower_tc3_red.p3d",
+    "h": 50.503,
+    "verified": true,
+    "w": 11.5
+  },
+  "land_tower_tc4_base": {
+    "d": 24.531,
+    "file": "structures/specific/towers/tower_tc4_base.p3d",
+    "h": 46.512,
+    "verified": true,
+    "w": 24.531
+  },
+  "land_tower_tc4_mid": {
+    "d": 43.201,
+    "file": "structures/specific/towers/tower_tc4_mid.p3d",
+    "h": 10.977,
+    "note": "horizontal pipe (long axis = depth/Z)",
+    "verified": true,
+    "w": 4.588
+  },
+  "land_tower_tc4_top": {
+    "d": 40.382,
+    "file": "structures/specific/towers/tower_tc4_top.p3d",
+    "h": 7.781,
+    "note": "horizontal pipe (long axis = depth/Z)",
+    "verified": true,
+    "w": 6.12
+  },
+  "staticobj_boat_small4": {
+    "d": 2.297,
+    "file": "structures_bliss/wrecks/ships/boat_small4.p3d",
+    "h": 3.923,
+    "verified": true,
+    "w": 3.779
+  },
+  "staticobj_boat_small5": {
+    "d": 10.956,
+    "file": "structures_bliss/wrecks/ships/boat_small5.p3d",
+    "h": 2.669,
+    "verified": true,
+    "w": 2.88
+  },
+  "staticobj_boat_small6": {
+    "d": 5.47,
+    "file": "structures_bliss/wrecks/ships/boat_small6.p3d",
+    "h": 6.89,
+    "verified": true,
+    "w": 1.815
+  },
+  "staticobj_boathouse": {
+    "d": 21.274,
+    "file": "structures/industrial/harbour/boathouse.p3d",
+    "h": 17.925,
+    "verified": true,
+    "w": 17.908
+  },
+  "staticobj_boathouse_pierl": {
+    "d": 3.192,
+    "file": "structures/industrial/harbour/boathouse_pierl.p3d",
+    "h": 12.692,
+    "verified": true,
+    "w": 13.02
+  },
+  "staticobj_boathouse_pierr": {
+    "d": 8.967,
+    "file": "structures/industrial/harbour/boathouse_pierr.p3d",
+    "h": 12.715,
+    "verified": true,
+    "w": 13.09
+  },
+  "staticobj_boathouse_piert": {
+    "d": 30.771,
+    "file": "structures/industrial/harbour/boathouse_piert.p3d",
+    "h": 12.852,
+    "note": "horizontal pipe (long axis = depth/Z)",
+    "verified": true,
+    "w": 4.953
+  },
+  "staticobj_lamp_ind": {
+    "d": 9.373,
+    "file": "structures/industrial/misc/lamp_ind.p3d",
+    "h": 1.35,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 9.75
+  },
+  "staticobj_lamp_rail": {
+    "d": 9.373,
+    "file": "structures/industrial/misc/lamp_rail.p3d",
+    "h": 1.35,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 9.731
+  },
+  "staticobj_lighthouse": {
+    "d": 19.912,
+    "file": "structures/industrial/harbour/lighthouse.p3d",
+    "h": 8.137,
+    "verified": true,
+    "w": 5.932
+  },
+  "staticobj_mil_hbarrier_1m": {
+    "d": 2.538,
+    "file": "structures/military/improvised/hbarrier_1m.p3d",
+    "h": 1.738,
+    "verified": true,
+    "w": 2.279
+  },
+  "staticobj_mil_hbarrier_4m": {
+    "d": 2.581,
+    "file": "structures/military/improvised/hbarrier_4m.p3d",
+    "h": 1.657,
+    "verified": true,
+    "w": 4.712
+  },
+  "staticobj_mil_hbarrier_6m": {
+    "d": 2.66,
+    "file": "structures/military/improvised/hbarrier_6m.p3d",
+    "h": 1.836,
+    "verified": true,
+    "w": 6.855
+  },
+  "staticobj_mil_hbarrier_big": {
+    "d": 4.154,
+    "file": "structures/military/improvised/hbarrier_big.p3d",
+    "h": 2.939,
+    "verified": true,
+    "w": 10.387
+  },
+  "staticobj_mil_hbarrier_round": {
+    "d": 3.523,
+    "file": "structures/military/improvised/hbarrier_round.p3d",
+    "h": 1.843,
+    "verified": true,
+    "w": 6.817
+  },
+  "staticobj_mil_mil_artilery_rampart": {
+    "d": 7.263,
+    "file": "structures/military/improvised/mil_artilery_rampart.p3d",
+    "h": 2.824,
+    "verified": true,
+    "w": 13.898
+  },
+  "staticobj_mil_mil_artillery_nest": {
+    "d": 21.997,
+    "file": "structures/military/improvised/mil_artillery_nest.p3d",
+    "h": 2.915,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 28.651
+  },
+  "staticobj_mil_mil_camonet_big_east": {
+    "d": 16.844,
+    "file": "structures/military/improvised/mil_camonet_big_east.p3d",
+    "h": 7.791,
+    "verified": true,
+    "w": 19.678
+  },
+  "staticobj_mil_mil_camonet_big_nato": {
+    "d": 16.844,
+    "file": "structures/military/improvised/mil_camonet_big_nato.p3d",
+    "h": 7.791,
+    "verified": true,
+    "w": 19.678
+  },
+  "staticobj_mil_mil_camonet_roof_east": {
+    "d": 5.587,
+    "file": "structures/military/improvised/mil_camonet_roof_east.p3d",
+    "h": 21.578,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 4.11
+  },
+  "staticobj_mil_mil_camonet_roof_nato": {
+    "d": 5.587,
+    "file": "structures/military/improvised/mil_camonet_roof_nato.p3d",
+    "h": 21.578,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 4.11
+  },
+  "staticobj_mil_mil_camonet_side_east": {
+    "d": 8.348,
+    "file": "structures/military/improvised/mil_camonet_side_east.p3d",
+    "h": 5.484,
+    "verified": true,
+    "w": 14.586
+  },
+  "staticobj_mil_mil_camonet_side_nato": {
+    "d": 8.348,
+    "file": "structures/military/improvised/mil_camonet_side_nato.p3d",
+    "h": 5.484,
+    "verified": true,
+    "w": 14.586
+  },
+  "staticobj_mil_mil_camonet_tent2": {
+    "d": 5.861,
+    "file": "structures/military/improvised/mil_camonet_tent2.p3d",
+    "h": 11.605,
+    "verified": true,
+    "w": 2.496
+  },
+  "staticobj_mil_mil_tent_big1_2": {
+    "d": 7.704,
+    "file": "structures/military/improvised/mil_tent_big1_2.p3d",
+    "h": 3.298,
+    "verified": true,
+    "w": 6.181
+  },
+  "staticobj_mil_mil_tent_big1_3": {
+    "d": 7.704,
+    "file": "structures/military/improvised/mil_tent_big1_3.p3d",
+    "h": 3.298,
+    "verified": true,
+    "w": 6.181
+  },
+  "staticobj_mil_mil_tent_big1_4": {
+    "d": 7.704,
+    "file": "structures/military/improvised/mil_tent_big1_4.p3d",
+    "h": 3.298,
+    "verified": true,
+    "w": 6.181
+  },
+  "staticobj_mil_mil_tent_big1_5": {
+    "d": 7.704,
+    "file": "structures/military/improvised/mil_tent_big1_5.p3d",
+    "h": 3.298,
+    "verified": true,
+    "w": 6.181
+  },
+  "staticobj_mil_mil_tent_big2_2": {
+    "d": 6.012,
+    "file": "structures/military/improvised/mil_tent_big2_2.p3d",
+    "h": 4.494,
+    "verified": true,
+    "w": 10.27
+  },
+  "staticobj_mil_mil_tent_big2_3": {
+    "d": 6.012,
+    "file": "structures/military/improvised/mil_tent_big2_3.p3d",
+    "h": 4.494,
+    "verified": true,
+    "w": 10.27
+  },
+  "staticobj_mil_mil_tent_big2_4": {
+    "d": 6.012,
+    "file": "structures/military/improvised/mil_tent_big2_4.p3d",
+    "h": 4.494,
+    "verified": true,
+    "w": 10.27
+  },
+  "staticobj_mil_mil_tent_big2_5": {
+    "d": 6.012,
+    "file": "structures/military/improvised/mil_tent_big2_5.p3d",
+    "h": 4.494,
+    "verified": true,
+    "w": 10.27
+  },
+  "staticobj_mil_misc_antenna": {
+    "d": 4.529,
+    "file": "structures/military/misc/misc_antenna.p3d",
+    "h": 9.138,
+    "verified": true,
+    "w": 5.885
+  },
+  "staticobj_mil_misc_concreteblock1_end": {
+    "d": 2.228,
+    "file": "structures/military/misc/misc_concreteblock1_end.p3d",
+    "h": 0.514,
+    "verified": true,
+    "w": 0.699
+  },
+  "staticobj_mil_misc_concreteblock2_damaged": {
+    "d": 0.359,
+    "file": "structures/military/misc/misc_concreteblock2_damaged.p3d",
+    "h": 0.775,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 2.616
+  },
+  "staticobj_mil_misc_concreteblock2_stripes": {
+    "d": 0.363,
+    "file": "structures/military/misc/misc_concreteblock2_stripes.p3d",
+    "h": 0.779,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 2.6
+  },
+  "staticobj_mil_misc_obstacle_cross": {
+    "d": 0.11,
+    "file": "structures/military/misc/misc_obstacle_cross.p3d",
+    "h": 1.089,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 3.11
+  },
+  "staticobj_mil_misc_obstacle_pass": {
+    "d": 1.981,
+    "file": "structures/military/misc/misc_obstacle_pass.p3d",
+    "h": 3.548,
+    "verified": true,
+    "w": 3.057
+  },
+  "staticobj_mil_misc_obstacle_runaround": {
+    "d": 7.216,
+    "file": "structures/military/misc/misc_obstacle_runaround.p3d",
+    "h": 1.295,
+    "note": "horizontal pipe (long axis = depth/Z)",
+    "verified": true,
+    "w": 3.362
+  },
+  "staticobj_mil_misc_range_line": {
+    "d": 0.262,
+    "file": "structures/military/misc/misc_range_line.p3d",
+    "h": 2.076,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 6.082
+  },
+  "staticobj_mil_misc_range_line_dispersions": {
+    "d": 0.268,
+    "file": "structures/military/misc/misc_range_line_dispersions.p3d",
+    "h": 1.959,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 3.646
+  },
+  "staticobj_mil_misc_range_pistol": {
+    "d": 0.195,
+    "file": "structures/military/misc/misc_range_pistol.p3d",
+    "h": 2.195,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 3.805
+  },
+  "staticobj_mil_misc_range_roof": {
+    "d": 3.243,
+    "file": "structures/military/misc/misc_range_roof.p3d",
+    "h": 7.804,
+    "verified": true,
+    "w": 8.364
+  },
+  "staticobj_mil_misc_range_single": {
+    "d": 0.102,
+    "file": "structures/military/misc/misc_range_single.p3d",
+    "h": 1.755,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.924
+  },
+  "staticobj_mil_roadblock_bags_curve": {
+    "d": 5.417,
+    "file": "structures/military/improvised/roadblock_bags_curve.p3d",
+    "h": 2.525,
+    "verified": true,
+    "w": 3.303
+  },
+  "staticobj_mil_roadblock_bags_endl": {
+    "d": 1.182,
+    "file": "structures/military/improvised/roadblock_bags_endl.p3d",
+    "h": 2.31,
+    "verified": true,
+    "w": 1.442
+  },
+  "staticobj_mil_roadblock_bags_endr": {
+    "d": 1.238,
+    "file": "structures/military/improvised/roadblock_bags_endr.p3d",
+    "h": 2.292,
+    "verified": true,
+    "w": 1.42
+  },
+  "staticobj_mil_roadblock_cncblock": {
+    "d": 2.655,
+    "file": "structures/military/improvised/roadblock_cncblock.p3d",
+    "h": 0.698,
+    "verified": true,
+    "w": 0.942
+  },
+  "staticobj_mil_roadblock_cncblocks_long": {
+    "d": 6.09,
+    "file": "structures/military/improvised/roadblock_cncblocks_long.p3d",
+    "h": 1.378,
+    "note": "horizontal pipe (long axis = depth/Z)",
+    "verified": true,
+    "w": 0.966
+  },
+  "staticobj_mil_roadblock_cncblocks_short": {
+    "d": 2.646,
+    "file": "structures/military/improvised/roadblock_cncblocks_short.p3d",
+    "h": 1.354,
+    "verified": true,
+    "w": 0.915
+  },
+  "staticobj_mil_roadblock_pillbox": {
+    "d": 5.209,
+    "file": "structures/military/improvised/roadblock_pillbox.p3d",
+    "h": 2.254,
+    "verified": true,
+    "w": 5.64
+  },
+  "staticobj_mil_roadblock_table": {
+    "d": 0.822,
+    "file": "structures/military/improvised/roadblock_table.p3d",
+    "h": 0.826,
+    "verified": true,
+    "w": 2.022
+  },
+  "staticobj_mil_roadblock_wood_long": {
+    "d": 0.752,
+    "file": "structures/military/improvised/roadblock_wood_long.p3d",
+    "h": 1.219,
+    "verified": true,
+    "w": 3.121
+  },
+  "staticobj_mil_roadblock_wood_small": {
+    "d": 1.424,
+    "file": "structures/military/improvised/roadblock_wood_small.p3d",
+    "h": 0.776,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 9.61
+  },
+  "staticobj_mil_roadblock_woodencrate": {
+    "d": 1.43,
+    "file": "structures/military/improvised/roadblock_woodencrate.p3d",
+    "h": 0.696,
+    "verified": true,
+    "w": 0.807
+  },
+  "staticobj_misc_bagfence_3m": {
+    "d": 1.125,
+    "file": "structures/military/misc/misc_bagfence_3m.p3d",
+    "h": 4.297,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 9.22
+  },
+  "staticobj_misc_bagfence_corner": {
+    "d": 4.305,
+    "file": "structures/military/misc/misc_bagfence_corner.p3d",
+    "h": 1.125,
+    "verified": true,
+    "w": 4.302
+  },
+  "staticobj_misc_bagfence_round": {
+    "d": 4.531,
+    "file": "structures/military/misc/misc_bagfence_round.p3d",
+    "h": 1.294,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 8.075
+  },
+  "staticobj_misc_barbedwire": {
+    "d": 2.084,
+    "file": "structures/military/misc/misc_barbedwire.p3d",
+    "h": 2.122,
+    "verified": true,
+    "w": 6.718
+  },
+  "staticobj_misc_barrelempty": {
+    "d": 0.537,
+    "file": "structures/industrial/misc/misc_barrelempty.p3d",
+    "h": 0.81,
+    "verified": true,
+    "w": 0.537
+  },
+  "staticobj_misc_boardspack1": {
+    "d": 3.09,
+    "file": "structures/industrial/misc/misc_boardspack1.p3d",
+    "h": 2.029,
+    "verified": true,
+    "w": 1.545
+  },
+  "staticobj_misc_boardspack2": {
+    "d": 3.09,
+    "file": "structures/industrial/misc/misc_boardspack2.p3d",
+    "h": 1.428,
+    "verified": true,
+    "w": 1.545
+  },
+  "staticobj_misc_boardspack3": {
+    "d": 3.09,
+    "file": "structures/industrial/misc/misc_boardspack3.p3d",
+    "h": 1.417,
+    "verified": true,
+    "w": 1.545
+  },
+  "staticobj_misc_cinderblock": {
+    "d": 0.337,
+    "file": "structures_bliss/industrial/misc/misc_cinderblock.p3d",
+    "h": 0.172,
+    "verified": true,
+    "w": 0.223
+  },
+  "staticobj_misc_cinderblocks": {
+    "d": 1.101,
+    "file": "structures_bliss/industrial/misc/misc_cinderblocks.p3d",
+    "h": 1.722,
+    "verified": true,
+    "w": 1.756
+  },
+  "staticobj_misc_coil": {
+    "d": 3.612,
+    "file": "structures/industrial/misc/misc_coil.p3d",
+    "h": 2.212,
+    "verified": true,
+    "w": 3.612
+  },
+  "staticobj_misc_concreteblock1": {
+    "d": 1.005,
+    "file": "structures/military/misc/misc_concreteblock1.p3d",
+    "h": 0.505,
+    "verified": true,
+    "w": 0.4
+  },
+  "staticobj_misc_concreteblock2": {
+    "d": 0.363,
+    "file": "structures/military/misc/misc_concreteblock2.p3d",
+    "h": 0.779,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 2.6
+  },
+  "staticobj_misc_concretepanels": {
+    "d": 3.366,
+    "file": "structures/industrial/misc/misc_concretepanels.p3d",
+    "h": 1.563,
+    "verified": true,
+    "w": 2.295
+  },
+  "staticobj_misc_concretepipe": {
+    "d": 3.814,
+    "file": "structures/industrial/misc/misc_concretepipe.p3d",
+    "h": 2.666,
+    "verified": true,
+    "w": 2.805
+  },
+  "staticobj_misc_concretepipe_gate": {
+    "d": 0.142,
+    "file": "structures/industrial/misc/misc_concretepipe_gate.p3d",
+    "h": 2.224,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 2.224
+  },
+  "staticobj_misc_cover_big": {
+    "d": 5.047,
+    "file": "structures/military/misc/misc_cover_big.p3d",
+    "h": 0.75,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 6.338
+  },
+  "staticobj_misc_cover_small": {
+    "d": 6.436,
+    "file": "structures/military/misc/misc_cover_small.p3d",
+    "h": 0.995,
+    "note": "horizontal pipe (long axis = depth/Z)",
+    "verified": true,
+    "w": 3.602
+  },
+  "staticobj_misc_deconshower_large": {
+    "d": 6.97,
+    "file": "structures_bliss/military/misc/misc_deconshower_large.p3d",
+    "h": 10.928,
+    "verified": true,
+    "w": 8.812
+  },
+  "staticobj_misc_dragonteeth": {
+    "d": 2.239,
+    "file": "structures/military/misc/misc_dragonteeth.p3d",
+    "h": 1.788,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 9.149
+  },
+  "staticobj_misc_dragonteeth_big": {
+    "d": 3.38,
+    "file": "structures/military/misc/misc_dragonteeth_big.p3d",
+    "h": 2.168,
+    "verified": true,
+    "w": 8.593
+  },
+  "staticobj_misc_dragonteeth_multiple": {
+    "d": 4.194,
+    "file": "structures_bliss/military/misc/misc_dragonteeth_multiple.p3d",
+    "h": 1.126,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 10.396
+  },
+  "staticobj_misc_dragonteeth_multiple_redwhite": {
+    "d": 4.194,
+    "file": "structures_bliss/military/misc/misc_dragonteeth_multiple_redwhite.p3d",
+    "h": 1.126,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 10.396
+  },
+  "staticobj_misc_dragonteeth_single": {
+    "d": 1.378,
+    "file": "structures_bliss/military/misc/misc_dragonteeth_single.p3d",
+    "h": 1.118,
+    "verified": true,
+    "w": 1.208
+  },
+  "staticobj_misc_dragonteeth_single_redwhite": {
+    "d": 1.378,
+    "file": "structures_bliss/military/misc/misc_dragonteeth_single_redwhite.p3d",
+    "h": 1.118,
+    "verified": true,
+    "w": 1.208
+  },
+  "staticobj_misc_drainage": {
+    "d": 1.865,
+    "file": "structures/industrial/misc/misc_drainage.p3d",
+    "h": 1.954,
+    "verified": true,
+    "w": 1.683
+  },
+  "staticobj_misc_flagpole": {
+    "d": 0.442,
+    "file": "structures/military/misc/misc_flagpole.p3d",
+    "h": 7.186,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.448
+  },
+  "staticobj_misc_gastank_01_blue": {
+    "d": 0.338,
+    "file": "structures/industrial/misc/misc_gastank_01_blue.p3d",
+    "h": 0.677,
+    "verified": true,
+    "w": 0.338
+  },
+  "staticobj_misc_gastank_01_khaki": {
+    "d": 0.338,
+    "file": "structures/industrial/misc/misc_gastank_01_khaki.p3d",
+    "h": 0.677,
+    "verified": true,
+    "w": 0.338
+  },
+  "staticobj_misc_gastank_01_yellow": {
+    "d": 0.338,
+    "file": "structures/industrial/misc/misc_gastank_01_yellow.p3d",
+    "h": 0.677,
+    "verified": true,
+    "w": 0.338
+  },
+  "staticobj_misc_gastank_02": {
+    "d": 0.229,
+    "file": "structures/industrial/misc/misc_gastank_02.p3d",
+    "h": 1.201,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.229
+  },
+  "staticobj_misc_gcontainer_big": {
+    "d": 3.124,
+    "file": "structures/industrial/misc/misc_gcontainer_big.p3d",
+    "h": 1.452,
+    "verified": true,
+    "w": 6.34
+  },
+  "staticobj_misc_gunrack": {
+    "d": 0.989,
+    "file": "structures/military/misc/misc_gunrack.p3d",
+    "h": 0.73,
+    "verified": true,
+    "w": 0.791
+  },
+  "staticobj_misc_haybale": {
+    "d": 1.579,
+    "file": "structures/industrial/misc/misc_haybale.p3d",
+    "h": 1.533,
+    "verified": true,
+    "w": 1.533
+  },
+  "staticobj_misc_haybale_decayed": {
+    "d": 2.335,
+    "file": "structures/industrial/misc/misc_haybale_decayed.p3d",
+    "h": 1.15,
+    "verified": true,
+    "w": 1.622
+  },
+  "staticobj_misc_haybale_packed": {
+    "d": 1.733,
+    "file": "structures_bliss/industrial/misc/misc_haybale_packed.p3d",
+    "h": 1.655,
+    "verified": true,
+    "w": 1.68
+  },
+  "staticobj_misc_haybale_packed_stack": {
+    "d": 6.593,
+    "file": "structures_bliss/industrial/misc/misc_haybale_packed_stack.p3d",
+    "h": 3.439,
+    "verified": true,
+    "w": 3.658
+  },
+  "staticobj_misc_hedgehog_concrete": {
+    "d": 1.847,
+    "file": "structures/military/misc/misc_hedgehog_concrete.p3d",
+    "h": 1.419,
+    "verified": true,
+    "w": 1.95
+  },
+  "staticobj_misc_hedgehog_iron": {
+    "d": 1.272,
+    "file": "structures/military/misc/misc_hedgehog_iron.p3d",
+    "h": 1.488,
+    "verified": true,
+    "w": 1.508
+  },
+  "staticobj_misc_obstacle_bridge": {
+    "d": 9.459,
+    "file": "structures/military/misc/misc_obstacle_bridge.p3d",
+    "h": 1.85,
+    "note": "horizontal pipe (long axis = depth/Z)",
+    "verified": true,
+    "w": 1.0
+  },
+  "staticobj_misc_obstacle_crawl": {
+    "d": 5.097,
+    "file": "structures/military/misc/misc_obstacle_crawl.p3d",
+    "h": 1.245,
+    "verified": true,
+    "w": 2.618
+  },
+  "staticobj_misc_obstacle_ramp": {
+    "d": 2.297,
+    "file": "structures/military/misc/misc_obstacle_ramp.p3d",
+    "h": 1.498,
+    "verified": true,
+    "w": 1.623
+  },
+  "staticobj_misc_pallet": {
+    "d": 1.519,
+    "file": "structures/industrial/misc/misc_pallet.p3d",
+    "h": 0.211,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 1.568
+  },
+  "staticobj_misc_pallets1": {
+    "d": 1.787,
+    "file": "structures/industrial/misc/misc_pallets1.p3d",
+    "h": 0.693,
+    "verified": true,
+    "w": 1.402
+  },
+  "staticobj_misc_pallets2": {
+    "d": 1.636,
+    "file": "structures/industrial/misc/misc_pallets2.p3d",
+    "h": 0.892,
+    "verified": true,
+    "w": 1.402
+  },
+  "staticobj_misc_pallets3": {
+    "d": 1.551,
+    "file": "structures/industrial/misc/misc_pallets3.p3d",
+    "h": 1.651,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 9.169
+  },
+  "staticobj_misc_pipes": {
+    "d": 2.259,
+    "file": "structures/industrial/misc/misc_pipes.p3d",
+    "h": 1.411,
+    "verified": true,
+    "w": 6.244
+  },
+  "staticobj_misc_pipes_2": {
+    "d": 1.76,
+    "file": "structures/industrial/misc/misc_pipes_2.p3d",
+    "h": 0.47,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 5.222
+  },
+  "staticobj_misc_razorwire": {
+    "d": 2.08,
+    "file": "structures/military/misc/misc_razorwire.p3d",
+    "h": 2.119,
+    "verified": true,
+    "w": 8.462
+  },
+  "staticobj_misc_scaffolding": {
+    "d": 18.563,
+    "file": "structures/industrial/misc/misc_scaffolding.p3d",
+    "h": 11.401,
+    "verified": true,
+    "w": 6.229
+  },
+  "staticobj_misc_spotlight": {
+    "d": 6.803,
+    "file": "structures/industrial/misc/misc_spotlight.p3d",
+    "h": 17.267,
+    "verified": true,
+    "w": 7.094
+  },
+  "staticobj_misc_supplybox1": {
+    "d": 1.512,
+    "file": "structures/military/misc/misc_supplybox1.p3d",
+    "h": 1.276,
+    "verified": true,
+    "w": 1.503
+  },
+  "staticobj_misc_supplybox2": {
+    "d": 1.041,
+    "file": "structures/military/misc/misc_supplybox2.p3d",
+    "h": 1.798,
+    "verified": true,
+    "w": 1.585
+  },
+  "staticobj_misc_supplybox3": {
+    "d": 1.041,
+    "file": "structures/military/misc/misc_supplybox3.p3d",
+    "h": 1.798,
+    "verified": true,
+    "w": 1.585
+  },
+  "staticobj_misc_surveymarker_cover": {
+    "d": 1.325,
+    "file": "structures_bliss/industrial/misc/misc_surveymarker_cover.p3d",
+    "h": 0.822,
+    "verified": true,
+    "w": 1.302
+  },
+  "staticobj_misc_surveymarker_post": {
+    "d": 0.097,
+    "file": "structures_bliss/industrial/misc/misc_surveymarker_post.p3d",
+    "h": 2.458,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.071
+  },
+  "staticobj_misc_surveymarker_rod": {
+    "d": 0.808,
+    "file": "structures_bliss/industrial/misc/misc_surveymarker_rod.p3d",
+    "h": 0.673,
+    "verified": true,
+    "w": 0.847
+  },
+  "staticobj_misc_through_static": {
+    "d": 0.929,
+    "file": "structures/industrial/misc/misc_through_static.p3d",
+    "h": 0.549,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 3.247
+  },
+  "staticobj_misc_through_trailer": {
+    "d": 1.304,
+    "file": "structures/industrial/misc/misc_through_trailer.p3d",
+    "h": 0.988,
+    "verified": true,
+    "w": 3.946
+  },
+  "staticobj_misc_timbers1": {
+    "d": 1.611,
+    "file": "structures/industrial/misc/misc_timbers1.p3d",
+    "h": 3.556,
+    "verified": true,
+    "w": 4.01
+  },
+  "staticobj_misc_timbers2": {
+    "d": 2.055,
+    "file": "structures/industrial/misc/misc_timbers2.p3d",
+    "h": 2.203,
+    "verified": true,
+    "w": 4.001
+  },
+  "staticobj_misc_timbers3": {
+    "d": 1.641,
+    "file": "structures/industrial/misc/misc_timbers3.p3d",
+    "h": 2.173,
+    "verified": true,
+    "w": 4.001
+  },
+  "staticobj_misc_timbers4": {
+    "d": 1.327,
+    "file": "structures/industrial/misc/misc_timbers4.p3d",
+    "h": 2.188,
+    "verified": true,
+    "w": 4.019
+  },
+  "staticobj_misc_timbers_log1": {
+    "d": 11.838,
+    "file": "structures/industrial/misc/misc_timbers_log1.p3d",
+    "h": 0.352,
+    "note": "horizontal pipe (long axis = depth/Z)",
+    "verified": true,
+    "w": 1.476
+  },
+  "staticobj_misc_timbers_log2": {
+    "d": 11.619,
+    "file": "structures/industrial/misc/misc_timbers_log2.p3d",
+    "h": 0.263,
+    "note": "horizontal pipe (long axis = depth/Z)",
+    "verified": true,
+    "w": 1.406
+  },
+  "staticobj_misc_timbers_log3": {
+    "d": 11.737,
+    "file": "structures/industrial/misc/misc_timbers_log3.p3d",
+    "h": 0.187,
+    "note": "horizontal pipe (long axis = depth/Z)",
+    "verified": true,
+    "w": 1.367
+  },
+  "staticobj_misc_timbers_log4": {
+    "d": 11.901,
+    "file": "structures/industrial/misc/misc_timbers_log4.p3d",
+    "h": 0.414,
+    "note": "horizontal pipe (long axis = depth/Z)",
+    "verified": true,
+    "w": 1.522
+  },
+  "staticobj_misc_timbers_log5": {
+    "d": 0.295,
+    "file": "structures/industrial/misc/misc_timbers_log5.p3d",
+    "h": 3.156,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.258
+  },
+  "staticobj_misc_tire": {
+    "d": 0.695,
+    "file": "structures_bliss/industrial/misc/misc_tire.p3d",
+    "h": 0.173,
+    "verified": true,
+    "w": 0.695
+  },
+  "staticobj_misc_tire_big": {
+    "d": 0.478,
+    "file": "structures/industrial/misc/misc_tire_big.p3d",
+    "h": 1.507,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 9.247
+  },
+  "staticobj_misc_tirepile": {
+    "d": 8.564,
+    "file": "structures/industrial/misc/misc_tirepile.p3d",
+    "h": 1.752,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 9.247
+  },
+  "staticobj_misc_tirepile_group": {
+    "d": 5.141,
+    "file": "structures/industrial/misc/misc_tirepile_group.p3d",
+    "h": 8.574,
+    "verified": true,
+    "w": 4.761
+  },
+  "staticobj_misc_tirepile_large": {
+    "d": 2.565,
+    "file": "structures_bliss/industrial/misc/misc_tirepile_large.p3d",
+    "h": 1.38,
+    "verified": true,
+    "w": 3.401
+  },
+  "staticobj_misc_transformer": {
+    "d": 6.186,
+    "file": "structures_bliss/industrial/misc/misc_transformer.p3d",
+    "h": 2.891,
+    "verified": true,
+    "w": 2.794
+  },
+  "staticobj_misc_weldingtrolley_01": {
+    "d": 0.671,
+    "file": "structures/industrial/misc/misc_weldingtrolley_01.p3d",
+    "h": 1.4,
+    "verified": true,
+    "w": 1.287
+  },
+  "staticobj_misc_woodpile_forest1": {
+    "d": 1.65,
+    "file": "structures/industrial/misc/misc_woodpile_forest1.p3d",
+    "h": 2.994,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 8.993
+  },
+  "staticobj_misc_woodpile_forest2": {
+    "d": 1.622,
+    "file": "structures/industrial/misc/misc_woodpile_forest2.p3d",
+    "h": 2.544,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 8.994
+  },
+  "staticobj_misc_woodpile_forest3": {
+    "d": 1.587,
+    "file": "structures/industrial/misc/misc_woodpile_forest3.p3d",
+    "h": 2.478,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 8.827
+  },
+  "staticobj_model_plane_mig21_35scale": {
+    "d": 0.144,
+    "file": "structures/specific/statues/model_plane_mig21_35scale.p3d",
+    "h": 0.507,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 9.882
+  },
+  "staticobj_monument_soldiers": {
+    "d": 9.395,
+    "file": "structures/specific/statues/monument_soldiers.p3d",
+    "h": 10.005,
+    "verified": true,
+    "w": 11.668
+  },
+  "staticobj_monument_t34": {
+    "d": 12.71,
+    "file": "structures/specific/statues/monument_t34.p3d",
+    "h": 6.564,
+    "verified": true,
+    "w": 16.588
+  },
+  "staticobj_monument_wall": {
+    "d": 0.487,
+    "file": "structures/specific/statues/monument_wall.p3d",
+    "h": 2.497,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 3.766
+  },
+  "staticobj_monument_war1": {
+    "d": 16.214,
+    "file": "structures/specific/statues/monument_war1.p3d",
+    "h": 11.414,
+    "verified": true,
+    "w": 12.516
+  },
+  "staticobj_monument_war2": {
+    "d": 13.794,
+    "file": "structures/specific/statues/monument_war2.p3d",
+    "h": 10.946,
+    "verified": true,
+    "w": 16.686
+  },
+  "staticobj_pier_concrete1": {
+    "d": 40.0,
+    "file": "structures/industrial/harbour/pier_concrete1.p3d",
+    "h": 48.374,
+    "verified": true,
+    "w": 20.775
+  },
+  "staticobj_pier_concrete1_cornerin": {
+    "d": 31.283,
+    "file": "structures/industrial/harbour/pier_concrete1_cornerin.p3d",
+    "h": 48.0,
+    "verified": true,
+    "w": 31.364
+  },
+  "staticobj_pier_concrete1_cornerout": {
+    "d": 20.07,
+    "file": "structures/industrial/harbour/pier_concrete1_cornerout.p3d",
+    "h": 48.0,
+    "verified": true,
+    "w": 20.088
+  },
+  "staticobj_pier_concrete1_end": {
+    "d": 50.867,
+    "file": "structures/industrial/harbour/pier_concrete1_end.p3d",
+    "h": 48.375,
+    "verified": true,
+    "w": 41.457
+  },
+  "staticobj_pier_concrete1_l": {
+    "d": 19.771,
+    "file": "structures/industrial/harbour/pier_concrete1_l.p3d",
+    "h": 48.0,
+    "verified": true,
+    "w": 22.469
+  },
+  "staticobj_pier_concrete1_l10": {
+    "d": 4.377,
+    "file": "structures/industrial/harbour/pier_concrete1_l10.p3d",
+    "h": 48.0,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 20.091
+  },
+  "staticobj_pier_concrete1_l30": {
+    "d": 12.972,
+    "file": "structures/industrial/harbour/pier_concrete1_l30.p3d",
+    "h": 48.0,
+    "verified": true,
+    "w": 20.568
+  },
+  "staticobj_pier_concrete1_r": {
+    "d": 20.665,
+    "file": "structures/industrial/harbour/pier_concrete1_r.p3d",
+    "h": 48.026,
+    "verified": true,
+    "w": 25.197
+  },
+  "staticobj_pier_concrete1_r10": {
+    "d": 4.36,
+    "file": "structures/industrial/harbour/pier_concrete1_r10.p3d",
+    "h": 48.0,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 20.089
+  },
+  "staticobj_pier_concrete1_r30": {
+    "d": 12.946,
+    "file": "structures/industrial/harbour/pier_concrete1_r30.p3d",
+    "h": 48.138,
+    "verified": true,
+    "w": 20.249
+  },
+  "staticobj_pier_concrete1_tbig": {
+    "d": 40.0,
+    "file": "structures/industrial/harbour/pier_concrete1_tbig.p3d",
+    "h": 48.0,
+    "verified": true,
+    "w": 30.06
+  },
+  "staticobj_pier_concrete1_tsmall": {
+    "d": 40.101,
+    "file": "structures/industrial/harbour/pier_concrete1_tsmall.p3d",
+    "h": 48.374,
+    "verified": true,
+    "w": 25.228
+  },
+  "staticobj_pier_concrete2": {
+    "d": 20.07,
+    "file": "structures/industrial/harbour/pier_concrete2.p3d",
+    "h": 48.0,
+    "verified": true,
+    "w": 40.0
+  },
+  "staticobj_pier_concrete2_end": {
+    "d": 10.036,
+    "file": "structures/industrial/harbour/pier_concrete2_end.p3d",
+    "h": 48.0,
+    "verified": true,
+    "w": 20.071
+  },
+  "staticobj_pier_concrete3_1": {
+    "d": 8.023,
+    "file": "structures/industrial/harbour/pier_concrete3_1.p3d",
+    "h": 49.093,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 40.0
+  },
+  "staticobj_pier_concrete3_2": {
+    "d": 8.023,
+    "file": "structures/industrial/harbour/pier_concrete3_2.p3d",
+    "h": 49.093,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 40.0
+  },
+  "staticobj_pier_concrete3_end": {
+    "d": 14.03,
+    "file": "structures/industrial/harbour/pier_concrete3_end.p3d",
+    "h": 49.093,
+    "verified": true,
+    "w": 11.756
+  },
+  "staticobj_pier_concrete3_fuel": {
+    "d": 17.956,
+    "file": "structures/industrial/harbour/pier_concrete3_fuel.p3d",
+    "h": 51.133,
+    "verified": true,
+    "w": 40.0
+  },
+  "staticobj_pier_crane_a": {
+    "d": 9.0,
+    "file": "structures/industrial/harbour/pier_crane_a.p3d",
+    "h": 11.648,
+    "verified": true,
+    "w": 14.03
+  },
+  "staticobj_pier_crane_b": {
+    "d": 5.494,
+    "file": "structures/industrial/harbour/pier_crane_b.p3d",
+    "h": 19.99,
+    "verified": true,
+    "w": 24.611
+  },
+  "staticobj_pier_crane_rails": {
+    "d": 9.0,
+    "file": "structures/industrial/harbour/pier_crane_rails.p3d",
+    "h": 0.328,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 12.271
+  },
+  "staticobj_pier_crane_rails_end": {
+    "d": 0.952,
+    "file": "structures/industrial/harbour/pier_crane_rails_end.p3d",
+    "h": 0.505,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 11.49
+  },
+  "staticobj_pier_tube_big": {
+    "d": 1.077,
+    "file": "structures/industrial/harbour/pier_tube_big.p3d",
+    "h": 19.95,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 1.077
+  },
+  "staticobj_pier_tube_small": {
+    "d": 0.85,
+    "file": "structures/industrial/harbour/pier_tube_small.p3d",
+    "h": 13.0,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.833
+  },
+  "staticobj_pier_wooden1": {
+    "d": 4.059,
+    "file": "structures/industrial/harbour/pier_wooden1.p3d",
+    "h": 5.231,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 40.59
+  },
+  "staticobj_pier_wooden1_end": {
+    "d": 6.573,
+    "file": "structures/industrial/harbour/pier_wooden1_end.p3d",
+    "h": 5.063,
+    "verified": true,
+    "w": 6.097
+  },
+  "staticobj_pier_wooden1_pillars": {
+    "d": 2.078,
+    "file": "structures/industrial/harbour/pier_wooden1_pillars.p3d",
+    "h": 5.02,
+    "verified": true,
+    "w": 3.356
+  },
+  "staticobj_pier_wooden2": {
+    "d": 16.115,
+    "file": "structures_bliss/industrial/harbour/pier_wooden2.p3d",
+    "h": 40.377,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 1.995
+  },
+  "staticobj_pipe_big_18m": {
+    "d": 8.578,
+    "file": "structures/industrial/pipes/pipe_big_18m.p3d",
+    "h": 4.184,
+    "note": "horizontal pipe (long axis = depth/Z)",
+    "verified": true,
+    "w": 0.544
+  },
+  "staticobj_pipe_big_9m": {
+    "d": 8.778,
+    "file": "structures/industrial/pipes/pipe_big_9m.p3d",
+    "h": 4.415,
+    "verified": true,
+    "w": 5.132
+  },
+  "staticobj_pipe_big_buildl": {
+    "d": 10.349,
+    "file": "structures/industrial/pipes/pipe_big_buildl.p3d",
+    "h": 9.004,
+    "verified": true,
+    "w": 15.719
+  },
+  "staticobj_pipe_big_buildr": {
+    "d": 10.349,
+    "file": "structures/industrial/pipes/pipe_big_buildr.p3d",
+    "h": 9.004,
+    "verified": true,
+    "w": 15.719
+  },
+  "staticobj_pipe_big_cornerl": {
+    "d": 6.385,
+    "file": "structures/industrial/pipes/pipe_big_cornerl.p3d",
+    "h": 9.118,
+    "verified": true,
+    "w": 6.497
+  },
+  "staticobj_pipe_big_cornerr": {
+    "d": 6.677,
+    "file": "structures/industrial/pipes/pipe_big_cornerr.p3d",
+    "h": 9.498,
+    "verified": true,
+    "w": 6.497
+  },
+  "staticobj_pipe_big_ground1": {
+    "d": 5.716,
+    "file": "structures/industrial/pipes/pipe_big_ground1.p3d",
+    "h": 8.943,
+    "verified": true,
+    "w": 4.749
+  },
+  "staticobj_pipe_big_ground2": {
+    "d": 5.224,
+    "file": "structures/industrial/pipes/pipe_big_ground2.p3d",
+    "h": 8.943,
+    "verified": true,
+    "w": 4.903
+  },
+  "staticobj_pipe_big_smallconl": {
+    "d": 8.578,
+    "file": "structures/industrial/pipes/pipe_big_smallconl.p3d",
+    "h": 4.495,
+    "verified": true,
+    "w": 5.023
+  },
+  "staticobj_pipe_big_smallconr": {
+    "d": 8.614,
+    "file": "structures/industrial/pipes/pipe_big_smallconr.p3d",
+    "h": 4.184,
+    "verified": true,
+    "w": 4.928
+  },
+  "staticobj_pipe_big_support": {
+    "d": 8.578,
+    "file": "structures/industrial/pipes/pipe_big_support.p3d",
+    "h": 4.184,
+    "verified": true,
+    "w": 9.255
+  },
+  "staticobj_pipe_med_9m": {
+    "d": 6.596,
+    "file": "structures/industrial/pipes/pipe_med_9m.p3d",
+    "h": 8.834,
+    "verified": true,
+    "w": 8.735
+  },
+  "staticobj_pipe_med_ground1": {
+    "d": 6.747,
+    "file": "structures/industrial/pipes/pipe_med_ground1.p3d",
+    "h": 5.298,
+    "verified": true,
+    "w": 7.953
+  },
+  "staticobj_pipe_med_ground2": {
+    "d": 6.747,
+    "file": "structures/industrial/pipes/pipe_med_ground2.p3d",
+    "h": 5.298,
+    "verified": true,
+    "w": 7.953
+  },
+  "staticobj_pipe_medl_buildr": {
+    "d": 6.571,
+    "file": "structures/industrial/pipes/pipe_medl_buildr.p3d",
+    "h": 3.895,
+    "verified": true,
+    "w": 5.654
+  },
+  "staticobj_pipe_medl_cornerl": {
+    "d": 6.596,
+    "file": "structures/industrial/pipes/pipe_medl_cornerl.p3d",
+    "h": 4.241,
+    "verified": true,
+    "w": 7.317
+  },
+  "staticobj_pipe_medl_cornerr": {
+    "d": 6.596,
+    "file": "structures/industrial/pipes/pipe_medl_cornerr.p3d",
+    "h": 4.126,
+    "verified": true,
+    "w": 7.359
+  },
+  "staticobj_pipe_medr_buildl": {
+    "d": 6.571,
+    "file": "structures/industrial/pipes/pipe_medr_buildl.p3d",
+    "h": 3.895,
+    "verified": true,
+    "w": 5.645
+  },
+  "staticobj_pipe_medr_buildr": {
+    "d": 6.571,
+    "file": "structures/industrial/pipes/pipe_medr_buildr.p3d",
+    "h": 4.124,
+    "verified": true,
+    "w": 4.948
+  },
+  "staticobj_pipe_small2_24m": {
+    "d": 25.415,
+    "file": "structures_bliss/industrial/pipes/pipe_small2_24m.p3d",
+    "h": 3.434,
+    "note": "horizontal pipe (long axis = depth/Z)",
+    "verified": true,
+    "w": 3.972
+  },
+  "staticobj_pipe_small2_8m": {
+    "d": 3.513,
+    "file": "structures_bliss/industrial/pipes/pipe_small2_8m.p3d",
+    "h": 2.987,
+    "verified": true,
+    "w": 5.093
+  },
+  "staticobj_pipe_small2_8m_metalsup": {
+    "d": 10.759,
+    "file": "structures_bliss/industrial/pipes/pipe_small2_8m_metalsup.p3d",
+    "h": 1.955,
+    "note": "horizontal pipe (long axis = depth/Z)",
+    "verified": true,
+    "w": 5.085
+  },
+  "staticobj_pipe_small2_8m_nosup": {
+    "d": 1.552,
+    "file": "structures_bliss/industrial/pipes/pipe_small2_8m_nosup.p3d",
+    "h": 1.984,
+    "verified": true,
+    "w": 5.093
+  },
+  "staticobj_pipe_small2_block": {
+    "d": 9.829,
+    "file": "structures_bliss/industrial/pipes/pipe_small2_block.p3d",
+    "h": 12.742,
+    "verified": true,
+    "w": 2.589
+  },
+  "staticobj_pipe_small2_curve": {
+    "d": 3.804,
+    "file": "structures_bliss/industrial/pipes/pipe_small2_curve.p3d",
+    "h": 3.499,
+    "verified": true,
+    "w": 3.09
+  },
+  "staticobj_pipe_small2_curve45": {
+    "d": 2.336,
+    "file": "structures_bliss/industrial/pipes/pipe_small2_curve45.p3d",
+    "h": 0.962,
+    "verified": true,
+    "w": 4.507
+  },
+  "staticobj_pipe_small2_ground": {
+    "d": 3.629,
+    "file": "structures_bliss/industrial/pipes/pipe_small2_ground.p3d",
+    "h": 3.5,
+    "verified": true,
+    "w": 2.652
+  },
+  "staticobj_pipe_small2_high_24m": {
+    "d": 25.538,
+    "file": "structures_bliss/industrial/pipes/pipe_small2_high_24m.p3d",
+    "h": 12.962,
+    "note": "horizontal pipe (long axis = depth/Z)",
+    "verified": true,
+    "w": 3.995
+  },
+  "staticobj_pipe_small2_high_8m": {
+    "d": 12.878,
+    "file": "structures_bliss/industrial/pipes/pipe_small2_high_8m.p3d",
+    "h": 2.589,
+    "verified": true,
+    "w": 5.085
+  },
+  "staticobj_pipe_small2_high_curve": {
+    "d": 3.994,
+    "file": "structures_bliss/industrial/pipes/pipe_small2_high_curve.p3d",
+    "h": 13.047,
+    "verified": true,
+    "w": 4.195
+  },
+  "staticobj_pipe_small2_high_ground": {
+    "d": 5.278,
+    "file": "structures_bliss/industrial/pipes/pipe_small2_high_ground.p3d",
+    "h": 12.822,
+    "verified": true,
+    "w": 2.677
+  },
+  "staticobj_pipe_small2_high_ground2": {
+    "d": 5.278,
+    "file": "structures_bliss/industrial/pipes/pipe_small2_high_ground2.p3d",
+    "h": 12.822,
+    "verified": true,
+    "w": 2.677
+  },
+  "staticobj_pipe_small_20m": {
+    "d": 21.818,
+    "file": "structures/industrial/pipes/pipe_small_20m.p3d",
+    "h": 1.704,
+    "note": "horizontal pipe (long axis = depth/Z)",
+    "verified": true,
+    "w": 0.837
+  },
+  "staticobj_pipe_small_broken": {
+    "d": 7.594,
+    "file": "structures/industrial/pipes/pipe_small_broken.p3d",
+    "h": 1.704,
+    "note": "horizontal pipe (long axis = depth/Z)",
+    "verified": true,
+    "w": 0.834
+  },
+  "staticobj_pipe_small_ground1": {
+    "d": 4.91,
+    "file": "structures/industrial/pipes/pipe_small_ground1.p3d",
+    "h": 1.74,
+    "note": "horizontal pipe (long axis = depth/Z)",
+    "verified": true,
+    "w": 0.834
+  },
+  "staticobj_pipe_small_ground2": {
+    "d": 4.891,
+    "file": "structures/industrial/pipes/pipe_small_ground2.p3d",
+    "h": 1.653,
+    "note": "horizontal pipe (long axis = depth/Z)",
+    "verified": true,
+    "w": 0.599
+  },
+  "staticobj_pipe_small_l45": {
+    "d": 4.959,
+    "file": "structures/industrial/pipes/pipe_small_l45.p3d",
+    "h": 1.704,
+    "verified": true,
+    "w": 2.349
+  },
+  "staticobj_pipe_small_l90": {
+    "d": 3.58,
+    "file": "structures/industrial/pipes/pipe_small_l90.p3d",
+    "h": 1.704,
+    "verified": true,
+    "w": 3.117
+  },
+  "staticobj_pipe_small_r45": {
+    "d": 4.933,
+    "file": "structures/industrial/pipes/pipe_small_r45.p3d",
+    "h": 1.704,
+    "verified": true,
+    "w": 2.336
+  },
+  "staticobj_pipe_small_r90": {
+    "d": 3.58,
+    "file": "structures/industrial/pipes/pipe_small_r90.p3d",
+    "h": 1.706,
+    "verified": true,
+    "w": 3.116
+  },
+  "staticobj_pipe_small_stairs": {
+    "d": 7.594,
+    "file": "structures/industrial/pipes/pipe_small_stairs.p3d",
+    "h": 3.464,
+    "verified": true,
+    "w": 8.929
+  },
+  "staticobj_pipe_small_u": {
+    "d": 9.309,
+    "file": "structures/industrial/pipes/pipe_small_u.p3d",
+    "h": 4.957,
+    "note": "horizontal pipe (long axis = depth/Z)",
+    "verified": true,
+    "w": 0.834
+  },
+  "staticobj_pipe_small_valve": {
+    "d": 2.135,
+    "file": "structures/industrial/pipes/pipe_small_valve.p3d",
+    "h": 1.617,
+    "verified": true,
+    "w": 6.203
+  },
+  "staticobj_roadblock_bags_long": {
+    "d": 3.383,
+    "file": "structures/military/improvised/roadblock_bags_long.p3d",
+    "h": 2.475,
+    "verified": true,
+    "w": 0.763
+  },
+  "staticobj_wall_backalley_01_l_1m_f": {
+    "d": 0.236,
+    "file": "structures_bliss/walls/wall_backalley_01_l_1m_f.p3d",
+    "h": 3.545,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 1.307
+  },
+  "staticobj_wall_backalley_01_l_gap_f": {
+    "d": 0.236,
+    "file": "structures_bliss/walls/wall_backalley_01_l_gap_f.p3d",
+    "h": 3.534,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 3.299
+  },
+  "staticobj_wall_backalley_01_l_gate_f": {
+    "d": 3.551,
+    "file": "structures_bliss/walls/wall_backalley_01_l_gate_f.p3d",
+    "h": 3.315,
+    "verified": true,
+    "w": 3.374
+  },
+  "staticobj_wall_backalley_02_l_1m_f": {
+    "d": 0.151,
+    "file": "structures_bliss/walls/wall_backalley_02_l_1m_f.p3d",
+    "h": 3.559,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 1.119
+  },
+  "staticobj_wall_barricade1_10": {
+    "d": 2.433,
+    "file": "structures_bliss/walls/wall_barricade1_10.p3d",
+    "h": 10.552,
+    "verified": true,
+    "w": 8.05
+  },
+  "staticobj_wall_barricade1_4": {
+    "d": 1.645,
+    "file": "structures_bliss/walls/wall_barricade1_4.p3d",
+    "h": 4.019,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 8.486
+  },
+  "staticobj_wall_canal_10": {
+    "d": 4.09,
+    "file": "structures_bliss/walls/wall_canal_10.p3d",
+    "h": 5.476,
+    "verified": true,
+    "w": 10.1
+  },
+  "staticobj_wall_cbrk_5": {
+    "d": 0.621,
+    "file": "structures/walls/wall_cbrk_5.p3d",
+    "h": 2.537,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 5.012
+  },
+  "staticobj_wall_cbrk_corner": {
+    "d": 0.889,
+    "file": "structures/walls/wall_cbrk_corner.p3d",
+    "h": 2.539,
+    "verified": true,
+    "w": 0.876
+  },
+  "staticobj_wall_cbrk_end": {
+    "d": 1.444,
+    "file": "structures/walls/wall_cbrk_end.p3d",
+    "h": 2.545,
+    "verified": true,
+    "w": 3.049
+  },
+  "staticobj_wall_cbrk_pole": {
+    "d": 0.896,
+    "file": "structures/walls/wall_cbrk_pole.p3d",
+    "h": 3.463,
+    "verified": true,
+    "w": 0.896
+  },
+  "staticobj_wall_cgry_5": {
+    "d": 2.66,
+    "file": "structures/walls/wall_cgry_5.p3d",
+    "h": 5.01,
+    "verified": true,
+    "w": 9.689
+  },
+  "staticobj_wall_cgry_corner": {
+    "d": 0.549,
+    "file": "structures/walls/wall_cgry_corner.p3d",
+    "h": 2.666,
+    "verified": true,
+    "w": 0.55
+  },
+  "staticobj_wall_cgry_corner_2": {
+    "d": 0.609,
+    "file": "structures/walls/wall_cgry_corner_2.p3d",
+    "h": 2.653,
+    "verified": true,
+    "w": 0.609
+  },
+  "staticobj_wall_cgry_end": {
+    "d": 1.673,
+    "file": "structures/walls/wall_cgry_end.p3d",
+    "h": 2.528,
+    "verified": true,
+    "w": 3.037
+  },
+  "staticobj_wall_cgrylow_5": {
+    "d": 0.492,
+    "file": "structures/walls/wall_cgrylow_5.p3d",
+    "h": 1.537,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 5.0
+  },
+  "staticobj_wall_cgrylow_end1": {
+    "d": 1.185,
+    "file": "structures/walls/wall_cgrylow_end1.p3d",
+    "h": 1.514,
+    "verified": true,
+    "w": 2.919
+  },
+  "staticobj_wall_cgrylow_end2": {
+    "d": 1.354,
+    "file": "structures/walls/wall_cgrylow_end2.p3d",
+    "h": 1.5,
+    "verified": true,
+    "w": 2.977
+  },
+  "staticobj_wall_cnc_5": {
+    "d": 1.003,
+    "file": "structures/walls/wall_cnc_5.p3d",
+    "h": 5.026,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 9.029
+  },
+  "staticobj_wall_cncbarrier_4block": {
+    "d": 1.833,
+    "file": "structures_bliss/walls/wall_cncbarrier_4block.p3d",
+    "h": 1.969,
+    "verified": true,
+    "w": 7.594
+  },
+  "staticobj_wall_cncbarrier_block": {
+    "d": 1.969,
+    "file": "structures_bliss/walls/wall_cncbarrier_block.p3d",
+    "h": 1.835,
+    "verified": true,
+    "w": 9.083
+  },
+  "staticobj_wall_cncsmall_4": {
+    "d": 0.538,
+    "file": "structures/walls/wall_cncsmall_4.p3d",
+    "h": 2.324,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 4.017
+  },
+  "staticobj_wall_cncsmall_8": {
+    "d": 0.53,
+    "file": "structures/walls/wall_cncsmall_8.p3d",
+    "h": 2.3,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 8.008
+  },
+  "staticobj_wall_cyel_5": {
+    "d": 0.554,
+    "file": "structures/walls/wall_cyel_5.p3d",
+    "h": 2.592,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 5.0
+  },
+  "staticobj_wall_cyel_corner": {
+    "d": 0.718,
+    "file": "structures/walls/wall_cyel_corner.p3d",
+    "h": 2.592,
+    "verified": true,
+    "w": 0.718
+  },
+  "staticobj_wall_cyel_end": {
+    "d": 1.544,
+    "file": "structures/walls/wall_cyel_end.p3d",
+    "h": 2.592,
+    "verified": true,
+    "w": 3.57
+  },
+  "staticobj_wall_cyel_end2": {
+    "d": 1.544,
+    "file": "structures/walls/wall_cyel_end2.p3d",
+    "h": 2.592,
+    "verified": true,
+    "w": 3.57
+  },
+  "staticobj_wall_fen1_5": {
+    "d": 0.167,
+    "file": "structures/walls/wall_fen1_5.p3d",
+    "h": 3.095,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 5.013
+  },
+  "staticobj_wall_fen1_5_2": {
+    "d": 0.174,
+    "file": "structures/walls/wall_fen1_5_2.p3d",
+    "h": 3.095,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 5.051
+  },
+  "staticobj_wall_fen1_5_hole": {
+    "d": 2.231,
+    "file": "structures/walls/wall_fen1_5_hole.p3d",
+    "h": 3.178,
+    "verified": true,
+    "w": 5.059
+  },
+  "staticobj_wall_fen1_5_pole": {
+    "d": 0.074,
+    "file": "structures/walls/wall_fen1_5_pole.p3d",
+    "h": 3.114,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.074
+  },
+  "staticobj_wall_fen2_6": {
+    "d": 0.363,
+    "file": "structures/walls/wall_fen2_6.p3d",
+    "h": 2.344,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 6.041
+  },
+  "staticobj_wall_fen2_6_hole": {
+    "d": 0.479,
+    "file": "structures/walls/wall_fen2_6_hole.p3d",
+    "h": 2.344,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 6.041
+  },
+  "staticobj_wall_fen2_pole": {
+    "d": 0.363,
+    "file": "structures/walls/wall_fen2_pole.p3d",
+    "h": 2.344,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.111
+  },
+  "staticobj_wall_fen3_4": {
+    "d": 0.2,
+    "file": "structures_bliss/walls/wall_fen3_4.p3d",
+    "h": 2.563,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 4.031
+  },
+  "staticobj_wall_fen3_8": {
+    "d": 0.2,
+    "file": "structures_bliss/walls/wall_fen3_8.p3d",
+    "h": 2.533,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 8.027
+  },
+  "staticobj_wall_fen3_pole": {
+    "d": 0.055,
+    "file": "structures_bliss/walls/wall_fen3_pole.p3d",
+    "h": 2.527,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.055
+  },
+  "staticobj_wall_fen4_4": {
+    "d": 0.209,
+    "file": "structures_bliss/walls/wall_fen4_4.p3d",
+    "h": 3.402,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 4.039
+  },
+  "staticobj_wall_fen4_8": {
+    "d": 0.226,
+    "file": "structures_bliss/walls/wall_fen4_8.p3d",
+    "h": 3.402,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 8.035
+  },
+  "staticobj_wall_fen4_pole": {
+    "d": 0.217,
+    "file": "structures_bliss/walls/wall_fen4_pole.p3d",
+    "h": 3.409,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.313
+  },
+  "staticobj_wall_fen5_10": {
+    "d": 1.279,
+    "file": "structures_bliss/walls/wall_fen5_10.p3d",
+    "h": 2.848,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 10.184
+  },
+  "staticobj_wall_fen5_5": {
+    "d": 1.276,
+    "file": "structures_bliss/walls/wall_fen5_5.p3d",
+    "h": 2.848,
+    "verified": true,
+    "w": 5.227
+  },
+  "staticobj_wall_fen5_pole": {
+    "d": 0.443,
+    "file": "structures_bliss/walls/wall_fen5_pole.p3d",
+    "h": 2.548,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.332
+  },
+  "staticobj_wall_fen6_8": {
+    "d": 0.502,
+    "file": "structures_bliss/walls/wall_fen6_8.p3d",
+    "h": 2.249,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 8.336
+  },
+  "staticobj_wall_fen6_pole": {
+    "d": 0.34,
+    "file": "structures_bliss/walls/wall_fen6_pole.p3d",
+    "h": 2.044,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.401
+  },
+  "staticobj_wall_fen7_4": {
+    "d": 1.098,
+    "file": "structures_bliss/walls/wall_fen7_4.p3d",
+    "h": 1.5,
+    "verified": true,
+    "w": 4.129
+  },
+  "staticobj_wall_fen7_pole": {
+    "d": 0.122,
+    "file": "structures_bliss/walls/wall_fen7_pole.p3d",
+    "h": 1.458,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.144
+  },
+  "staticobj_wall_fenforest_5": {
+    "d": 2.568,
+    "file": "structures_bliss/walls/wall_fenforest_5.p3d",
+    "h": 5.034,
+    "verified": true,
+    "w": 9.493
+  },
+  "staticobj_wall_fenforest_gate": {
+    "d": 3.0,
+    "file": "structures_bliss/walls/wall_fenforest_gate.p3d",
+    "h": 2.802,
+    "verified": true,
+    "w": 1.512
+  },
+  "staticobj_wall_fenforest_pole": {
+    "d": 0.859,
+    "file": "structures_bliss/walls/wall_fenforest_pole.p3d",
+    "h": 2.521,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.114
+  },
+  "staticobj_wall_feng_3": {
+    "d": 0.378,
+    "file": "structures/walls/wall_feng_3.p3d",
+    "h": 2.749,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 2.587
+  },
+  "staticobj_wall_feng_pole": {
+    "d": 0.328,
+    "file": "structures/walls/wall_feng_pole.p3d",
+    "h": 2.746,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.348
+  },
+  "staticobj_wall_fenr_3": {
+    "d": 0.385,
+    "file": "structures/walls/wall_fenr_3.p3d",
+    "h": 2.704,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 2.587
+  },
+  "staticobj_wall_fenr_pole": {
+    "d": 0.357,
+    "file": "structures/walls/wall_fenr_pole.p3d",
+    "h": 2.777,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.37
+  },
+  "staticobj_wall_fenstadium": {
+    "d": 0.326,
+    "file": "structures_bliss/walls/wall_fenstadium.p3d",
+    "h": 4.812,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 5.124
+  },
+  "staticobj_wall_fenvineyard": {
+    "d": 0.305,
+    "file": "structures_bliss/walls/wall_fenvineyard.p3d",
+    "h": 2.062,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 8.324
+  },
+  "staticobj_wall_fenw_7": {
+    "d": 2.061,
+    "file": "structures/walls/wall_fenw_7.p3d",
+    "h": 7.05,
+    "verified": true,
+    "w": 1.484
+  },
+  "staticobj_wall_fenw_7_s": {
+    "d": 2.061,
+    "file": "structures/walls/wall_fenw_7_s.p3d",
+    "h": 7.008,
+    "verified": true,
+    "w": 1.757
+  },
+  "staticobj_wall_forfieldfen_1": {
+    "d": 0.245,
+    "file": "structures/walls/wall_forfieldfen_1.p3d",
+    "h": 1.81,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 3.407
+  },
+  "staticobj_wall_forfieldfen_2": {
+    "d": 0.234,
+    "file": "structures/walls/wall_forfieldfen_2.p3d",
+    "h": 1.81,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 3.441
+  },
+  "staticobj_wall_forfieldfen_end": {
+    "d": 0.239,
+    "file": "structures/walls/wall_forfieldfen_end.p3d",
+    "h": 1.811,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 3.406
+  },
+  "staticobj_wall_garbcont": {
+    "d": 1.01,
+    "file": "structures/walls/wall_garbcont.p3d",
+    "h": 1.6,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.15
+  },
+  "staticobj_wall_garbcont_corner": {
+    "d": 1.4,
+    "file": "structures/walls/wall_garbcont_corner.p3d",
+    "h": 1.6,
+    "verified": true,
+    "w": 1.408
+  },
+  "staticobj_wall_gate_camp": {
+    "d": 0.192,
+    "file": "structures/walls/wall_gate_camp.p3d",
+    "h": 5.248,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 7.734
+  },
+  "staticobj_wall_gate_cgry": {
+    "d": 4.461,
+    "file": "structures/walls/wall_gate_cgry.p3d",
+    "h": 5.995,
+    "verified": true,
+    "w": 5.03
+  },
+  "staticobj_wall_gate_fen2_l": {
+    "d": 2.377,
+    "file": "structures/walls/wall_gate_fen2_l.p3d",
+    "h": 3.068,
+    "verified": true,
+    "w": 2.216
+  },
+  "staticobj_wall_gate_fen2_r": {
+    "d": 2.377,
+    "file": "structures/walls/wall_gate_fen2_r.p3d",
+    "h": 3.041,
+    "verified": true,
+    "w": 2.216
+  },
+  "staticobj_wall_gate_fen3": {
+    "d": 6.087,
+    "file": "structures_bliss/walls/wall_gate_fen3.p3d",
+    "h": 3.145,
+    "verified": true,
+    "w": 6.158
+  },
+  "staticobj_wall_gate_fen4": {
+    "d": 4.0,
+    "file": "structures_bliss/walls/wall_gate_fen4.p3d",
+    "h": 2.619,
+    "verified": true,
+    "w": 4.099
+  },
+  "staticobj_wall_gate_feng": {
+    "d": 2.942,
+    "file": "structures/walls/wall_gate_feng.p3d",
+    "h": 2.748,
+    "verified": true,
+    "w": 3.688
+  },
+  "staticobj_wall_gate_feng_big": {
+    "d": 3.584,
+    "file": "structures/walls/wall_gate_feng_big.p3d",
+    "h": 2.748,
+    "verified": true,
+    "w": 4.951
+  },
+  "staticobj_wall_gate_feng_big_l": {
+    "d": 0.301,
+    "file": "structures/walls/wall_gate_feng_big_l.p3d",
+    "h": 2.406,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 2.373
+  },
+  "staticobj_wall_gate_feng_big_open": {
+    "d": 0.308,
+    "file": "structures/walls/wall_gate_feng_big_open.p3d",
+    "h": 2.406,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 4.754
+  },
+  "staticobj_wall_gate_feng_big_r": {
+    "d": 1.9,
+    "file": "structures/walls/wall_gate_feng_big_r.p3d",
+    "h": 2.38,
+    "verified": true,
+    "w": 2.406
+  },
+  "staticobj_wall_gate_feng_open": {
+    "d": 3.515,
+    "file": "structures/walls/wall_gate_feng_open.p3d",
+    "h": 2.409,
+    "verified": true,
+    "w": 1.347
+  },
+  "staticobj_wall_gate_fenr": {
+    "d": 2.942,
+    "file": "structures/walls/wall_gate_fenr.p3d",
+    "h": 2.821,
+    "verified": true,
+    "w": 3.25
+  },
+  "staticobj_wall_gate_fenr_big": {
+    "d": 3.584,
+    "file": "structures/walls/wall_gate_fenr_big.p3d",
+    "h": 2.748,
+    "verified": true,
+    "w": 4.951
+  },
+  "staticobj_wall_gate_fenr_big_l": {
+    "d": 0.307,
+    "file": "structures/walls/wall_gate_fenr_big_l.p3d",
+    "h": 2.406,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 2.388
+  },
+  "staticobj_wall_gate_fenr_big_open": {
+    "d": 0.308,
+    "file": "structures/walls/wall_gate_fenr_big_open.p3d",
+    "h": 2.406,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 4.769
+  },
+  "staticobj_wall_gate_fenr_big_r": {
+    "d": 1.9,
+    "file": "structures/walls/wall_gate_fenr_big_r.p3d",
+    "h": 2.38,
+    "verified": true,
+    "w": 2.406
+  },
+  "staticobj_wall_gate_fenr_open": {
+    "d": 0.328,
+    "file": "structures/walls/wall_gate_fenr_open.p3d",
+    "h": 2.426,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 1.834
+  },
+  "staticobj_wall_gate_ind1_l": {
+    "d": 5.511,
+    "file": "structures/walls/wall_gate_ind1_l.p3d",
+    "h": 2.409,
+    "verified": true,
+    "w": 8.225
+  },
+  "staticobj_wall_gate_ind1_r": {
+    "d": 2.942,
+    "file": "structures/walls/wall_gate_ind1_r.p3d",
+    "h": 2.409,
+    "verified": true,
+    "w": 8.211
+  },
+  "staticobj_wall_gate_ind2a_l": {
+    "d": 2.942,
+    "file": "structures/walls/wall_gate_ind2a_l.p3d",
+    "h": 2.485,
+    "verified": true,
+    "w": 8.268
+  },
+  "staticobj_wall_gate_ind2a_r": {
+    "d": 2.942,
+    "file": "structures/walls/wall_gate_ind2a_r.p3d",
+    "h": 2.487,
+    "verified": true,
+    "w": 8.265
+  },
+  "staticobj_wall_gate_ind2b_l": {
+    "d": 2.942,
+    "file": "structures/walls/wall_gate_ind2b_l.p3d",
+    "h": 2.485,
+    "verified": true,
+    "w": 8.268
+  },
+  "staticobj_wall_gate_ind2b_r": {
+    "d": 2.942,
+    "file": "structures/walls/wall_gate_ind2b_r.p3d",
+    "h": 2.487,
+    "verified": true,
+    "w": 8.265
+  },
+  "staticobj_wall_gate_ind2rail_l": {
+    "d": 2.942,
+    "file": "structures/walls/wall_gate_ind2rail_l.p3d",
+    "h": 2.485,
+    "verified": true,
+    "w": 8.268
+  },
+  "staticobj_wall_gate_ind2rail_r": {
+    "d": 2.942,
+    "file": "structures/walls/wall_gate_ind2rail_r.p3d",
+    "h": 2.487,
+    "verified": true,
+    "w": 8.265
+  },
+  "staticobj_wall_gate_ind3": {
+    "d": 0.63,
+    "file": "structures_bliss/walls/wall_gate_ind3.p3d",
+    "h": 3.641,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 10.455
+  },
+  "staticobj_wall_gate_indcnc4": {
+    "d": 2.942,
+    "file": "structures_bliss/walls/wall_gate_indcnc4.p3d",
+    "h": 3.015,
+    "verified": true,
+    "w": 10.612
+  },
+  "staticobj_wall_gate_indcnc4_low": {
+    "d": 2.942,
+    "file": "structures_bliss/walls/wall_gate_indcnc4_low.p3d",
+    "h": 2.119,
+    "verified": true,
+    "w": 10.581
+  },
+  "staticobj_wall_gate_kolchoz": {
+    "d": 3.417,
+    "file": "structures/walls/wall_gate_kolchoz.p3d",
+    "h": 6.269,
+    "verified": true,
+    "w": 9.104
+  },
+  "staticobj_wall_gate_opendam": {
+    "d": 4.077,
+    "file": "structures/walls/wall_gate_opendam.p3d",
+    "h": 2.5,
+    "verified": true,
+    "w": 11.678
+  },
+  "staticobj_wall_gate_tin6_1": {
+    "d": 2.397,
+    "file": "structures_bliss/walls/wall_gate_tin6_1.p3d",
+    "h": 3.428,
+    "verified": true,
+    "w": 8.529
+  },
+  "staticobj_wall_gate_tin6_2": {
+    "d": 2.011,
+    "file": "structures_bliss/walls/wall_gate_tin6_2.p3d",
+    "h": 4.099,
+    "verified": true,
+    "w": 8.0
+  },
+  "staticobj_wall_gate_village": {
+    "d": 2.942,
+    "file": "structures/walls/wall_gate_village.p3d",
+    "h": 2.059,
+    "verified": true,
+    "w": 3.25
+  },
+  "staticobj_wall_gate_wood1": {
+    "d": 2.356,
+    "file": "structures/walls/wall_gate_wood1.p3d",
+    "h": 1.218,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 9.88
+  },
+  "staticobj_wall_gate_wood2": {
+    "d": 2.942,
+    "file": "structures/walls/wall_gate_wood2.p3d",
+    "h": 1.997,
+    "verified": true,
+    "w": 3.25
+  },
+  "staticobj_wall_gate_wood3": {
+    "d": 2.942,
+    "file": "structures/walls/wall_gate_wood3.p3d",
+    "h": 1.086,
+    "verified": true,
+    "w": 3.25
+  },
+  "staticobj_wall_gate_wood4": {
+    "d": 4.696,
+    "file": "structures/walls/wall_gate_wood4.p3d",
+    "h": 2.21,
+    "verified": true,
+    "w": 3.383
+  },
+  "staticobj_wall_indcnc2_3": {
+    "d": 0.4,
+    "file": "structures/walls/wall_indcnc2_3.p3d",
+    "h": 4.002,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 3.0
+  },
+  "staticobj_wall_indcnc3_1_4": {
+    "d": 0.322,
+    "file": "structures_bliss/walls/wall_indcnc3_1_4.p3d",
+    "h": 3.605,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 6.029
+  },
+  "staticobj_wall_indcnc3_2_4": {
+    "d": 0.322,
+    "file": "structures_bliss/walls/wall_indcnc3_2_4.p3d",
+    "h": 3.605,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 6.029
+  },
+  "staticobj_wall_indcnc3_end": {
+    "d": 3.518,
+    "file": "structures_bliss/walls/wall_indcnc3_end.p3d",
+    "h": 2.583,
+    "verified": true,
+    "w": 9.24
+  },
+  "staticobj_wall_indcnc3_pole": {
+    "d": 0.252,
+    "file": "structures_bliss/walls/wall_indcnc3_pole.p3d",
+    "h": 3.45,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.249
+  },
+  "staticobj_wall_indcnc4_4": {
+    "d": 0.4,
+    "file": "structures_bliss/walls/wall_indcnc4_4.p3d",
+    "h": 3.0,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 4.055
+  },
+  "staticobj_wall_indcnc4_8": {
+    "d": 0.4,
+    "file": "structures_bliss/walls/wall_indcnc4_8.p3d",
+    "h": 3.004,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 8.044
+  },
+  "staticobj_wall_indcnc4_low_4": {
+    "d": 0.4,
+    "file": "structures_bliss/walls/wall_indcnc4_low_4.p3d",
+    "h": 2.1,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 4.052
+  },
+  "staticobj_wall_indcnc4_low_8": {
+    "d": 0.4,
+    "file": "structures_bliss/walls/wall_indcnc4_low_8.p3d",
+    "h": 2.1,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 8.044
+  },
+  "staticobj_wall_indcnc4_low_pole": {
+    "d": 0.511,
+    "file": "structures_bliss/walls/wall_indcnc4_low_pole.p3d",
+    "h": 2.269,
+    "verified": true,
+    "w": 0.511
+  },
+  "staticobj_wall_indcnc4_pole": {
+    "d": 0.525,
+    "file": "structures_bliss/walls/wall_indcnc4_pole.p3d",
+    "h": 3.161,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.525
+  },
+  "staticobj_wall_indcnc_10": {
+    "d": 1.007,
+    "file": "structures/walls/wall_indcnc_10.p3d",
+    "h": 9.758,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 9.012
+  },
+  "staticobj_wall_indcnc_4": {
+    "d": 0.266,
+    "file": "structures/walls/wall_indcnc_4.p3d",
+    "h": 3.499,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 6.0
+  },
+  "staticobj_wall_indcnc_end_2": {
+    "d": 1.294,
+    "file": "structures/walls/wall_indcnc_end_2.p3d",
+    "h": 3.499,
+    "verified": true,
+    "w": 2.055
+  },
+  "staticobj_wall_indcnc_end_3": {
+    "d": 1.931,
+    "file": "structures/walls/wall_indcnc_end_3.p3d",
+    "h": 1.468,
+    "verified": true,
+    "w": 2.372
+  },
+  "staticobj_wall_indcnc_pole": {
+    "d": 0.259,
+    "file": "structures/walls/wall_indcnc_pole.p3d",
+    "h": 3.499,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.244
+  },
+  "staticobj_wall_indcnch_10": {
+    "d": 10.688,
+    "file": "structures/walls/wall_indcnch_10.p3d",
+    "h": 1.113,
+    "note": "horizontal pipe (long axis = depth/Z)",
+    "verified": true,
+    "w": 9.608
+  },
+  "staticobj_wall_indcnch_5": {
+    "d": 5.466,
+    "file": "structures/walls/wall_indcnch_5.p3d",
+    "h": 1.12,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 9.499
+  },
+  "staticobj_wall_indfnc2_3": {
+    "d": 0.525,
+    "file": "structures_bliss/walls/wall_indfnc2_3.p3d",
+    "h": 3.384,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 3.037
+  },
+  "staticobj_wall_indfnc2_3_hole": {
+    "d": 0.584,
+    "file": "structures_bliss/walls/wall_indfnc2_3_hole.p3d",
+    "h": 3.39,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 3.04
+  },
+  "staticobj_wall_indfnc2_9": {
+    "d": 0.406,
+    "file": "structures_bliss/walls/wall_indfnc2_9.p3d",
+    "h": 3.384,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 9.037
+  },
+  "staticobj_wall_indfnc2_corner": {
+    "d": 0.525,
+    "file": "structures_bliss/walls/wall_indfnc2_corner.p3d",
+    "h": 3.384,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 3.167
+  },
+  "staticobj_wall_indfnc2_pole": {
+    "d": 0.323,
+    "file": "structures_bliss/walls/wall_indfnc2_pole.p3d",
+    "h": 3.384,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.163
+  },
+  "staticobj_wall_indfnc_3": {
+    "d": 0.353,
+    "file": "structures/walls/wall_indfnc_3.p3d",
+    "h": 3.373,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 3.005
+  },
+  "staticobj_wall_indfnc_3_hole": {
+    "d": 0.697,
+    "file": "structures/walls/wall_indfnc_3_hole.p3d",
+    "h": 3.378,
+    "verified": true,
+    "w": 3.005
+  },
+  "staticobj_wall_indfnc_9": {
+    "d": 0.386,
+    "file": "structures/walls/wall_indfnc_9.p3d",
+    "h": 3.373,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 10.005
+  },
+  "staticobj_wall_indfnc_corner": {
+    "d": 0.348,
+    "file": "structures/walls/wall_indfnc_corner.p3d",
+    "h": 3.373,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 3.161
+  },
+  "staticobj_wall_indfnc_pole": {
+    "d": 0.325,
+    "file": "structures/walls/wall_indfnc_pole.p3d",
+    "h": 3.374,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.14
+  },
+  "staticobj_wall_indvar1_5": {
+    "d": 0.707,
+    "file": "structures/walls/wall_indvar1_5.p3d",
+    "h": 3.802,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 6.348
+  },
+  "staticobj_wall_indvar1_5_2": {
+    "d": 0.707,
+    "file": "structures/walls/wall_indvar1_5_2.p3d",
+    "h": 3.789,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 6.348
+  },
+  "staticobj_wall_indvar1_pole": {
+    "d": 0.715,
+    "file": "structures/walls/wall_indvar1_pole.p3d",
+    "h": 3.794,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.692
+  },
+  "staticobj_wall_indvar2_5": {
+    "d": 0.566,
+    "file": "structures/walls/wall_indvar2_5.p3d",
+    "h": 3.297,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 5.054
+  },
+  "staticobj_wall_indvar2_pole": {
+    "d": 0.572,
+    "file": "structures/walls/wall_indvar2_pole.p3d",
+    "h": 3.296,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.551
+  },
+  "staticobj_wall_indvar3_5": {
+    "d": 3.297,
+    "file": "structures_bliss/walls/wall_indvar3_5.p3d",
+    "h": 5.054,
+    "verified": true,
+    "w": 9.717
+  },
+  "staticobj_wall_indvar3_pole": {
+    "d": 3.296,
+    "file": "structures_bliss/walls/wall_indvar3_pole.p3d",
+    "h": 0.551,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 9.714
+  },
+  "staticobj_wall_milcnc_4": {
+    "d": 1.096,
+    "file": "structures_bliss/walls/wall_milcnc_4.p3d",
+    "h": 4.744,
+    "verified": true,
+    "w": 4.052
+  },
+  "staticobj_wall_milcnc_corner": {
+    "d": 1.532,
+    "file": "structures_bliss/walls/wall_milcnc_corner.p3d",
+    "h": 4.727,
+    "verified": true,
+    "w": 1.538
+  },
+  "staticobj_wall_milcncbarrier": {
+    "d": 0.487,
+    "file": "structures_bliss/walls/wall_milcncbarrier.p3d",
+    "h": 0.805,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 4.012
+  },
+  "staticobj_wall_pipefence_4": {
+    "d": 0.125,
+    "file": "structures_bliss/walls/wall_pipefence_4.p3d",
+    "h": 1.411,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 4.122
+  },
+  "staticobj_wall_pipefence_8": {
+    "d": 0.14,
+    "file": "structures_bliss/walls/wall_pipefence_8.p3d",
+    "h": 1.409,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 8.124
+  },
+  "staticobj_wall_pipefencewall_8": {
+    "d": 0.715,
+    "file": "structures_bliss/walls/wall_pipefencewall_8.p3d",
+    "h": 4.488,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 8.026
+  },
+  "staticobj_wall_polewall_5_1": {
+    "d": 2.088,
+    "file": "structures_bliss/walls/wall_polewall_5_1.p3d",
+    "h": 5.225,
+    "verified": true,
+    "w": 9.882
+  },
+  "staticobj_wall_polewall_5_2": {
+    "d": 2.088,
+    "file": "structures_bliss/walls/wall_polewall_5_2.p3d",
+    "h": 5.22,
+    "verified": true,
+    "w": 9.81
+  },
+  "staticobj_wall_polewall_end": {
+    "d": 3.061,
+    "file": "structures_bliss/walls/wall_polewall_end.p3d",
+    "h": 5.018,
+    "verified": true,
+    "w": 9.659
+  },
+  "staticobj_wall_railing_1": {
+    "d": null,
+    "file": "structures/walls/wall_railing_1.p3d",
+    "h": null,
+    "verified": false,
+    "w": null
+  },
+  "staticobj_wall_railing_1_endl": {
+    "d": null,
+    "file": "structures/walls/wall_railing_1_endl.p3d",
+    "h": null,
+    "verified": false,
+    "w": null
+  },
+  "staticobj_wall_railing_1_endr": {
+    "d": null,
+    "file": "structures/walls/wall_railing_1_endr.p3d",
+    "h": null,
+    "verified": false,
+    "w": null
+  },
+  "staticobj_wall_railing_1_pole": {
+    "d": null,
+    "file": "structures_bliss/walls/wall_railing_1_pole.p3d",
+    "h": null,
+    "verified": false,
+    "w": null
+  },
+  "staticobj_wall_railing_1_slope": {
+    "d": null,
+    "file": "structures/walls/wall_railing_1_slope.p3d",
+    "h": null,
+    "verified": false,
+    "w": null
+  },
+  "staticobj_wall_railing_2": {
+    "d": null,
+    "file": "structures/walls/wall_railing_2.p3d",
+    "h": null,
+    "verified": false,
+    "w": null
+  },
+  "staticobj_wall_railing_2_slope": {
+    "d": null,
+    "file": "structures/walls/wall_railing_2_slope.p3d",
+    "h": null,
+    "verified": false,
+    "w": null
+  },
+  "staticobj_wall_railing_endl": {
+    "d": null,
+    "file": "structures/walls/wall_railing_endl.p3d",
+    "h": null,
+    "verified": false,
+    "w": null
+  },
+  "staticobj_wall_railing_endr": {
+    "d": null,
+    "file": "structures/walls/wall_railing_endr.p3d",
+    "h": null,
+    "verified": false,
+    "w": null
+  },
+  "staticobj_wall_silagewall_5": {
+    "d": 2.344,
+    "file": "structures_bliss/walls/wall_silagewall_5.p3d",
+    "h": 4.1,
+    "verified": true,
+    "w": 5.108
+  },
+  "staticobj_wall_silagewall_pole": {
+    "d": 2.317,
+    "file": "structures_bliss/walls/wall_silagewall_pole.p3d",
+    "h": 4.1,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.179
+  },
+  "staticobj_wall_stone": {
+    "d": 1.95,
+    "file": "structures/walls/wall_stone.p3d",
+    "h": 2.034,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 10.06
+  },
+  "staticobj_wall_stone2": {
+    "d": 1.452,
+    "file": "structures_bliss/walls/wall_stone2.p3d",
+    "h": 1.572,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 9.408
+  },
+  "staticobj_wall_stone2d": {
+    "d": 1.42,
+    "file": "structures_bliss/walls/wall_stone2d.p3d",
+    "h": 11.143,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 8.569
+  },
+  "staticobj_wall_stoned": {
+    "d": 1.622,
+    "file": "structures/walls/wall_stoned.p3d",
+    "h": 11.932,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 8.131
+  },
+  "staticobj_wall_tin6_1_4": {
+    "d": 0.216,
+    "file": "structures_bliss/walls/wall_tin6_1_4.p3d",
+    "h": 2.297,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 4.107
+  },
+  "staticobj_wall_tin6_1_pole": {
+    "d": 0.1,
+    "file": "structures_bliss/walls/wall_tin6_1_pole.p3d",
+    "h": 2.01,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.095
+  },
+  "staticobj_wall_tin6_2_4": {
+    "d": 0.203,
+    "file": "structures_bliss/walls/wall_tin6_2_4.p3d",
+    "h": 2.059,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 4.097
+  },
+  "staticobj_wall_tin7_4": {
+    "d": 3.634,
+    "file": "structures_bliss/walls/wall_tin7_4.p3d",
+    "h": 4.134,
+    "verified": true,
+    "w": 9.908
+  },
+  "staticobj_wall_tin7_8": {
+    "d": 0.184,
+    "file": "structures_bliss/walls/wall_tin7_8.p3d",
+    "h": 3.634,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 8.071
+  },
+  "staticobj_wall_tin7_pole": {
+    "d": 0.11,
+    "file": "structures_bliss/walls/wall_tin7_pole.p3d",
+    "h": 3.281,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.11
+  },
+  "staticobj_wall_tin_4": {
+    "d": 0.233,
+    "file": "structures/walls/wall_tin_4.p3d",
+    "h": 2.9,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 4.0
+  },
+  "staticobj_wall_tin_4_2": {
+    "d": 0.307,
+    "file": "structures/walls/wall_tin_4_2.p3d",
+    "h": 2.901,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 4.0
+  },
+  "staticobj_wall_tin_5": {
+    "d": 0.301,
+    "file": "structures/walls/wall_tin_5.p3d",
+    "h": 2.645,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 5.301
+  },
+  "staticobj_wall_tin_pole": {
+    "d": 0.054,
+    "file": "structures/walls/wall_tin_pole.p3d",
+    "h": 2.9,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.054
+  },
+  "staticobj_wall_tincom_3": {
+    "d": 0.364,
+    "file": "structures/walls/wall_tincom_3.p3d",
+    "h": 3.0,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 3.075
+  },
+  "staticobj_wall_tincom_9": {
+    "d": 0.411,
+    "file": "structures/walls/wall_tincom_9.p3d",
+    "h": 3.0,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 9.075
+  },
+  "staticobj_wall_tincom_9_2": {
+    "d": 0.793,
+    "file": "structures/walls/wall_tincom_9_2.p3d",
+    "h": 3.001,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 9.075
+  },
+  "staticobj_wall_tincom_pole": {
+    "d": 0.364,
+    "file": "structures/walls/wall_tincom_pole.p3d",
+    "h": 3.0,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.095
+  },
+  "staticobj_wall_vilvar1_6": {
+    "d": 0.226,
+    "file": "structures/walls/wall_vilvar1_6.p3d",
+    "h": 2.015,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 6.0
+  },
+  "staticobj_wall_vilvar1_pole": {
+    "d": 0.2,
+    "file": "structures/walls/wall_vilvar1_pole.p3d",
+    "h": 2.0,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.2
+  },
+  "staticobj_wall_vilvar2_4": {
+    "d": 0.196,
+    "file": "structures/walls/wall_vilvar2_4.p3d",
+    "h": 3.012,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 4.0
+  },
+  "staticobj_wall_vilvar2_4_2": {
+    "d": 0.181,
+    "file": "structures/walls/wall_vilvar2_4_2.p3d",
+    "h": 3.02,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 4.0
+  },
+  "staticobj_wall_vilvar2_4_end": {
+    "d": 0.175,
+    "file": "structures/walls/wall_vilvar2_4_end.p3d",
+    "h": 3.007,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 4.0
+  },
+  "staticobj_wall_vilvar2_pole": {
+    "d": 0.155,
+    "file": "structures/walls/wall_vilvar2_pole.p3d",
+    "h": 3.001,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.257
+  },
+  "staticobj_wall_wood1_5": {
+    "d": 0.109,
+    "file": "structures/walls/wall_wood1_5.p3d",
+    "h": 1.961,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 5.0
+  },
+  "staticobj_wall_wood1_5_2": {
+    "d": 0.133,
+    "file": "structures/walls/wall_wood1_5_2.p3d",
+    "h": 1.961,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 5.0
+  },
+  "staticobj_wall_wood1_5_pole": {
+    "d": 0.123,
+    "file": "structures/walls/wall_wood1_5_pole.p3d",
+    "h": 1.881,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.162
+  },
+  "staticobj_wall_wood1d_5": {
+    "d": 0.152,
+    "file": "structures/walls/wall_wood1d_5.p3d",
+    "h": 1.961,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 5.0
+  },
+  "staticobj_wall_wood1d_5_2": {
+    "d": 0.135,
+    "file": "structures/walls/wall_wood1d_5_2.p3d",
+    "h": 1.962,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 5.0
+  },
+  "staticobj_wall_wood1d_5_pole": {
+    "d": null,
+    "file": "structures/walls/wall_wood1d_5_pole.p3d",
+    "h": null,
+    "verified": false,
+    "w": null
+  },
+  "staticobj_wall_wood2_5": {
+    "d": 0.191,
+    "file": "structures/walls/wall_wood2_5.p3d",
+    "h": 2.019,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 5.0
+  },
+  "staticobj_wall_wood2_5_end": {
+    "d": 0.183,
+    "file": "structures/walls/wall_wood2_5_end.p3d",
+    "h": 2.014,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 5.0
+  },
+  "staticobj_wall_wood2_5_end_2": {
+    "d": 0.176,
+    "file": "structures/walls/wall_wood2_5_end_2.p3d",
+    "h": 2.019,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 5.0
+  },
+  "staticobj_wall_wood2_5_pole": {
+    "d": 0.101,
+    "file": "structures/walls/wall_wood2_5_pole.p3d",
+    "h": 1.958,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 5.0
+  },
+  "staticobj_wall_wood3_4": {
+    "d": 0.287,
+    "file": "structures/walls/wall_wood3_4.p3d",
+    "h": 1.867,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 3.605
+  },
+  "staticobj_wall_wood3_4_end": {
+    "d": 0.286,
+    "file": "structures/walls/wall_wood3_4_end.p3d",
+    "h": 1.867,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 3.697
+  },
+  "staticobj_wall_wood4_4": {
+    "d": 0.452,
+    "file": "structures/walls/wall_wood4_4.p3d",
+    "h": 2.21,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 3.888
+  },
+  "staticobj_wall_wood4_end1": {
+    "d": 0.611,
+    "file": "structures/walls/wall_wood4_end1.p3d",
+    "h": 2.213,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 3.456
+  },
+  "staticobj_wall_wood4_end2": {
+    "d": 0.55,
+    "file": "structures/walls/wall_wood4_end2.p3d",
+    "h": 1.323,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 3.411
+  },
+  "staticobj_wall_wood4_pole": {
+    "d": 0.452,
+    "file": "structures/walls/wall_wood4_pole.p3d",
+    "h": 2.21,
+    "verified": true,
+    "w": 0.533
+  },
+  "staticobj_wall_woodf_5": {
+    "d": 2.088,
+    "file": "structures/walls/wall_woodf_5.p3d",
+    "h": 5.225,
+    "verified": true,
+    "w": 9.882
+  },
+  "staticobj_wall_woodf_5_2": {
+    "d": 2.088,
+    "file": "structures/walls/wall_woodf_5_2.p3d",
+    "h": 5.22,
+    "verified": true,
+    "w": 9.81
+  },
+  "staticobj_wall_woodf_5_end": {
+    "d": 3.061,
+    "file": "structures/walls/wall_woodf_5_end.p3d",
+    "h": 5.018,
+    "verified": true,
+    "w": 9.659
+  },
+  "staticobj_wall_woodvil_4": {
+    "d": 0.178,
+    "file": "structures/walls/wall_woodvil_4.p3d",
+    "h": 2.019,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 4.0
+  },
+  "staticobj_wall_woodvil_4_2": {
+    "d": 0.164,
+    "file": "structures/walls/wall_woodvil_4_2.p3d",
+    "h": 2.019,
+    "note": "horizontal (long axis = width/X)",
+    "verified": true,
+    "w": 4.0
+  },
+  "staticobj_wall_woodvil_4_pole": {
+    "d": 0.1,
+    "file": "structures/walls/wall_woodvil_4_pole.p3d",
+    "h": 1.958,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.191
+  },
+  "staticobj_walls_end": {
+    "d": 0.398,
+    "file": "structures/walls/walls_end.p3d",
+    "h": 2.484,
+    "note": "vertical (long axis = height/Y)",
+    "verified": true,
+    "w": 0.235
+  },
+  "staticobj_wreck_mining_excavator": {
+    "d": 30.15,
+    "file": "structures_bliss/wrecks/vehicles/wreck_mining_excavator.p3d",
+    "h": 20.53,
+    "verified": true,
+    "w": 19.315
+  },
+  "staticobj_wreck_mining_haultruck": {
+    "d": 17.434,
+    "file": "structures_bliss/wrecks/vehicles/wreck_mining_haultruck.p3d",
+    "h": 8.413,
+    "verified": true,
+    "w": 11.536
+  },
+  "staticobj_wreck_tractor": {
+    "d": 3.782,
+    "file": "structures_bliss/wrecks/vehicles/wreck_tractor.p3d",
+    "h": 2.792,
+    "verified": true,
+    "w": 2.295
+  }
+}

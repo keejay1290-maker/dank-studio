@@ -19,14 +19,15 @@ import { getObjectDef } from "../constants";
 
 export type GenParams = Record<string, number>;
 
-// ─── Shorthand wall class constants ─────────────────────────────────────────
-const CASTLE  = "staticobj_castle_wall3";      // 8m × 2m
-const STONE   = "staticobj_wall_stone";        // 8m × 3.5m dark
-const STONE2  = "staticobj_wall_stone2";       // 8m × 3.5m light
-const CNC8    = "staticobj_wall_cncsmall_8";   // 8m × 3m concrete
-const CNC4    = "staticobj_wall_cncsmall_4";   // 4m × 3m concrete
-const MILCNC  = "staticobj_wall_milcnc_4";     // 4m × 3m metal
-const IND10   = "staticobj_wall_indcnc_10";    // 8.75m × 10m industrial
+// ─── Shorthand wall class constants (P3D-verified dimensions) ───────────────
+// w = face width (X, horizontal spacing), h = panel height (Y), d = depth (Z)
+const CASTLE  = "staticobj_castle_wall3";      // ~8m × 2m  (P3D not scanned)
+const STONE   = "staticobj_wall_stone";        // 10.060m × 2.034m dark stone
+const STONE2  = "staticobj_wall_stone2";       // 9.408m × 1.572m light stone
+const CNC8    = "staticobj_wall_cncsmall_8";   // 8.008m × 2.300m concrete
+const CNC4    = "staticobj_wall_cncsmall_4";   // 4.017m × 2.324m concrete
+const MILCNC  = "staticobj_wall_milcnc_4";     // 4.052m × 4.744m military
+const IND10   = "staticobj_wall_indcnc_10";    // 9.012m × 9.758m industrial
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  SCI-FI
@@ -52,10 +53,10 @@ const IND10   = "staticobj_wall_indcnc_10";    // 8.75m × 10m industrial
 export function gen_death_star(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
   const R     = p.r ?? 50;           // radius 50 — ~920 panels total, well under 1200 limit
-  const panelW = 8.75;               // IND10 face width
+  const panelW = 9.012;              // IND10 face width (P3D-verified)
 
   // ── Materials ─────────────────────────────────────────────────────────────
-  const MAT_MAIN  = IND10;           // main hull plates — 8.75×10 industrial
+  const MAT_MAIN  = IND10;           // main hull plates — 9.012×9.758 industrial
   const MAT_BAND  = "staticobj_wall_indcnc4_8"; // 8m × 8m darker band
   const MAT_TRENCH= CNC4;            // trench floor panels
   const MAT_RIM   = STONE;           // trench wall rim — dark grey
@@ -316,13 +317,13 @@ export function gen_atat_walker(p: GenParams): Point3D[] {
   const S  = Math.max(0.5, p.scale ?? 1);
 
   // ── Dimensions ────────────────────────────────────────────────────────────
-  const LH = 16 * S;   // leg height (ground to body floor)
-  const BW =  7 * S;   // body half-width  (full = 14m)
-  const BD = 12 * S;   // body half-depth  (full = 24m)
-  // Body is one row of IND10 (10m tall) → sits from LH to LH+10
-  const bodyTop = LH + 10 * S;
+  const LH = 16 * S;        // leg height (ground to body floor)
+  const BW =  7 * S;        // body half-width  (full = 14m)
+  const BD = 12 * S;        // body half-depth  (full = 24m)
+  // Body is one row of IND10 (P3D height = 9.758m) → sits from LH to LH+9.758
+  const bodyTop = LH + 9.758 * S;
 
-  // ── BODY — IND10 armour plates ────────────────────────────────────────────
+  // ── BODY — IND10 armour plates (9.758m tall) ──────────────────────────────
   drawRect(pts, 0, LH, 0, BW, BD, IND10);
 
   // ── NECK — angled forward from body front-top to head ─────────────────────

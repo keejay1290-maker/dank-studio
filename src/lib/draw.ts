@@ -238,11 +238,11 @@ export function drawSphereBudgeted(
   r:          number,
   budget:     number,
   candidates: string[] = [
-    "staticobj_wall_indcnc_10",     // 8.75 × 10  — biggest (5× coverage)
-    "staticobj_wall_indcnc4_8",     // 8.00 × 8
-    "staticobj_wall_indcnch_10",    // 8.75 × 5
-    "staticobj_wall_stone",         // 8.00 × 3.5
-    "staticobj_wall_cncsmall_8",    // 8.00 × 3
+    "staticobj_wall_indcnc_10",     // 9.012 × 9.758 — biggest (5× coverage)
+    "staticobj_wall_indcnc4_8",     // 8.044 × 3.004
+    "staticobj_wall_indcnch_10",    // 9.608 × 1.113 (horizontal slab)
+    "staticobj_wall_stone",         // 10.060 × 2.034
+    "staticobj_wall_cncsmall_8",    // 8.008 × 2.300
   ],
 ): string {
   for (const c of candidates) {
