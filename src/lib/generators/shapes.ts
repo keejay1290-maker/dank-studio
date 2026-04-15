@@ -1130,14 +1130,26 @@ export function gen_taj_mahal(p: GenParams): Point3D[] {
   const chhatriR = 4 * S;
   for (const cx of [-cOff, cOff]) {
      for (const cz of [-cOff, cOff]) {
+        // Pillars (Square cross pattern, fixed scale S to avoid auto-scaling gaps)
         for (let y = domeBaseY; y < domeBaseY + 5*S; y += STONE_H) {
-           drawRect(pts, cx, y, cz, chhatriR, chhatriR, STONE2);
+           pts.push({ x: cx, y, z: cz - chhatriR/2, yaw: 0,   scale: S, name: STONE2 });
+           pts.push({ x: cx, y, z: cz + chhatriR/2, yaw: 180, scale: S, name: STONE2 });
+           pts.push({ x: cx - chhatriR/2, y, z: cz, yaw: 90,  scale: S, name: STONE2 });
+           pts.push({ x: cx + chhatriR/2, y, z: cz, yaw: -90, scale: S, name: STONE2 });
         }
+        // Small Domes (fixed height stack)
         for (let y = domeBaseY + 6*S; y < domeBaseY + 10*S; y += STONE_H) {
            const t = (y - (domeBaseY + 6*S)) / (4*S);
            const r = chhatriR * Math.sqrt(1 - t*t);
-           if (r > 0.5*S) drawRing(pts, cx, y, cz, r, STONE2);
+           if (r > 0) {
+              pts.push({ x: cx, y, z: cz - r, yaw: 0,   scale: S, name: STONE2 });
+              pts.push({ x: cx, y, z: cz + r, yaw: 180, scale: S, name: STONE2 });
+              pts.push({ x: cx - r, y, z: cz, yaw: 90,  scale: S, name: STONE2 });
+              pts.push({ x: cx + r, y, z: cz, yaw: -90, scale: S, name: STONE2 });
+           }
         }
+        // Chhatri Finial (Spire)
+        pts.push({ x: cx, y: domeBaseY + 10*S, z: cz, yaw: 0, scale: S * 0.7, name: "barrel_red" });
      }
   }
 
@@ -1148,21 +1160,35 @@ export function gen_taj_mahal(p: GenParams): Point3D[] {
   
   for (const cx of [-mOff, mOff]) {
      for (const cz of [-mOff, mOff]) {
-        // Tower shafts
+        // Tower shafts (Cruciform/Square stack with fixed scale S to maintain 1.572m height)
         for (let y = hPlinth; y < hPlinth + minaretH; y += STONE_H) {
-           drawRing(pts, cx, y, cz, minaretR, STONE2);
+           pts.push({ x: cx, y, z: cz - minaretR, yaw: 0,   scale: S, name: STONE2 });
+           pts.push({ x: cx, y, z: cz + minaretR, yaw: 180, scale: S, name: STONE2 });
+           pts.push({ x: cx - minaretR, y, z: cz, yaw: 90,  scale: S, name: STONE2 });
+           pts.push({ x: cx + minaretR, y, z: cz, yaw: -90, scale: S, name: STONE2 });
         }
+        
         // Projecting balconies
-        drawRing(pts, cx, hPlinth + minaretH*0.4, cz, minaretR + 1.5*S, STONE2);
-        drawRing(pts, cx, hPlinth + minaretH*0.8, cz, minaretR + 1.5*S, STONE2);
+        for (const balcY of [hPlinth + minaretH*0.4, hPlinth + minaretH*0.8]) {
+            // A dark stone landing using explicitly sized panels
+            drawRect(pts, cx, balcY, cz, minaretR + 1.5*S, minaretR + 1.5*S, "staticobj_wall_indcnc4_4");
+        }
         
         // Capping chhatris
         const mTop = hPlinth + minaretH;
         for (let y = mTop; y < mTop + 4*S; y += STONE_H) {
            const t = (y - mTop) / (4*S);
-           const r = minaretR * Math.sqrt(1 - t*t);
-           if (r > 0.5*S) drawRing(pts, cx, y, cz, r, STONE2);
+           const r = (minaretR + 1*S) * Math.sqrt(1 - t*t);
+           if (r > 0) {
+              pts.push({ x: cx, y, z: cz - r, yaw: 0,   scale: S, name: STONE2 });
+              pts.push({ x: cx, y, z: cz + r, yaw: 180, scale: S, name: STONE2 });
+              pts.push({ x: cx - r, y, z: cz, yaw: 90,  scale: S, name: STONE2 });
+              pts.push({ x: cx + r, y, z: cz, yaw: -90, scale: S, name: STONE2 });
+           }
         }
+
+        // Aviation light / Spire on top of the minarets
+        pts.push({ x: cx, y: mTop + 4*S, z: cz, yaw: 0, scale: S * 0.7, name: "barrel_red" });
      }
   }
 
