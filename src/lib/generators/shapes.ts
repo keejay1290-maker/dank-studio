@@ -298,48 +298,90 @@ export function gen_death_star(p: GenParams): Point3D[] {
 
 /**
  * 🤖 AT-AT WALKER — Imperial All Terrain Armoured Transport
- * Confirmed working — ported from old build.
+ *
+ * Research: T-1 walker — 22.5m tall, 26m long, 8.6m wide.
+ * At S=1 this generator is ~3× real scale for DayZ visibility.
+ *
+ * Structure:
+ *  • Body — huge IND10 armour-plate box on 4 articulated legs
+ *  • Neck — short angled spar from front-top of body to head base
+ *  • Head — CNC8 box, facing south (-Z). Two chin cannons with barrel_red tips.
+ *  • Legs — MILCNC panels: upper thigh (angled outward), lower shin (near-vertical), foot pad
+ *
+ * The angled drawWall segments auto-calculate pitch → panels look rotated/mechanical.
+ * barrel_red at cannon muzzles = the original working look.
  */
 export function gen_atat_walker(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const S  = p.scale ?? 1;
-  const BW = 18 * S, BH = 8 * S, BD = 12 * S;  // body
-  const LH = 14 * S;  // leg height
-  const FW = 5 * S;   // foot width
+  const S  = Math.max(0.5, p.scale ?? 1);
 
-  // ── BODY ──────────────────────────────────────────────────────────────────
-  for (let y = LH; y <= LH + BH; y += 4 * S) {
-    drawRect(pts, 0, y, 0, BW/2, BD/2, IND10);
-  }
-  // Neck
-  for (let y = LH + BH; y <= LH + BH + 6 * S; y += 4 * S) {
-    drawRect(pts, 0, y, -BD/3, 3 * S, 3 * S, IND10);
-  }
-  // Head
-  const headY = LH + BH + 6 * S;
-  drawRect(pts, 0, headY, -BD/3, 6*S, 5*S, IND10);
-  drawRect(pts, 0, headY + 4*S, -BD/3, 6*S, 5*S, IND10);
-  // Chin cannons
-  for (let c = -1; c <= 1; c += 2) {
-    drawWall(pts, c*4*S, headY+1*S, -BD/3-5*S, c*4*S, headY+1*S, -BD/3-12*S, IND10);
+  // ── Dimensions ────────────────────────────────────────────────────────────
+  const LH = 16 * S;   // leg height (ground to body floor)
+  const BW =  7 * S;   // body half-width  (full = 14m)
+  const BD = 12 * S;   // body half-depth  (full = 24m)
+  // Body is one row of IND10 (10m tall) → sits from LH to LH+10
+  const bodyTop = LH + 10 * S;
+
+  // ── BODY — IND10 armour plates ────────────────────────────────────────────
+  drawRect(pts, 0, LH, 0, BW, BD, IND10);
+
+  // ── NECK — angled forward from body front-top to head ─────────────────────
+  // Front of body is at z = -BD. Neck angles forward (more -Z) and slightly down.
+  const neckBX = 0, neckBY = bodyTop,     neckBZ = -BD;
+  const neckTX = 0, neckTY = LH + 6 * S, neckTZ = -BD - 10 * S;
+  drawWall(pts, neckBX, neckBY, neckBZ, neckTX, neckTY, neckTZ, IND10);
+
+  // ── HEAD — CNC8 box (2 stacked rows = 6m tall) ───────────────────────────
+  // Head centre Z is 8m past the neck tip; head faces south (-Z direction).
+  const headCZ = neckTZ - 6 * S;   // centre of head along Z
+  const headBY = neckTY - 5 * S;   // head base Y (slightly below neck tip)
+  const HW = 5 * S;                 // head half-width (X)
+  const HD = 6 * S;                 // head half-depth (Z)
+  drawRect(pts, 0, headBY,           headCZ, HW, HD, CNC8);
+  drawRect(pts, 0, headBY + 3 * S,  headCZ, HW, HD, CNC8);
+
+  // ── CHIN CANNONS — two forward barrels with barrel_red muzzles ───────────
+  // Mounted on the lower chin (front-bottom of head).
+  const cannonY  = headBY + 1 * S;          // chin height
+  const cannonZ1 = headCZ - HD;             // cannon root (front face of head)
+  const cannonZ2 = cannonZ1 - 10 * S;       // muzzle tip
+
+  for (const cx of [-3 * S, 3 * S]) {
+    drawWall(pts, cx, cannonY, cannonZ1, cx, cannonY, cannonZ2, CNC4);
+    // barrel_red cluster at the muzzle — the original working look
+    pts.push({ x: cx,            y: cannonY + 1.5 * S, z: cannonZ2, yaw: 0, name: "barrel_red" });
+    pts.push({ x: cx,            y: cannonY,            z: cannonZ2, yaw: 0, name: "barrel_red" });
+    pts.push({ x: cx + 0.4 * S, y: cannonY + 0.8 * S, z: cannonZ2, yaw: 0, name: "barrel_red" });
+    pts.push({ x: cx - 0.4 * S, y: cannonY + 0.8 * S, z: cannonZ2, yaw: 0, name: "barrel_red" });
   }
 
-  // ── 4 LEGS ────────────────────────────────────────────────────────────────
-  const legPos = [
-    { lx:  BW/2 - 2*S, lz:  BD/2 - 2*S },
-    { lx: -BW/2 + 2*S, lz:  BD/2 - 2*S },
-    { lx:  BW/2 - 2*S, lz: -BD/2 + 2*S },
-    { lx: -BW/2 + 2*S, lz: -BD/2 + 2*S },
+  // ── 4 LEGS — MILCNC angled segments (auto-pitch via drawWall) ────────────
+  // 2 front legs (z = -BD), 2 rear legs (z = +BD)
+  const legPositions = [
+    { lx:  BW, lz: -BD },   // front-right
+    { lx: -BW, lz: -BD },   // front-left
+    { lx:  BW, lz:  BD },   // rear-right
+    { lx: -BW, lz:  BD },   // rear-left
   ];
-  for (const leg of legPos) {
-    // Upper leg (slanted)
-    const mx = leg.lx * 0.6, mz = leg.lz * 0.6;
-    drawWall(pts, leg.lx, LH, leg.lz, mx, LH * 0.5, mz, IND10);
-    // Lower leg (vertical)
-    drawWall(pts, mx, LH * 0.5, mz, mx, 0, mz, IND10);
-    // Foot platform
-    drawRect(pts, mx, 1*S, mz, FW/2, FW/2, IND10);
+
+  for (const leg of legPositions) {
+    // Knee: splayed outward 30%, halfway up
+    const kneeX = leg.lx * 1.35;
+    const kneeY = LH * 0.52;
+    const kneeZ = leg.lz;
+
+    // Ankle: pulls inward from knee, near ground
+    const ankleX = leg.lx * 1.15;
+    const ankleY = 2 * S;
+
+    // Upper leg (hip → knee) — angled outward: panels rotate automatically via drawWall pitch
+    drawWall(pts, leg.lx, LH, leg.lz, kneeX, kneeY, kneeZ, MILCNC);
+    // Lower leg (knee → ankle)
+    drawWall(pts, kneeX, kneeY, kneeZ, ankleX, ankleY, kneeZ, MILCNC);
+    // Foot pad (wide flat base)
+    drawRect(pts, ankleX, 0.5 * S, kneeZ, 3.5 * S, 4 * S, CNC8);
   }
+
   return pts;
 }
 
@@ -561,31 +603,124 @@ export function gen_saturn(p: GenParams): Point3D[] {
   return pts;
 }
 
+/**
+ * ✈️ X-WING STARFIGHTER (T-65B) — Full structural rewrite
+ *
+ * Reference: Real T-65B — 12.5m long, 11m wingspan (S-foils open).
+ * At S=1 this is ~3× scale for DayZ panel visibility.
+ *
+ * Structure (nose points toward -Z / South):
+ *  • Fuselage — CNC4 rectangular cross-sections along Z, tapered at nose
+ *  • Cockpit canopy — raised CNC4 box above fuselage at mid-ship
+ *  • R2-D2 dome — barrel_blue behind cockpit
+ *  • Vertical tail fin — two CNC4 panels rising from tail
+ *  • 4 Wings — CNC8 panels laid FLAT (pitch=-90) in X attack formation
+ *      upper wings angle UP toward tip, lower wings angle DOWN
+ *  • 4 Engine nacelles — drawRing CNC4 at the outer wing root (mid-span)
+ *  • 4 Laser cannons — CNC4 drawWall extending forward from each wingtip
+ *  • Red wing stripes — barrel_red accent along each wing
+ *  • Cannon muzzle tips — barrel_red at the very end of each cannon
+ *
+ * Wing geometry note:
+ *   pitch=-90 lays a CNC8 panel flat (face points up).
+ *   yaw=0 keeps the 8m span running East-West.
+ *   Varying Y per span section creates the X spread seen head-on.
+ */
 export function gen_xwing(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
   const S = Math.max(0.5, p.scale ?? 1);
-  // Fuselage
-  for (let z = -6*S; z <= 6*S; z += 2*S) drawRing(pts, 0, 0, z, 1.2*S, CNC8);
-  drawRing(pts, 0, 0, -6*S, 1.5*S, CNC8);
-  drawRing(pts, 0, 0.4*S, -7*S, 1.0*S, CNC8);
-  pts.push({ x:0, y:0.2*S, z:-8*S, yaw:0, name: CNC8 });
-  // Cockpit
-  drawRing(pts, 0, 1.2*S, -4*S, 1.0*S, CNC8);
-  drawRing(pts, 0, 1.8*S, -4*S, 0.5*S, CNC8);
-  pts.push({ x:0, y:2.2*S, z:-4*S, yaw:0, name: CNC8 });
-  // S-foils
-  const wings = [
-    { ax:1.2,ay:1.2,tx:5.5,ty:3.0 }, { ax:-1.2,ay:1.2,tx:-5.5,ty:3.0 },
-    { ax:1.2,ay:-1.2,tx:5.5,ty:-3.0 }, { ax:-1.2,ay:-1.2,tx:-5.5,ty:-3.0 },
+
+  // ── Dimensions ────────────────────────────────────────────────────────────
+  const fY    = 3 * S;    // fuselage floor Y (sits off ground)
+  const noseZ = -18 * S;  // nose tip Z
+  const tailZ =  10 * S;  // tail end Z
+
+  // ── FUSELAGE — CNC4 cross-sections, tapered at nose ──────────────────────
+  // Each section: drawRect creates a 4-wall rectangular tube
+  const fuseSections: Array<{ z: number; hw: number; hd: number }> = [
+    { z: noseZ + 3*S,  hw: 0.5*S, hd: 0.4*S },  // narrow nose section
+    { z: noseZ + 7*S,  hw: 1.2*S, hd: 1.0*S },  // taper widens
+    { z: noseZ + 11*S, hw: 1.8*S, hd: 1.5*S },  // transitioning to body
+    { z: -4 * S,       hw: 2.2*S, hd: 1.8*S },  // pre-cockpit body
+    { z:  0 * S,       hw: 2.2*S, hd: 1.8*S },  // wing root body
+    { z:  4 * S,       hw: 2.0*S, hd: 1.7*S },  // rear body
+    { z: tailZ - 1*S,  hw: 1.6*S, hd: 1.4*S },  // tail
   ];
-  for (const w of wings) {
-    drawWall(pts, w.ax*S, w.ay*S, 2*S, w.tx*S, w.ty*S, 2*S, CNC8);
-    drawWall(pts, w.ax*S, w.ay*S, 5*S, w.tx*S, w.ty*S, 5*S, CNC8);
+  for (const sec of fuseSections) {
+    drawRect(pts, 0, fY, sec.z, sec.hw, sec.hd, CNC4);
   }
-  // Nacelles
-  for (const n of [{ cx:5.5,cy:3.0 },{cx:-5.5,cy:3.0},{cx:5.5,cy:-3.0},{cx:-5.5,cy:-3.0}]) {
-    for (let z = 0; z <= 6*S; z += 2*S) drawRing(pts, n.cx*S, n.cy*S, z, 0.9*S, CNC8);
+  // Nose point cap
+  pts.push({ x: 0, y: fY, z: noseZ + 0.5*S, yaw: 0, name: CNC4 });
+
+  // ── COCKPIT CANOPY — raised above fuselage, mid-ship ─────────────────────
+  // Sits from z=-10 to z=-4, elevated 2.5m above fuselage floor
+  for (const z of [-9*S, -6*S, -3.5*S]) {
+    drawRect(pts, 0, fY + 2.5*S, z, 1.3*S, 1.1*S, CNC4);
   }
+  // Canopy top ridge
+  pts.push({ x: 0, y: fY + 4.2*S, z: -7*S, yaw: 0, name: CNC4 });
+
+  // R2-D2 astromech dome behind cockpit
+  pts.push({ x: 0, y: fY + 3.8*S, z: -1.5*S, yaw: 0, name: "barrel_blue" });
+
+  // ── VERTICAL TAIL FIN ─────────────────────────────────────────────────────
+  for (let y = 0; y <= 4*S; y += 2.5*S) {
+    pts.push({ x: 0, y: fY + 1.5*S + y, z: tailZ - 2*S, yaw: 90, name: CNC4 });
+    pts.push({ x: 0, y: fY + 1.5*S + y, z: tailZ - 5*S, yaw: 90, name: CNC4 });
+  }
+
+  // ── WINGS — S-foils in attack position (X formation) ─────────────────────
+  // pitch=-90 → CNC8 panel lays flat (8m E-W × 3m N-S, 0.4m thick)
+  // Y increases toward tip on upper wings, decreases on lower wings → X shape
+  //
+  // Wing chord spans z=-6 to z=+6 (covered by 4 panels × 3m each)
+  const chordZs  = [-4.5*S, -1.5*S, 1.5*S, 4.5*S];
+  // Span sections: inner (x=±4), outer (x=±12), tip approach (x=±18)
+  const spanDefs = [
+    { t: 0.0,  xMag: 4  },   // inner span  (x ± 0–8)
+    { t: 0.55, xMag: 12 },   // outer span  (x ± 8–16)
+    { t: 0.9,  xMag: 18 },   // tip section (x ± 14–22)
+  ];
+
+  for (const side of [-1, 1] as const) {
+    for (const upper of [1, -1] as const) {
+      // upper=1: wing rises 5m at tip. upper=-1: wing drops 3m at tip.
+      const tipYSpread = upper === 1 ? 5 * S : -3 * S;
+
+      for (const span of spanDefs) {
+        const wx = side * span.xMag * S;
+        const wy = fY + 0.5*S + span.t * tipYSpread;
+
+        // Flat wing surface — all chord panels at this span section
+        for (const cz of chordZs) {
+          pts.push({ x: wx, y: wy, z: cz, yaw: 0, pitch: -90, name: CNC8 });
+        }
+
+        // Red stripe — one barrel_red per span section along wing midline
+        pts.push({ x: wx, y: wy + 0.3, z: 0, yaw: 0, pitch: -90, name: "barrel_red" });
+      }
+
+      // ── ENGINE NACELLE — at outer wing root (x=±12) ───────────────────
+      // 3 rings form the cylindrical engine body; military concrete for contrast
+      const engX = side * 12 * S;
+      const engY = fY + 0.5*S + 0.45 * tipYSpread;
+      for (let z = 3*S; z <= 9*S; z += 3*S) {
+        drawRing(pts, engX, engY, z, 2.2*S, CNC4);
+      }
+      drawRing(pts, engX, engY, 9*S, 2.5*S, MILCNC);  // exhaust ring
+
+      // ── LASER CANNON — from wingtip, extending forward past nose ──────
+      const tipX = side * 21 * S;
+      const tipY = fY + 0.5*S + tipYSpread;
+      drawWall(pts, tipX, tipY, -7*S, tipX, tipY, noseZ - 1*S, CNC4);
+      // barrel_red muzzle cluster at cannon tip
+      pts.push({ x: tipX,            y: tipY + 1.5*S, z: noseZ - 1*S, yaw: 0, name: "barrel_red" });
+      pts.push({ x: tipX,            y: tipY,          z: noseZ - 1*S, yaw: 0, name: "barrel_red" });
+      pts.push({ x: tipX + 0.5*S,   y: tipY + 0.8*S,  z: noseZ - 1*S, yaw: 0, name: "barrel_red" });
+      pts.push({ x: tipX - 0.5*S,   y: tipY + 0.8*S,  z: noseZ - 1*S, yaw: 0, name: "barrel_red" });
+    }
+  }
+
   return pts;
 }
 

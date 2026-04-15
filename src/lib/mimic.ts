@@ -86,6 +86,22 @@ const MIMICS: Record<string, MimicDef> = {
   "barrel_yellow":                    { w: 0.70, h:  0.9, d: 0.70, color: "#f1c40f" },
   "barrel_green":                     { w: 0.70, h:  0.9, d: 0.70, color: "#27ae60" },
 
+  // ── PIPES & TUBES ────────────────────────────────────────────────────────
+  "staticobj_misc_concretepipe":       { w: 2.00, h:  2.0, d: 2.00, color: "#7a7a7a" },
+  "staticobj_misc_boundarystone_tube": { w: 0.30, h:  1.8, d: 0.30, color: "#6a5a4a" },
+  "staticobj_pier_tube_big":           { w: 1.50, h:  3.0, d: 1.50, color: "#5a5a5a" },
+  "staticobj_pier_tube_small":         { w: 0.80, h:  1.5, d: 0.80, color: "#5a5a5a" },
+  "staticobj_pipe_big_18m":            { w: 1.50, h:  1.5, d:18.00, color: "#666666" },
+  "staticobj_pipe_med_9m":             { w: 0.90, h:  0.9, d: 9.00, color: "#6a6a6a" },
+  "staticobj_pipe_small_20m":          { w: 0.40, h:  0.4, d:20.00, color: "#707070" },
+
+  // ── MONUMENTS / PILLARS ──────────────────────────────────────────────────
+  "staticobj_monument_war1":           { w: 2.00, h: 12.0, d: 2.00, color: "#8a8a8a" },
+  "staticobj_monument_enoch1":         { w: 1.00, h:  3.0, d: 1.00, color: "#8a8a8a" },
+
+  // ── CASTLE STRUCTURAL ────────────────────────────────────────────────────
+  "land_castle_bastion":               { w: 6.00, h:  8.0, d: 6.00, color: "#7a6a5a" },
+
   // ── WRECKS ───────────────────────────────────────────────────────────────
   "wreck_ship_large_front":           { w:15.00, h:  7.0, d:10.00, color: "#5a6a7a" },
   "wreck_ship_large_mid":             { w:15.00, h:  6.0, d:10.00, color: "#5a6a7a" },

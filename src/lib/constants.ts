@@ -94,6 +94,32 @@ export const OBJECT_CATALOGUE: ObjectDef[] = [
   { classname: "barrel_yellow",                label: "Barrel (Yellow)",           category: "Props",    width:  0.70, height:  0.9, depth: 0.70, color: "#f1c40f" },
   { classname: "barrel_green",                 label: "Barrel (Green)",            category: "Props",    width:  0.70, height:  0.9, depth: 0.70, color: "#27ae60" },
 
+  // ── PIPES & TUBES (from DAYZ_OBJECT_CATALOGUE.txt) ───────────────────────
+  // Dimensions are measured estimates — verify in-game if using for precision builds.
+  // concretepipe: short large-diameter drainage section (sewage pipe look)
+  { classname: "staticobj_misc_concretepipe",       label: "Concrete Pipe",             category: "Pipes",    width:  2.00, height:  2.0, depth: 2.00, color: "#7a7a7a" },
+  // boundarystone_tube: tiny thin cigar/rod — perfect for thin gun barrels, railings
+  { classname: "staticobj_misc_boundarystone_tube", label: "Boundary Tube (Tiny Pipe)", category: "Pipes",    width:  0.30, height:  1.8, depth: 0.30, color: "#6a5a4a" },
+  // pier_tube: dock bollard tubes — thick and cylindrical
+  { classname: "staticobj_pier_tube_big",           label: "Pier Tube (Big)",           category: "Pipes",    width:  1.50, height:  3.0, depth: 1.50, color: "#5a5a5a" },
+  { classname: "staticobj_pier_tube_small",         label: "Pier Tube (Small)",         category: "Pipes",    width:  0.80, height:  1.5, depth: 0.80, color: "#5a5a5a" },
+  // pipe_big_18m: large industrial pipe section — great for stacks, engine nacelles
+  { classname: "staticobj_pipe_big_18m",            label: "Industrial Pipe 18m",       category: "Pipes",    width:  1.50, height:  1.5, depth:18.00, color: "#666666" },
+  // pipe_med_9m: medium pipe section
+  { classname: "staticobj_pipe_med_9m",             label: "Industrial Pipe 9m",        category: "Pipes",    width:  0.90, height:  0.9, depth: 9.00, color: "#6a6a6a" },
+  // pipe_small_20m: long thin pipe — railings, antenna masts, antenna arrays
+  { classname: "staticobj_pipe_small_20m",          label: "Small Pipe 20m",            category: "Pipes",    width:  0.40, height:  0.4, depth:20.00, color: "#707070" },
+
+  // ── MONUMENTS / PILLARS ──────────────────────────────────────────────────
+  // war1: tall concrete obelisk / pointy column — great for spires
+  { classname: "staticobj_monument_war1",           label: "Obelisk / Concrete Spire",  category: "Props",    width:  2.00, height: 12.0, depth: 2.00, color: "#8a8a8a" },
+  // enoch1: small concrete pillar / marker
+  { classname: "staticobj_monument_enoch1",         label: "Concrete Pillar (Small)",   category: "Props",    width:  1.00, height:  3.0, depth: 1.00, color: "#8a8a8a" },
+
+  // ── CASTLE STRUCTURAL ────────────────────────────────────────────────────
+  // Castle_Bastion: round stone tower section — half-tunnel / circular bastion
+  { classname: "Land_Castle_Bastion",               label: "Castle Bastion (Round)",    category: "Walls",    width:  6.00, height:  8.0, depth: 6.00, color: "#7a6a5a" },
+
   // ── WRECKS ───────────────────────────────────────────────────────────────
   { classname: "wreck_ship_large_front",       label: "Shipwreck Front",           category: "Wrecks",   width: 15.00, height:  7.0, depth:10.00, color: "#5a6a7a" },
   { classname: "wreck_ship_large_mid",         label: "Shipwreck Mid",             category: "Wrecks",   width: 15.00, height:  6.0, depth:10.00, color: "#5a6a7a" },
