@@ -387,8 +387,7 @@ export function gen_atat_walker(p: GenParams): Point3D[] {
     pts.push({ x: cx - 0.4 * S, y: cannonY + 0.8 * S, z: cannonZ2, yaw: 0, name: "barrel_red" });
   }
 
-  // ── 4 LEGS — MILCNC angled segments (auto-pitch via drawWall) ────────────
-  // 2 front legs (z = -BD), 2 rear legs (z = +BD)
+  // ── 4 LEGS — Fully articulated 3D armored segments ───────────────────────
   const legPositions = [
     { lx:  BW, lz: -BD },   // front-right
     { lx: -BW, lz: -BD },   // front-left
@@ -397,21 +396,32 @@ export function gen_atat_walker(p: GenParams): Point3D[] {
   ];
 
   for (const leg of legPositions) {
-    // Knee: splayed outward 30%, halfway up
     const kneeX = leg.lx * 1.35;
     const kneeY = LH * 0.52;
     const kneeZ = leg.lz;
 
-    // Ankle: pulls inward from knee, near ground
     const ankleX = leg.lx * 1.15;
     const ankleY = 2 * S;
 
-    // Upper leg (hip → knee) — angled outward: panels rotate automatically via drawWall pitch
-    drawWall(pts, leg.lx, LH, leg.lz, kneeX, kneeY, kneeZ, MILCNC);
-    // Lower leg (knee → ankle)
-    drawWall(pts, kneeX, kneeY, kneeZ, ankleX, ankleY, kneeZ, MILCNC);
-    // Foot pad (wide flat base)
-    drawRect(pts, ankleX, 0.5 * S, kneeZ, 3.5 * S, 4 * S, CNC8);
+    // Upper leg / Hip (Enclosed 4-sided strut)
+    drawWall(pts, leg.lx - 2*S, LH, leg.lz - 2*S, kneeX - 2*S, kneeY, kneeZ - 2*S, CNC4);
+    drawWall(pts, leg.lx + 2*S, LH, leg.lz + 2*S, kneeX + 2*S, kneeY, kneeZ + 2*S, CNC4);
+    drawWall(pts, leg.lx - 2*S, LH, leg.lz + 2*S, kneeX - 2*S, kneeY, kneeZ + 2*S, CNC4);
+    drawWall(pts, leg.lx + 2*S, LH, leg.lz - 2*S, kneeX + 2*S, kneeY, kneeZ - 2*S, CNC4);
+
+    // Knee Joint (Solid cylinder ring)
+    drawRing(pts, kneeX, kneeY, kneeZ, 3*S, "barrel_black");
+
+    // Lower leg / Shin (Enclosed 4-sided strut)
+    drawWall(pts, kneeX - 1.5*S, kneeY, kneeZ - 1.5*S, ankleX - 1.5*S, ankleY, kneeZ - 1.5*S, CNC4);
+    drawWall(pts, kneeX + 1.5*S, kneeY, kneeZ + 1.5*S, ankleX + 1.5*S, ankleY, kneeZ + 1.5*S, CNC4);
+    drawWall(pts, kneeX - 1.5*S, kneeY, kneeZ + 1.5*S, ankleX - 1.5*S, ankleY, kneeZ + 1.5*S, CNC4);
+    drawWall(pts, kneeX + 1.5*S, kneeY, kneeZ - 1.5*S, ankleX + 1.5*S, ankleY, kneeZ - 1.5*S, CNC4);
+
+    // Foot pad (Large rounded disc)
+    drawDisk(pts, ankleX, 0.5 * S, kneeZ, 4.5 * S, CNC4);
+    // Toe flap
+    drawWall(pts, ankleX - 3*S, 1.5*S, kneeZ - 5*S, ankleX + 3*S, 1*S, kneeZ - 6*S, CNC4);
   }
 
   return pts;
@@ -539,24 +549,53 @@ export function gen_star_destroyer(p: GenParams): Point3D[] {
   const botY = -3 * S;  // ventral deck height
 
   // 1. PERIMETER WALLS (The wedge border)
-  // Left, Right, and Stern edges using vertical IND10 walls
   drawWall(pts, -HW, 0, sternZ, 0, 0, bowZ, IND10);
   drawWall(pts, HW, 0, sternZ, 0, 0, bowZ, IND10);
   drawWall(pts, -HW, 0, sternZ, HW, 0, sternZ, IND10);
 
   // 2. MAIN HULL DORSAL & VENTRAL DECKS (Flat horizontal panels)
-  // Fill the triangular interior with plates
-  for (let z = bowZ + PD; z <= sternZ - PD / 2; z += PD) {
+  // Instead of an exposed blocky grid pushing out, we lay several perfectly 
+  // tangent layers of deck plates exactly parallel to the diagonal outer hull.
+  // This swallows the rough edges of the inner grid into a smooth border.
+  const edgeLen = Math.sqrt(HW * HW + L * L);
+  const nEdgeP = Math.floor(edgeLen / PW);
+  const eScale = edgeLen / (nEdgeP * PW);
+  
+  for(const side of [-1, 1]) {
+     // Yaw aligns tangent to the diagonal
+     const edgeYaw = side * Math.atan2(HW, L) * 180 / Math.PI + 90; 
+     
+     // 3 layers deep of parallel border plating
+     for(let layer = 0; layer < 3; layer++) {
+        // Shift inwardly towards the central spine
+        const innerShiftX = side * (layer * PD * 0.9 * Math.cos(Math.atan2(HW, L)));
+        const innerShiftZ = layer * PD * 0.9 * Math.sin(Math.atan2(HW, L));
+        
+        for (let i = 0; i < nEdgeP; i++) {
+           const t = (i + 0.5) / nEdgeP;
+           let z = bowZ + t * L + innerShiftZ;
+           let x = (side * t * HW) - innerShiftX;
+           
+           if (z > sternZ - 2*S) continue; // Keep within rear bound
+           
+           pts.push({x, y: deckY, z, yaw: edgeYaw, pitch: -90, scale: eScale, name: IND10});
+           pts.push({x, y: botY, z, yaw: edgeYaw, pitch: -90, scale: eScale, name: IND10});
+        }
+     }
+  }
+
+  // Deep internal grid (now safely shielded 3 layers deep, preventing any jagged edges poking out)
+  for (let z = bowZ + (3*PD); z <= sternZ - PD; z += PD) {
     const fraction = (z - bowZ) / L;
-    const currentHW = HW * fraction - 1 * S; // inset slightly from walls
-    const rows = Math.max(0, Math.floor((currentHW * 2) / PW));
+    const currentHW = (HW * fraction) - (3 * PD * 0.9); 
+    if (currentHW <= 0) continue;
+    
+    const rows = Math.floor((currentHW * 2) / PW);
     const startX = -(rows * PW) / 2 + PW / 2;
 
     for (let i = 0; i < rows; i++) {
       const x = startX + i * PW;
-      // Dorsal Plate (top)
       pts.push({ x, y: deckY, z, yaw: 0, pitch: -90, name: IND10 });
-      // Ventral Plate (bottom)
       if (fraction > 0.4) {
         pts.push({ x, y: botY, z, yaw: 0, pitch: -90, name: IND10 });
       }
