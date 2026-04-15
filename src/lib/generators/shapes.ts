@@ -729,36 +729,6 @@ export function gen_stargate_portal(p: GenParams): Point3D[] {
 }
 
 /**
- * 💀 T-800 ENDOSKELETON
- */
-export function gen_t800(p: GenParams): Point3D[] {
-  const pts: Point3D[] = [];
-  const S = p.scale ?? 1;
-  // Torso
-  drawRect(pts, 0, 8*S, 0, 3*S, 2*S, IND10);
-  drawRect(pts, 0, 11*S, 0, 2.5*S, 1.5*S, IND10);
-  // Head
-  drawRect(pts, 0, 14*S, 0, 2*S, 1.5*S, IND10);
-  drawRect(pts, 0, 16*S, 0, 1.5*S, 1*S, IND10);
-  // Eyes
-  pts.push({ x: -1*S, y: 15.5*S, z: -1.5*S, yaw: 0, name: "barrel_red" });
-  pts.push({ x:  1*S, y: 15.5*S, z: -1.5*S, yaw: 0, name: "barrel_red" });
-  // Arms
-  for (let c = -1; c <= 1; c += 2) {
-    drawWall(pts, c*3*S, 11*S, 0, c*6*S, 7*S, 0, IND10);
-    drawWall(pts, c*6*S, 7*S, 0, c*5*S, 3*S, 1*S, IND10);
-    drawRect(pts, c*5*S, 2*S, 1*S, 1*S, 0.5*S, MILCNC); // hand
-  }
-  // Legs
-  for (let c = -1; c <= 1; c += 2) {
-    drawWall(pts, c*2*S, 8*S, 0, c*2.5*S, 4*S, 0, IND10);
-    drawWall(pts, c*2.5*S, 4*S, 0, c*2*S, 0, 0.5*S, IND10);
-    drawRect(pts, c*2*S, 0, 0.5*S, 1.5*S, 1*S, IND10); // foot
-  }
-  return pts;
-}
-
-/**
  * 🚛 OPTIMUS PRIME
  */
 export function gen_optimus(p: GenParams): Point3D[] {

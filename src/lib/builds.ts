@@ -70,13 +70,7 @@ const SCI_FI: BuildEntry[] = [
       { key: "r", label: "Radius (m)", min: 10, max: 50, step: 2, default: 20 },
     ],
   },
-  {
-    key: "t800_endoskeleton", label: "T-800 Endoskeleton", category: "Sci-Fi",
-    defaultParams: { scale: 1 },
-    params: [
-      { key: "scale", label: "Scale", min: 0.5, max: 5, step: 0.25, default: 1 },
-    ],
-  },
+
   {
     key: "tf_optimus", label: "Optimus Prime", category: "Sci-Fi",
     defaultParams: { scale: 1 },
