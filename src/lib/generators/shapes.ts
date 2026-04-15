@@ -14,7 +14,7 @@
 //  2. Add an import + case in generators/index.ts
 // ─────────────────────────────────────────────────────────────────────────────
 import type { Point3D } from "../types";
-import { drawWall, drawRing, drawRect, drawDisk, drawSphere, drawDome, drawSphereBudgeted, auditSphereCoverage } from "../draw";
+import { drawWall, drawRing, drawRect, drawDisk, drawSphere, drawDome, drawSphereBudgeted, auditSphereCoverage, _drawSphereRings } from "../draw";
 import { getObjectDef } from "../constants";
 
 export type GenParams = Record<string, number>;
@@ -57,7 +57,7 @@ export function gen_death_star(p: GenParams): Point3D[] {
 
   // ── Materials ─────────────────────────────────────────────────────────────
   const MAT_MAIN  = IND10;           // main hull plates — 9.012×9.758 industrial
-  const MAT_BAND  = "staticobj_wall_indcnc4_8"; // 8m × 8m darker band
+  const MAT_BAND  = IND10;           // Must be same height to prevent gaps!
   const MAT_TRENCH= CNC4;            // trench floor panels
   const MAT_RIM   = STONE;           // trench wall rim — dark grey
 
@@ -76,37 +76,48 @@ export function gen_death_star(p: GenParams): Point3D[] {
   const dcy = Math.cos(dishPhi);
   const dcz = Math.sin(dishPhi) * Math.sin(dishTheta);
 
-  // ── Base sphere — use the proven gap-free drawSphere helper ─────────────
-  // Build into a temp array, then filter out panels in the dish + trench
-  // regions before pushing to pts. This keeps all sphere-tiling math in one
-  // place (draw.ts) instead of duplicating it here.
+  // ── Base sphere — Built explicitly bounded by the trench gap ─────────────
+  const panelH = getObjectDef(MAT_MAIN)?.height ?? 9.758;
+  const HULL_HALF_H = panelH / 2;
+
+  // North hemisphere (North Pole down to the top edge of trench)
+  const arcN = trenchPhi - trenchHalf;
+  const nRingsN = Math.max(3, Math.round((arcN * R) / (panelH * 0.75)));
+  
+  // South hemisphere (Bottom edge of trench down to South Pole)
+  const arcS = Math.PI - (trenchPhi + trenchHalf);
+  const nRingsS = Math.max(3, Math.round((arcS * R) / (panelH * 0.75)));
+
   const baseSphere: Point3D[] = [];
-  drawSphere(baseSphere, 0, R, 0, R, MAT_MAIN);
-  // drawSphere stores y at pivot-bottom (surface - panelH/2). Add halfH back
-  // when reconstructing radial direction vectors for dish/trench filtering.
-  const HULL_HALF_H = (getObjectDef(MAT_MAIN)?.height ?? 10) / 2;
+  
+  // North cap
+  baseSphere.push({ x: 0, y: R + R - HULL_HALF_H, z: 0, yaw: 0, pitch: -90, name: MAT_MAIN });
+  _drawSphereRings(baseSphere, 0, R, 0, R, 0, arcN, nRingsN, panelW, HULL_HALF_H, MAT_MAIN);
+  
+  // South half
+  _drawSphereRings(baseSphere, 0, R, 0, R, trenchPhi + trenchHalf, Math.PI, nRingsS, panelW, HULL_HALF_H, MAT_MAIN);
+  // South cap
+  baseSphere.push({ x: 0, y: R - R - HULL_HALF_H, z: 0, yaw: 0, pitch: 90,  name: MAT_MAIN });
 
   for (const panel of baseSphere) {
-    // Reconstruct unit direction from sphere center (0, R, 0)
+    // Reconstruct normal to carve the dish and assign band colors
     const dx = panel.x;
-    const dy = panel.y - R + HULL_HALF_H; // +halfH cancels drawSphere's pivot-bottom offset
+    const dy = panel.y - R + HULL_HALF_H; 
     const dz = panel.z;
     const len = Math.sqrt(dx * dx + dy * dy + dz * dz);
     if (len < 0.001) { pts.push(panel); continue; }
-    const nx = dx / len, ny = dy / len, nz = dz / len;
-
+    
     // Latitude (phi from north pole)
+    const ny = dy / len;
     const phi = Math.acos(Math.max(-1, Math.min(1, ny)));
 
-    // Skip main equatorial trench band
-    if (Math.abs(phi - trenchPhi) < trenchHalf) continue;
-
     // Skip dish region
+    const nx = dx / len, nz = dz / len;
     const dot = nx * dcx + ny * dcy + nz * dcz;
     const dishAngle = Math.acos(Math.max(-1, Math.min(1, dot)));
     if (dishAngle < dishCone) continue;
 
-    // Material banding: darker plates in latitude rings for surface grid look
+    // Material banding: darker plates in latitude rings
     const bandIdx = Math.floor((phi / Math.PI) * 12);
     const nearTrench = Math.abs(phi - trenchPhi) < trenchHalf + 0.05;
     const mat = nearTrench ? MAT_RIM : (bandIdx % 2 === 0 ? MAT_MAIN : MAT_BAND);
@@ -325,21 +336,41 @@ export function gen_atat_walker(p: GenParams): Point3D[] {
 
   // ── BODY — IND10 armour plates (9.758m tall) ──────────────────────────────
   drawRect(pts, 0, LH, 0, BW, BD, IND10);
+  
+  // Solid upper and lower decks for the body encapsulation
+  const PW = 4.052 * S; 
+  const PD = 4.744 * S; 
+  for(let z = -BD + PD/2; z <= BD - PD/2; z += PD) {
+     for(let x = -BW + PW/2; x <= BW - PW/2; x += PW) {
+         pts.push({x, y: LH, z, yaw: 0, pitch: -90, name: MILCNC});
+         pts.push({x, y: bodyTop, z, yaw: 0, pitch: -90, name: MILCNC});
+     }
+  }
 
-  // ── NECK — angled forward from body front-top to head ─────────────────────
-  // Front of body is at z = -BD. Neck angles forward (more -Z) and slightly down.
-  const neckBX = 0, neckBY = bodyTop,     neckBZ = -BD;
-  const neckTX = 0, neckTY = LH + 6 * S, neckTZ = -BD - 10 * S;
-  drawWall(pts, neckBX, neckBY, neckBZ, neckTX, neckTY, neckTZ, IND10);
+  // ── NECK — armored tube extending forward ─────────────────────────────────
+  const neckBX = 0, neckBY = bodyTop - 2 * S, neckBZ = -BD;
+  const neckTX = 0, neckTY = LH + 6 * S,      neckTZ = -BD - 10 * S;
+  // Four walls to construct a fully enclosed structural tunnel
+  drawWall(pts, neckBX - 2*S, neckBY, neckBZ, neckTX - 2*S, neckTY, neckTZ, CNC4);
+  drawWall(pts, neckBX + 2*S, neckBY, neckBZ, neckTX + 2*S, neckTY, neckTZ, CNC4);
+  drawWall(pts, neckBX, neckBY + 2*S, neckBZ, neckTX, neckTY + 2*S, neckTZ, CNC4);
+  drawWall(pts, neckBX, neckBY - 2*S, neckBZ, neckTX, neckTY - 2*S, neckTZ, CNC4);
 
-  // ── HEAD — CNC8 box (2 stacked rows = 6m tall) ───────────────────────────
-  // Head centre Z is 8m past the neck tip; head faces south (-Z direction).
+  // ── HEAD — CNC8 box (6m tall capsular head) ───────────────────────────────
   const headCZ = neckTZ - 6 * S;   // centre of head along Z
   const headBY = neckTY - 5 * S;   // head base Y (slightly below neck tip)
   const HW = 5 * S;                 // head half-width (X)
   const HD = 6 * S;                 // head half-depth (Z)
   drawRect(pts, 0, headBY,           headCZ, HW, HD, CNC8);
-  drawRect(pts, 0, headBY + 3 * S,  headCZ, HW, HD, CNC8);
+  drawRect(pts, 0, headBY + 3 * S,   headCZ, HW, HD, CNC8);
+  
+  // Solid upper and lower decks for the head encapsulation
+  for(let z = headCZ - HD + PD/2; z <= headCZ + HD - PD/2; z += PD) {
+      for(let x = -HW + PW/2; x <= HW - PW/2; x += PW) {
+          pts.push({x, y: headBY, z, yaw: 0, pitch: -90, name: MILCNC});
+          pts.push({x, y: headBY + 6 * S, z, yaw: 0, pitch: -90, name: MILCNC});
+      }
+  }
 
   // ── CHIN CANNONS — two forward barrels with barrel_red muzzles ───────────
   // Mounted on the lower chin (front-bottom of head).

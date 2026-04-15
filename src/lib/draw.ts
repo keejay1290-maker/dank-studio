@@ -144,7 +144,7 @@ export function drawRect(
 //   yaw   = atan2(x,z)*180/π  — panel faces radially outward in XZ plane
 //   pitch = (phi-π/2)*180/π   — phi=0→-90 (flat up), φ=π/2→0 (vertical), φ=π→+90 (flat down)
 // ─────────────────────────────────────────────────────────────────────────────
-function _drawSphereRings(
+export function _drawSphereRings(
   pts: Point3D[],
   cx: number, cy: number, cz: number,
   r: number,
