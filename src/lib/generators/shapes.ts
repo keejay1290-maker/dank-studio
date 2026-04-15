@@ -1052,43 +1052,120 @@ export function gen_eiffel_tower(p: GenParams): Point3D[] {
   return pts;
 }
 
-/**
- * 🕌 TAJ MAHAL
- */
 export function gen_taj_mahal(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
   const S = Math.max(0.5, p.scale ?? 1);
-  const W = 30*S, D = 26*S, BH = 10*S;
+  const STONE_W = 9.408 * S;
+  const STONE_H = 1.572 * S;
+  const STONE2 = "staticobj_wall_stone2";
 
-  // Main plinth
-  for (let y = 0; y <= BH; y += 4*S) drawRect(pts, 0, y, 0, W, D, STONE2);
+  const wPlinth = 40 * S;
+  const hPlinth = 7 * S;
+  const wMain = 24 * S;
+  const hMain = 28 * S;
 
-  // Central dome
-  const domeR = 10*S;
-  for (let dy = 0; dy <= domeR; dy += 2*S) {
-    const r = Math.sqrt(Math.max(0, domeR*domeR - dy*dy));
-    if (r > 0.5) drawRing(pts, 0, BH + domeR + dy, 0, r, STONE2);
-  }
-  pts.push({ x:0, y: BH + 2*domeR + 4*S, z:0, name: STONE2 });
-
-  // 4 minarets at corners
-  const mOff = W + 2*S;
-  const mPos = [{ x:mOff,z:mOff },{ x:-mOff,z:mOff },{ x:mOff,z:-mOff },{ x:-mOff,z:-mOff }];
-  for (const m of mPos) {
-    for (let y = 0; y <= BH + domeR*1.5; y += 4*S) drawRing(pts, m.x, y, m.z, 2.5*S, STONE2);
-    // minaret dome
-    for (let dy = 0; dy <= 3*S; dy += 1.5*S) {
-      const r = Math.sqrt(Math.max(0, 9*S*S - dy*dy));
-      if (r > 0.2) drawRing(pts, m.x, BH+domeR*1.5+dy, m.z, r, STONE2);
-    }
+  // 1. THE MASSIVE PLINTH (Base platform)
+  // Drawn layer by layer using exact STONE_H step to remove vertical gaps
+  for (let y = 0; y < hPlinth; y += STONE_H) {
+     drawRect(pts, 0, y, 0, wPlinth, wPlinth, STONE2);
   }
 
-  // Arched entrance (south facade)
-  const archR = 5*S;
-  for (let s = 0; s <= 8; s++) {
-    const a  = (s/8) * Math.PI;
-    pts.push({ x: Math.cos(a)*archR, y: BH + Math.sin(a)*archR*1.2, z: -D-0.5*S, yaw: 0, name: STONE2 });
+  // 2. THE MAIN MAUSOLEUM BODY
+  // Constructed as a chamfered octagon: N, S, E, W faces are flat; corners are diagonal.
+  const wFlat = 10 * S; // Half width of the flat cardinal face
+  
+  for (let y = hPlinth; y < hPlinth + hMain; y += STONE_H) {
+     // Cardinal Faces
+     drawWall(pts, -wFlat, y, wMain, wFlat, y, wMain, STONE2);      // North
+     drawWall(pts, -wFlat, y, -wMain, wFlat, y, -wMain, STONE2);    // South
+     drawWall(pts, wMain, y, -wFlat, wMain, y, wFlat, STONE2);      // East
+     drawWall(pts, -wMain, y, -wFlat, -wMain, y, wFlat, STONE2);    // West
+     
+     // Chamfered Diagonal Corner Faces
+     drawWall(pts, wFlat, y, wMain, wMain, y, wFlat, STONE2);       // NE
+     drawWall(pts, wFlat, y, -wMain, wMain, y, -wFlat, STONE2);     // SE
+     drawWall(pts, -wFlat, y, -wMain, -wMain, y, -wFlat, STONE2);   // SW
+     drawWall(pts, -wFlat, y, wMain, -wMain, y, wFlat, STONE2);     // NW
   }
+
+  // 3. THE GRAND (IWAN) ARCHES
+  // Plaster dark concrete against the cardinal faces to simulate deep archways
+  const iwanW = 7 * S;
+  const iwanH = 20 * S;
+  const DARK = "staticobj_wall_indcnc4_4";
+  for (let y = hPlinth; y < hPlinth + iwanH; y += 4.744 * S) { 
+     drawWall(pts, -iwanW, y, wMain + 0.5*S, iwanW, y, wMain + 0.5*S, DARK);      // N
+     drawWall(pts, -iwanW, y, -wMain - 0.5*S, iwanW, y, -wMain - 0.5*S, DARK);    // S
+     drawWall(pts, wMain + 0.5*S, y, -iwanW, wMain + 0.5*S, y, iwanW, DARK);      // E
+     drawWall(pts, -wMain - 0.5*S, y, -iwanW, -wMain - 0.5*S, y, iwanW, DARK);    // W
+  }
+
+  // 4. THE CENTRAL ONION DOME
+  const domeBaseY = hPlinth + hMain;
+  const domeBaseR = 12 * S;
+  
+  // Drum base
+  for (let y = domeBaseY; y < domeBaseY + 6*S; y += STONE_H) {
+     drawRing(pts, 0, y, 0, domeBaseR, STONE2);
+  }
+  
+  // Swelling "onion" bulb
+  const domeStart = domeBaseY + 6*S;
+  const domeHeight = 22 * S;
+  for (let y = domeStart; y < domeStart + domeHeight; y += STONE_H) {
+     const t = (y - domeStart) / domeHeight;
+     let r = domeBaseR;
+     // Swells to 1.15x radius at t=0.3, then aggressively tapers to 0 at t=1
+     if (t < 0.3) r = domeBaseR * (1 + (t / 0.3)*0.15);
+     else r = domeBaseR * 1.15 * Math.pow(1 - (t - 0.3)/0.7, 1.3);
+     
+     if (r > 0.5*S) drawRing(pts, 0, y, 0, r, STONE2);
+  }
+  
+  // Kalash Finial (Spire)
+  pts.push({ x: 0, y: domeStart + domeHeight, z: 0, yaw: 0, name: "barrel_red" });
+
+  // 5. THE FOUR CHHATRIS (Small decorative domes bordering the central dome)
+  const cOff = 16 * S;
+  const chhatriR = 4 * S;
+  for (const cx of [-cOff, cOff]) {
+     for (const cz of [-cOff, cOff]) {
+        for (let y = domeBaseY; y < domeBaseY + 5*S; y += STONE_H) {
+           drawRect(pts, cx, y, cz, chhatriR, chhatriR, STONE2);
+        }
+        for (let y = domeBaseY + 6*S; y < domeBaseY + 10*S; y += STONE_H) {
+           const t = (y - (domeBaseY + 6*S)) / (4*S);
+           const r = chhatriR * Math.sqrt(1 - t*t);
+           if (r > 0.5*S) drawRing(pts, cx, y, cz, r, STONE2);
+        }
+     }
+  }
+
+  // 6. THE FOUR MINARETS
+  const mOff = wPlinth - 4*S; // Placed at the very corners of the expansive plinth
+  const minaretR = 2.5 * S;
+  const minaretH = 45 * S;
+  
+  for (const cx of [-mOff, mOff]) {
+     for (const cz of [-mOff, mOff]) {
+        // Tower shafts
+        for (let y = hPlinth; y < hPlinth + minaretH; y += STONE_H) {
+           drawRing(pts, cx, y, cz, minaretR, STONE2);
+        }
+        // Projecting balconies
+        drawRing(pts, cx, hPlinth + minaretH*0.4, cz, minaretR + 1.5*S, STONE2);
+        drawRing(pts, cx, hPlinth + minaretH*0.8, cz, minaretR + 1.5*S, STONE2);
+        
+        // Capping chhatris
+        const mTop = hPlinth + minaretH;
+        for (let y = mTop; y < mTop + 4*S; y += STONE_H) {
+           const t = (y - mTop) / (4*S);
+           const r = minaretR * Math.sqrt(1 - t*t);
+           if (r > 0.5*S) drawRing(pts, cx, y, cz, r, STONE2);
+        }
+     }
+  }
+
   return pts;
 }
 

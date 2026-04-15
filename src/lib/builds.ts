@@ -111,6 +111,7 @@ const MONUMENTS: BuildEntry[] = [
   },
   {
     key: "taj_mahal", label: "Taj Mahal", category: "Monuments",
+    description: "Pristine marble mausoleum with grand dome and minarets",
     defaultParams: { scale: 1 },
     params: [
       { key: "scale", label: "Scale", min: 0.5, max: 3, step: 0.25, default: 1 },
