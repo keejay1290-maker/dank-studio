@@ -405,17 +405,24 @@ export function gen_millennium_falcon(p: GenParams): Point3D[] {
   drawRing(pts, 0, 0, 0, R, CNC4); 
 
   // 2. SAUCER FLAT DECKS (Dorsal & Ventral)
-  // Deeply inset the floor so no blocky square corners poke through the smooth ring
-  for (let z = -R + PD / 2; z <= R - PD / 2; z += PD) {
-    const hw = Math.sqrt(R * R - z * z);
-    const currentHW = Math.max(0, hw - 3.2 * S); // Deep inset to hide corners
-    if (currentHW <= 0) continue;
-    const rows = Math.floor((currentHW * 2) / PW);
-    const startX = -(rows * PW) / 2 + PW / 2;
-    for (let i = 0; i < rows; i++) {
-       const x = startX + i * PW;
-       pts.push({ x, y: deckY, z, yaw: 0, pitch: -90, name: MILCNC });
-       pts.push({ x, y: botY,  z, yaw: 0, pitch: -90, name: MILCNC });
+  // To create a perfectly flush boundary without jagged corners poking through,
+  // we layout flat plates in concentric rings (like a spiderweb) tangent to the hull.
+  for (let r = PD / 2; r < R; r += PD) {
+    const circ = 2 * Math.PI * r;
+    const nPanels = Math.max(4, Math.floor(circ / PW));
+    const arcStep = (2 * Math.PI) / nPanels;
+    
+    // Slight overlap horizontally guarantees no gaps
+    const scale = (circ / nPanels) / PW;
+    
+    for (let i = 0; i < nPanels; i++) {
+       const a = (i + 0.5) * arcStep;
+       const x = r * Math.cos(a);
+       const z = r * Math.sin(a);
+       const yaw = -a * 180 / Math.PI + 90; // tangent orientation
+       
+       pts.push({ x, y: deckY, z, yaw, pitch: -90, scale, name: MILCNC }); // Top Plate
+       pts.push({ x, y: botY,  z, yaw, pitch: -90, scale, name: MILCNC }); // Bottom Plate
     }
   }
 
