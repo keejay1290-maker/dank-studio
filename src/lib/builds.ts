@@ -71,20 +71,7 @@ const SCI_FI: BuildEntry[] = [
     ],
   },
 
-  {
-    key: "tf_optimus", label: "Optimus Prime", category: "Sci-Fi",
-    defaultParams: { scale: 1 },
-    params: [
-      { key: "scale", label: "Scale", min: 0.5, max: 5, step: 0.25, default: 1 },
-    ],
-  },
-  {
-    key: "black_hole", label: "Black Hole", category: "Sci-Fi",
-    defaultParams: { r: 60 },
-    params: [
-      { key: "r", label: "Radius (m)", min: 20, max: 120, step: 5, default: 60 },
-    ],
-  },
+
   {
     key: "tony_stark_tower", label: "Stark Tower", category: "Sci-Fi",
     defaultParams: { scale: 1 },

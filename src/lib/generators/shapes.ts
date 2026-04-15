@@ -729,59 +729,6 @@ export function gen_stargate_portal(p: GenParams): Point3D[] {
 }
 
 /**
- * 🚛 OPTIMUS PRIME
- */
-export function gen_optimus(p: GenParams): Point3D[] {
-  const pts: Point3D[] = [];
-  const S = p.scale ?? 1;
-  // Cab / Torso
-  drawRect(pts, 0, 8*S, 0, 4*S, 3*S, IND10);
-  drawRect(pts, 0, 12*S, 0, 3*S, 2.5*S, IND10);
-  // Head
-  drawRect(pts, 0, 16*S, 0, 2.5*S, 2*S, IND10);
-  pts.push({ x: 0, y: 18*S, z: 0, yaw: 0, name: "barrel_red" }); // face plate
-  // Shoulder plates
-  for (let c = -1; c <= 1; c += 2) {
-    drawWall(pts, c*4*S, 12*S, 0, c*7*S, 12*S, 0, IND10);
-    drawRect(pts, c*6.5*S, 10*S, 0, 2*S, 1.5*S, IND10); // upper arm
-    drawRect(pts, c*6*S, 6*S, 0, 1.5*S, 1.5*S, IND10);  // lower arm
-    pts.push({ x: c*6*S, y: 4*S, z: 0, yaw: c < 0 ? 270 : 90, name: IND10 }); // fist
-  }
-  // Trailer hitch / legs
-  for (let c = -1; c <= 1; c += 2) {
-    drawWall(pts, c*2*S, 8*S, 0, c*2*S, 4*S, 0, IND10);
-    drawWall(pts, c*2*S, 4*S, 0, c*2*S, 0, 0, IND10);
-    drawRect(pts, c*2*S, 0, 1*S, 2*S, 1.5*S, IND10);
-  }
-  // Exhaust stacks
-  for (let c = -1; c <= 1; c += 2) {
-    drawWall(pts, c*3.5*S, 8*S, -2*S, c*3.5*S, 16*S, -2*S, CNC4);
-  }
-  return pts;
-}
-
-/**
- * 🕳️ BLACK HOLE EVENT HORIZON
- */
-export function gen_black_hole(p: GenParams): Point3D[] {
-  const pts: Point3D[] = [];
-  const r    = p.radius ?? 30;
-  const arcs = p.arcs   ?? 8;
-  for (let a = 0; a < arcs; a++) {
-    const startAngle = (a / arcs) * Math.PI * 2;
-    for (let i = 0; i < 50; i++) {
-      const t     = i / 50;
-      const angle = startAngle + t * Math.PI * 1.5;
-      const dist  = r * (0.6 + t * 0.4);
-      const y     = Math.sin(t * Math.PI * 2) * 2;
-      pts.push({ x: dist*Math.cos(angle), y, z: dist*Math.sin(angle), yaw: -angle*180/Math.PI+90, name: IND10 });
-    }
-  }
-  for (let y = -2; y <= 2; y += 1) drawRing(pts, 0, y, 0, r*0.4, IND10);
-  return pts;
-}
-
-/**
  * 🅰️ TONY STARK TOWER
  */
 export function gen_stark_tower(p: GenParams): Point3D[] {

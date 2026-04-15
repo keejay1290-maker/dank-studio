@@ -24,8 +24,7 @@ const REGISTRY: Record<string, (p: GenParams) => Point3D[]> = {
   star_destroyer:          G.gen_star_destroyer,
   stargate_portal:         G.gen_stargate_portal,
 
-  tf_optimus:              G.gen_optimus,
-  black_hole:              G.gen_black_hole,
+
   tony_stark_tower:        G.gen_stark_tower,
   cyberpunk_nexus:         G.gen_cyberpunk,
   saturn:                  G.gen_saturn,
