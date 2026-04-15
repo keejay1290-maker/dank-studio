@@ -737,7 +737,7 @@ function Scene({ points, ctrlRef }: { points: Point3D[]; ctrlRef: React.Ref<any>
 
       {/* ── Build objects ─────────────────────────────────────────────────── */}
       {points.map((pt, i) => (
-        <BuildObject key={`${pt.name}_${pt.x}_${pt.y}_${pt.z}_${i}`} pt={pt} highCount={points.length > 200} />
+        <BuildObject key={`${pt.name}_${pt.x}_${pt.y}_${pt.z}_${i}`} pt={pt} highCount={points.length > 30} />
       ))}
     </>
   );

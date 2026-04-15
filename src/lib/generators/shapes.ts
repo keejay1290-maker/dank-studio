@@ -52,7 +52,7 @@ const IND10   = "staticobj_wall_indcnc_10";    // 9.012m × 9.758m industrial
  */
 export function gen_death_star(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const R     = p.r ?? 50;           // radius 50 — ~920 panels total, well under 1200 limit
+  const R     = p.r ?? 42;           // radius 42 — denser hull coverage within 1200 limit
   const panelW = 9.012;              // IND10 face width (P3D-verified)
 
   // ── Materials ─────────────────────────────────────────────────────────────
