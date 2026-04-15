@@ -388,143 +388,175 @@ export function gen_atat_walker(p: GenParams): Point3D[] {
 
 /**
  * 🛸 MILLENNIUM FALCON
+ * Built with solid flat decks, forward mandibles, cylindrical cockpit arm, and rear engine glow.
  */
 export function gen_millennium_falcon(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
   const S = p.scale ?? 1;
   const R = 14 * S;
 
-  // Saucer hull — two rings at slight offset give the oval shape
-  for (let y = 0; y <= 3 * S; y += 1.5 * S) {
-    const r = R * (1 - (y / (3 * S)) * 0.3);
-    drawRing(pts, 0, y, 0, r, CNC8);
+  // Uses MILCNC for flat decks because 4.052 x 4.744m fits nicely inside a 28m saucer
+  const PW = 4.052 * S; 
+  const PD = 4.744 * S; 
+  const deckY = 1.5 * S;  // Dorsal deck height
+  const botY = -1.5 * S;  // Ventral deck height
+
+  // 1. SAUCER PERIMETER WALL
+  drawRing(pts, 0, 0, 0, R, CNC4); 
+
+  // 2. SAUCER FLAT DECKS (Dorsal & Ventral)
+  // Fill circle of radius R with flat panels (z from -R to +R)
+  for (let z = -R + PD / 2; z <= R - PD / 2; z += PD) {
+    const hw = Math.sqrt(R * R - z * z);
+    const currentHW = Math.max(0, hw - 1 * S);
+    const rows = Math.floor((currentHW * 2) / PW);
+    const startX = -(rows * PW) / 2 + PW / 2;
+    for (let i = 0; i < rows; i++) {
+       const x = startX + i * PW;
+       pts.push({ x, y: deckY, z, yaw: 0, pitch: -90, name: MILCNC }); // Top Plate
+       pts.push({ x, y: botY,  z, yaw: 0, pitch: -90, name: MILCNC }); // Bottom Plate
+    }
   }
-  // Cockpit arm
-  drawWall(pts, 0, 1.5*S, -R, R, 1.5*S, -R - 6*S, CNC8);
-  drawRing(pts, R, 1.5*S, -R - 4*S, 2.5*S, CNC8);
-  // Engines (rear)
-  for (let e = -1; e <= 1; e += 2) {
-    drawWall(pts, e*4*S, 1*S, R, e*4*S, 1*S, R+5*S, IND10);
-    drawRing(pts, e*4*S, 1*S, R+5*S, 2*S, IND10);
+
+  // 3. FORWARD MANDIBLES
+  // Left and right prongs jutting forward from the saucer
+  const mandL = 12 * S;
+  const mandZ = -R - mandL / 2 + 2 * S; // Centered past the front curve
+  // Left mandible perimeter
+  drawRect(pts, -4.5 * S, 0, mandZ, 2.5 * S, mandL / 2, CNC4);
+  // Right mandible perimeter
+  drawRect(pts,  4.5 * S, 0, mandZ, 2.5 * S, mandL / 2, CNC4);
+  
+  // Fill the mandibles with flat decks
+  for (let mt = 0; mt < 3; mt++) { // 3 panels along Z to fill the 12m length
+     const mz = -R - 1 * S - mt * PD;
+     for (const side of [-1, 1] as const) {
+        pts.push({ x: side * 4.5 * S, y: deckY, z: mz, yaw: 0, pitch: -90, name: MILCNC });
+        pts.push({ x: side * 4.5 * S, y: botY,  z: mz, yaw: 0, pitch: -90, name: MILCNC });
+     }
   }
-  // Central turret
-  drawRing(pts, 0, 5*S, 0, 3*S, MILCNC);
+
+  // 4. COCKPIT ARM & POD (Right side)
+  const innerX = R * 0.8;
+  const innerZ = -1 * S;
+  const podX = R + 7 * S;
+  const podZ = -R + 5 * S; // Angles forward
+  // Arm structural walls (creates a corridor angling toward the front right)
+  drawWall(pts, innerX, 0, innerZ - 2 * S, podX, 0, podZ - 2 * S, CNC4); // Front wall
+  drawWall(pts, innerX, 0, innerZ + 2 * S, podX, 0, podZ + 2 * S, CNC4); // Back wall
+  
+  // Cockpit Pod (Cylinder)
+  drawRing(pts, podX, 0, podZ, 2.5 * S, CNC4);
+  // Cockpit roof cap
+  pts.push({ x: podX, y: deckY + 1 * S, z: podZ, yaw: 0, pitch: -90, name: CNC4 });
+  // Viewport/glass (blue glow at the very front of the pod)
+  pts.push({ x: podX, y: deckY - 0.5 * S, z: podZ - 2.5 * S, yaw: 0, pitch: 0, name: "barrel_blue" });
+
+  // 5. REAR ENGINE GLOW
+  // Band of bright blue across the stern curve (arc from ~120° to ~240°)
+  for (let a = Math.PI * 0.65; a <= Math.PI * 1.35; a += 0.1) {
+     const ex = R * 0.95 * Math.sin(a);
+     const ez = R * 0.95 * Math.cos(a);
+     // Standing upright drum creates a vertical glowing bar
+     pts.push({ x: ex, y: 0, z: ez, yaw: 0, pitch: 0, name: "barrel_blue" });
+  }
+
+  // 6. CENTRAL QUAD LASER & RADAR DISH
+  // Raised central deck
+  drawRing(pts, 0, deckY + 1 * S, 0, 4 * S, CNC4); 
+  pts.push({ x: 0, y: deckY + 2 * S, z: 0, yaw: 0, pitch: -90, name: MILCNC }); // cap
+  
+  // Radar Dish (Offset to the right side of the spine)
+  const rx = 3 * S;
+  const rz = 2 * S;
+  drawRing(pts, rx, deckY + 2 * S, rz, 1.5 * S, CNC4);
+  pts.push({ x: rx, y: deckY + 3 * S, z: rz, yaw: 0, pitch: -90, name: CNC4 }); // Dish face
+
   return pts;
 }
 
 /**
- * 🛰️ STAR DESTROYER — Imperial-class (ISD-I)
- *
- * Reference: 1,600m long, 900m wide at stern, 100m tall stern cross-section.
- * At S=1 this is ~1/10 scale (160m long) for DayZ visibility.
- *
- * Structure (bow points toward -Z / South):
- *  • Hull — 3D dagger wedge: wide+thick at stern (+Z), narrow+thin at bow (-Z)
- *    - Dorsal skin (top) — IND10 panels running Z slices, tapered in both X and Y
- *    - Ventral skin (bottom) — mirrored below, angled slightly upward toward bow
- *  • Dorsal superstructure — raised spine keel running from mid-ship to stern
- *  • Bridge tower — tall stalk behind mid-ship with T-shaped command bridge
- *    - Two shield generator spheres (dome rings) atop the bridge wings
- *  • Engine bank — 3 large + 2 small engine rings at the stern face
- *  • Hangar bay — recessed dark rectangle on ventral stern
+ * 🛰️ STAR DESTROYER — Imperial-class
+ * Built using solid flat deck plating and stacked architectural tiers.
  */
 export function gen_star_destroyer(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
   const S = Math.max(0.5, p.scale ?? 1);
-  const L   = 160 * S;           // overall length
-  const HW  = 45  * S;           // stern half-width (full 90m at stern)
-  const TH  = 14  * S;           // stern hull thickness (total height)
-  const sliceStep = 10 * S;      // slice interval along Z
+  const L = 160 * S;
+  const HW = 45 * S; // Half-width at stern
+  const bowZ = -L / 2;
+  const sternZ = L / 2;
 
-  // ── HULL — dorsal + ventral skins ─────────────────────────────────────────
-  // From stern (+L/2) to bow (-L/2), each Z slice is a trapezoidal cross-section
-  // that narrows in both X and Y toward the bow.
-  for (let z = -L/2; z <= L/2; z += sliceStep) {
-    const t    = (z / L + 0.5);              // 0 = bow, 1 = stern
-    const halfX = 2 * S + t * (HW - 2 * S); // width taper: 2m → 45m
-    const topY  = t * TH * 0.55;            // dorsal height: 0 → 7.7m
-    const botY  = -t * TH * 0.45;           // ventral depth: 0 → -6.3m
+  // Panel dimensions for IND10 when laid flat (pitch: -90)
+  const PW = 9.012 * S; // width X
+  const PD = 9.758 * S; // depth Z
+  const deckY = 3 * S;  // dorsal deck height
+  const botY = -3 * S;  // ventral deck height
 
-    // Dorsal skin (top surface)
-    drawWall(pts, -halfX, topY, z, halfX, topY, z, IND10);
+  // 1. PERIMETER WALLS (The wedge border)
+  // Left, Right, and Stern edges using vertical IND10 walls
+  drawWall(pts, -HW, 0, sternZ, 0, 0, bowZ, IND10);
+  drawWall(pts, HW, 0, sternZ, 0, 0, bowZ, IND10);
+  drawWall(pts, -HW, 0, sternZ, HW, 0, sternZ, IND10);
 
-    // Ventral skin (bottom surface) — only from mid-ship to stern for performance
-    if (t > 0.3) {
-      drawWall(pts, -halfX, botY, z, halfX, botY, z, IND10);
-    }
+  // 2. MAIN HULL DORSAL & VENTRAL DECKS (Flat horizontal panels)
+  // Fill the triangular interior with plates
+  for (let z = bowZ + PD; z <= sternZ - PD / 2; z += PD) {
+    const fraction = (z - bowZ) / L;
+    const currentHW = HW * fraction - 1 * S; // inset slightly from walls
+    const rows = Math.max(0, Math.floor((currentHW * 2) / PW));
+    const startX = -(rows * PW) / 2 + PW / 2;
 
-    // Side edges — left & right hull edges connecting dorsal to ventral
-    if (t > 0.25 && Math.abs(halfX) > 8 * S) {
-      // Left edge
-      pts.push({ x: -halfX, y: (topY + botY) / 2, z, yaw: 90, name: IND10 });
-      // Right edge
-      pts.push({ x:  halfX, y: (topY + botY) / 2, z, yaw: 90, name: IND10 });
+    for (let i = 0; i < rows; i++) {
+      const x = startX + i * PW;
+      // Dorsal Plate (top)
+      pts.push({ x, y: deckY, z, yaw: 0, pitch: -90, name: IND10 });
+      // Ventral Plate (bottom)
+      if (fraction > 0.4) {
+        pts.push({ x, y: botY, z, yaw: 0, pitch: -90, name: IND10 });
+      }
     }
   }
 
-  // ── DORSAL SUPERSTRUCTURE — raised spine/keel ─────────────────────────────
-  // Runs from z = -10*S (just behind mid-ship) to z = +L/2 - 20*S (before stern)
-  const spineStart = -10 * S;
-  const spineEnd   = L/2 - 20 * S;
-  for (let z = spineStart; z <= spineEnd; z += 12 * S) {
-    const t    = (z - spineStart) / (spineEnd - spineStart);
-    const half = (3 + t * 5) * S;  // spine widens toward stern
-    const yTop = (0.55 * TH * ((z / L + 0.5))) + (2 + t * 3) * S;
-    drawWall(pts, -half, yTop, z, half, yTop, z, MILCNC);
-  }
+  // 3. TIERED SUPERSTRUCTURE (The layered city-blocks on the dorsal deck)
+  // Tier 1 (Base wide tier)
+  drawRect(pts, 0, deckY + 2 * S, sternZ - 25 * S, 14 * S, 20 * S, CNC8); // 8m walls
+  // Tier 2 (Middle narrower tier)
+  drawRect(pts, 0, deckY + 5 * S, sternZ - 20 * S, 10 * S, 15 * S, CNC4); // 4m walls
 
-  // ── BRIDGE TOWER — tall rectangular stalk + T-shaped command bridge ───────
-  const towerZ   = -15 * S;       // just behind mid-ship
-  const towerBase = 0.55 * TH * ((-15 * S / L + 0.5)) + 2 * S;
-  const towerTop  = towerBase + 20 * S;
+  // 4. BRIDGE TOWER (The iconic command neck and head)
+  const towerZ = sternZ - 12 * S;
+  const neckY = deckY + 7 * S;
+  // Neck (Stalk)
+  drawRect(pts, 0, neckY, towerZ, 3 * S, 3 * S, IND10);
+  drawRect(pts, 0, neckY + 4 * S, towerZ, 3 * S, 3 * S, IND10);
+  
+  // Command Bridge (T-Shape wide head at the top)
+  const bridgeY = neckY + 9 * S;
+  drawWall(pts, -10 * S, bridgeY, towerZ, 10 * S, bridgeY, towerZ, IND10);
+  // Viewport windows
+  drawWall(pts, -9 * S, bridgeY + 3.5 * S, towerZ - 1 * S, 9 * S, bridgeY + 3.5 * S, towerZ - 1 * S, CNC4);
 
-  // Tower stalk — 2 vertical walls (narrow rectangle rising from dorsal hull)
-  drawWall(pts, -2 * S, towerBase, towerZ, -2 * S, towerTop, towerZ, IND10);
-  drawWall(pts,  2 * S, towerBase, towerZ,  2 * S, towerTop, towerZ, IND10);
-  // Tower front/back faces
-  drawWall(pts, -2 * S, towerBase, towerZ - 2 * S, -2 * S, towerTop, towerZ - 2 * S, IND10);
-  drawWall(pts,  2 * S, towerBase, towerZ + 2 * S,  2 * S, towerTop, towerZ + 2 * S, IND10);
-
-  // T-shaped command bridge — wide horizontal bar at top of stalk
-  const bridgeY = towerTop;
-  const bridgeHW = 12 * S;  // half-width of the command bridge
-  drawWall(pts, -bridgeHW, bridgeY, towerZ - 3 * S, bridgeHW, bridgeY, towerZ - 3 * S, CNC8);
-  drawWall(pts, -bridgeHW, bridgeY, towerZ + 3 * S, bridgeHW, bridgeY, towerZ + 3 * S, CNC8);
-  drawWall(pts, -bridgeHW, bridgeY + 2 * S, towerZ, bridgeHW, bridgeY + 2 * S, towerZ, CNC8);
-
-  // Bridge viewport windows (dark band)
-  drawWall(pts, -bridgeHW * 0.8, bridgeY + 3.5 * S, towerZ, bridgeHW * 0.8, bridgeY + 3.5 * S, towerZ, CNC4);
-
-  // ── SHIELD GENERATOR DOMES — two spherical bumps on bridge wings ──────────
+  // Shield Generator Domes (Two spheres on bridge wings)
   for (const side of [-1, 1] as const) {
-    const domeX = side * (bridgeHW - 2 * S);
-    const domeY = bridgeY + 4 * S;
-    // 3 stacked rings approximate a small dome
-    for (const dr of [0, 1.2, 2.2] as const) {
-      const r = (2.5 - dr * 0.6) * S;
-      if (r > 0.5) drawRing(pts, domeX, domeY + dr * S, towerZ, r, CNC4);
+    const domeX = side * 8 * S;
+    for (let h = 0; h <= 2; h++) {
+       const r = (2.5 - h * 0.6) * S;
+       if (r > 0) drawRing(pts, domeX, bridgeY + 4 * S + h * S, towerZ, r, CNC4);
     }
-    // Dome cap
-    pts.push({ x: domeX, y: domeY + 3 * S, z: towerZ, yaw: 0, pitch: -90, name: CNC4 });
+    pts.push({ x: side * 8 * S, y: bridgeY + 7 * S, z: towerZ, yaw: 0, pitch: -90, name: CNC4 });
   }
 
-  // ── ENGINE BANK — 3 large + 2 small nozzle rings at stern ─────────────────
-  const sternZ = L / 2 - 2 * S;
-  // 3 main engines (center, left, right)
-  for (const ex of [-10, 0, 10] as const) {
-    drawRing(pts, ex * S, 0, sternZ, 5 * S, IND10);
-    // Glowing nozzle inner ring
-    drawRing(pts, ex * S, 0, sternZ + 1 * S, 3 * S, "barrel_blue");
+  // 5. REAR ENGINE NOZZLES
+  // 3 Primary engines along the stern
+  for (const x of [-16, 0, 16] as const) {
+    drawRing(pts, x * S, 0, sternZ + 1 * S, 4.5 * S, IND10);
+    drawRing(pts, x * S, 0, sternZ + 2 * S, 2.5 * S, "barrel_blue"); // engine glow
   }
-  // 2 smaller auxiliary engines
-  for (const ex of [-20, 20] as const) {
-    drawRing(pts, ex * S, 2 * S, sternZ, 3 * S, MILCNC);
+  // 2 Auxiliary engines
+  for (const x of [-28, 28] as const) {
+    drawRing(pts, x * S, deckY, sternZ + 1 * S, 2 * S, CNC4);
   }
-
-  // ── VENTRAL HANGAR BAY — dark recessed rectangle ──────────────────────────
-  const hangarZ = 20 * S;
-  const hangarY = -0.45 * TH * ((hangarZ / L + 0.5)) - 1 * S;
-  drawRect(pts, 0, hangarY, hangarZ, 8 * S, 6 * S, STONE);
 
   return pts;
 }
