@@ -65,6 +65,7 @@ const SCI_FI: BuildEntry[] = [
   },
   {
     key: "stargate_portal", label: "Stargate Portal", category: "Sci-Fi",
+    description: "Interstellar Chappa'ai portal with 9 unlocking chevrons",
     defaultParams: { r: 20 },
     params: [
       { key: "r", label: "Radius (m)", min: 10, max: 50, step: 2, default: 20 },
@@ -74,6 +75,7 @@ const SCI_FI: BuildEntry[] = [
 
   {
     key: "tony_stark_tower", label: "Stark Tower", category: "Sci-Fi",
+    description: "Avengers command spire and energy arc reactor",
     defaultParams: { scale: 1 },
     params: [
       { key: "scale", label: "Scale", min: 0.5, max: 3, step: 0.25, default: 1 },
@@ -81,6 +83,7 @@ const SCI_FI: BuildEntry[] = [
   },
   {
     key: "cyberpunk_nexus", label: "Cyberpunk Nexus", category: "Sci-Fi",
+    description: "Neon-drenched high-tech dystopian cityscape hub",
     defaultParams: { scale: 1 },
     params: [
       { key: "scale", label: "Scale", min: 0.5, max: 2, step: 0.1, default: 1 },
@@ -88,6 +91,7 @@ const SCI_FI: BuildEntry[] = [
   },
   {
     key: "saturn", label: "Planet Saturn", category: "Sci-Fi",
+    description: "Gas giant featuring mathematically perfect orbital rings",
     defaultParams: { r: 60 },
     params: [
       { key: "r", label: "Radius (m)", min: 30, max: 120, step: 5, default: 60 },

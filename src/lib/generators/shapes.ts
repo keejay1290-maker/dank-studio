@@ -733,28 +733,87 @@ export function gen_stargate_portal(p: GenParams): Point3D[] {
  */
 export function gen_stark_tower(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const floors = p.floors ?? 40;
-  const fh     = 3.5;
-  const W = 20, D = 14, sp = 3.5;
+  const S = Math.max(0.5, p.scale ?? 1);
+  const panelH = 9.758 * S;
 
-  for (let f = 0; f < floors; f++) {
-    const y     = f * fh;
-    const slant = f > 5 ? (f - 5) * 0.25 : 0;
-    const fx    = slant;
-    for (let x = -W/2; x <= W/2; x += sp) {
-      pts.push({ x: fx+x, y, z: -D/2, yaw: 0, name: CNC8 });
-      pts.push({ x: fx+x, y, z:  D/2, yaw: 0, name: CNC8 });
+  const totalFloors = 32;
+
+  let padY = 0;
+  let padZ = 0;
+  let towerTopY = 0;
+
+  for (let f = 0; f < totalFloors; f++) {
+    const y = f * panelH;
+
+    // Fractional height 0.0 to 1.0
+    const t = f / totalFloors;
+
+    // Base width tapers cleanly upwards
+    const W = 25 * S * (1 - t * 0.4); 
+    
+    // The Stark Tower front sweeps dramatically backwards around 40% height
+    let frontZ = -15 * S;
+    if (t > 0.4) {
+      const curveT = (t - 0.4) / 0.6;
+      frontZ += Math.pow(curveT, 2) * 20 * S;
     }
-    for (let z = -D/2; z <= D/2; z += sp) {
-      pts.push({ x: fx-W/2, y, z, yaw: 90, name: CNC8 });
-      pts.push({ x: fx+W/2, y, z, yaw: 90, name: CNC8 });
-    }
-    // Landing pad at floor 35
-    if (f === 35) {
-      const padR = 12, px = fx + W/2 + padR - 2;
-      drawRing(pts, px, y, 0, padR, MILCNC);
+
+    // Back profile curves in slightly less aggressively
+    const backZ = 15 * S - (t * 5 * S);
+
+    // Build the 4 pristine structural walls to prevent horizontal or vertical gapping
+    drawWall(pts, -W, y, frontZ,  W, y, frontZ, IND10); // Front face
+    drawWall(pts, -W, y, backZ,   W, y, backZ, IND10);  // Back face
+    drawWall(pts, -W, y, backZ,  -W, y, frontZ, IND10); // Left face
+    drawWall(pts,  W, y, frontZ,  W, y, backZ, IND10);  // Right face
+
+    // Anchor the cantilever platform at floor 24
+    if (f === 24) {
+      padY = y;
+      padZ = frontZ;
     }
   }
+  
+  towerTopY = totalFloors * panelH;
+
+  // ── THE CANTILEVERED LANDING PAD ──────────────────────────────────────────
+  // Thrusts far out over the swept-back front face
+  const padExtension = 20 * S;
+  const padFront = padZ - padExtension;
+  const padW = 10 * S; // Half-width of the pad
+
+  // Render a massive solid flat deck overlapping the space
+  for(let z = padFront; z <= padZ + 2*S; z += 4.5*S) {
+     for(let x = -padW; x <= padW; x += 4*S) {
+         pts.push({ x, y: padY, z, yaw: 0, pitch: -90, scale: S, name: MILCNC });
+         pts.push({ x, y: padY - 0.5*S, z, yaw: 0, pitch: -90, scale: S, name: MILCNC }); // underbelly
+     }
+  }
+
+  // Rounded tip spanning the front
+  drawDisk(pts, 0, padY, padFront, padW, MILCNC);
+  drawDisk(pts, 0, padY - 0.5*S, padFront, padW, MILCNC);
+  
+  // Glowing blue runway lights tracing the pad edges
+  for (let z = padFront; z < padZ; z += 3 * S) {
+     pts.push({ x: -padW + 1*S, y: padY + 1*S, z, yaw: 0, name: "barrel_blue" });
+     pts.push({ x:  padW - 1*S, y: padY + 1*S, z, yaw: 0, name: "barrel_blue" });
+  }
+
+  // ── ARC REACTOR LOGO (Floor 27) ──────────────────────────────────────────
+  // Imposing glowing blue ring clamped directly to the swept-back face
+  const arcY = padY + 3 * panelH;
+  // Compute exactly where the curved frontZ lies at t=27/32
+  const tArc = 27 / 32;
+  const arcZ = (-15 + Math.pow((tArc - 0.4) / 0.6, 2) * 20) * S - 1.5 * S;
+  
+  // 5m radius giant glowing ring representing the "A" core
+  drawRing(pts, 0, arcY, arcZ, 5 * S, "barrel_blue");
+
+  // ── SPIRE ANTENNA ────────────────────────────────────────────────────────
+  // A sharply piercing 30m tall needle finishing the skyscraper
+  drawWall(pts, 0, towerTopY, 0, 0, towerTopY + 30 * S, 0, IND10);
+  
   return pts;
 }
 
