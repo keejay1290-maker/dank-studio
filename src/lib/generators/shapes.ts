@@ -413,27 +413,119 @@ export function gen_millennium_falcon(p: GenParams): Point3D[] {
 }
 
 /**
- * 🛰️ STAR DESTROYER
+ * 🛰️ STAR DESTROYER — Imperial-class (ISD-I)
+ *
+ * Reference: 1,600m long, 900m wide at stern, 100m tall stern cross-section.
+ * At S=1 this is ~1/10 scale (160m long) for DayZ visibility.
+ *
+ * Structure (bow points toward -Z / South):
+ *  • Hull — 3D dagger wedge: wide+thick at stern (+Z), narrow+thin at bow (-Z)
+ *    - Dorsal skin (top) — IND10 panels running Z slices, tapered in both X and Y
+ *    - Ventral skin (bottom) — mirrored below, angled slightly upward toward bow
+ *  • Dorsal superstructure — raised spine keel running from mid-ship to stern
+ *  • Bridge tower — tall stalk behind mid-ship with T-shaped command bridge
+ *    - Two shield generator spheres (dome rings) atop the bridge wings
+ *  • Engine bank — 3 large + 2 small engine rings at the stern face
+ *  • Hangar bay — recessed dark rectangle on ventral stern
  */
 export function gen_star_destroyer(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
   const S = Math.max(0.5, p.scale ?? 1);
-  const L = 160 * S;
+  const L   = 160 * S;           // overall length
+  const HW  = 45  * S;           // stern half-width (full 90m at stern)
+  const TH  = 14  * S;           // stern hull thickness (total height)
+  const sliceStep = 10 * S;      // slice interval along Z
 
-  // Wedge hull — triangular plan, builds from stern to bow
-  for (let z = -L/2; z <= L/2; z += 8*S) {
-    const t    = (z / L + 0.5);
-    const half = (1 - t) * 40 * S + t * 2 * S;
-    const y    = t * 12 * S; // bow rises
-    drawWall(pts, -half, y, z, half, y, z, IND10);
+  // ── HULL — dorsal + ventral skins ─────────────────────────────────────────
+  // From stern (+L/2) to bow (-L/2), each Z slice is a trapezoidal cross-section
+  // that narrows in both X and Y toward the bow.
+  for (let z = -L/2; z <= L/2; z += sliceStep) {
+    const t    = (z / L + 0.5);              // 0 = bow, 1 = stern
+    const halfX = 2 * S + t * (HW - 2 * S); // width taper: 2m → 45m
+    const topY  = t * TH * 0.55;            // dorsal height: 0 → 7.7m
+    const botY  = -t * TH * 0.45;           // ventral depth: 0 → -6.3m
+
+    // Dorsal skin (top surface)
+    drawWall(pts, -halfX, topY, z, halfX, topY, z, IND10);
+
+    // Ventral skin (bottom surface) — only from mid-ship to stern for performance
+    if (t > 0.3) {
+      drawWall(pts, -halfX, botY, z, halfX, botY, z, IND10);
+    }
+
+    // Side edges — left & right hull edges connecting dorsal to ventral
+    if (t > 0.25 && Math.abs(halfX) > 8 * S) {
+      // Left edge
+      pts.push({ x: -halfX, y: (topY + botY) / 2, z, yaw: 90, name: IND10 });
+      // Right edge
+      pts.push({ x:  halfX, y: (topY + botY) / 2, z, yaw: 90, name: IND10 });
+    }
   }
-  // Bridge tower
-  drawRect(pts, 0, 12*S, -20*S, 6*S, 6*S, IND10);
-  drawRect(pts, 0, 16*S, -20*S, 4*S, 4*S, IND10);
-  // Engine banks
-  for (let e = -2; e <= 2; e++) {
-    drawRing(pts, e*10*S, 2*S, L/2 - 4*S, 4*S, IND10);
+
+  // ── DORSAL SUPERSTRUCTURE — raised spine/keel ─────────────────────────────
+  // Runs from z = -10*S (just behind mid-ship) to z = +L/2 - 20*S (before stern)
+  const spineStart = -10 * S;
+  const spineEnd   = L/2 - 20 * S;
+  for (let z = spineStart; z <= spineEnd; z += 12 * S) {
+    const t    = (z - spineStart) / (spineEnd - spineStart);
+    const half = (3 + t * 5) * S;  // spine widens toward stern
+    const yTop = (0.55 * TH * ((z / L + 0.5))) + (2 + t * 3) * S;
+    drawWall(pts, -half, yTop, z, half, yTop, z, MILCNC);
   }
+
+  // ── BRIDGE TOWER — tall rectangular stalk + T-shaped command bridge ───────
+  const towerZ   = -15 * S;       // just behind mid-ship
+  const towerBase = 0.55 * TH * ((-15 * S / L + 0.5)) + 2 * S;
+  const towerTop  = towerBase + 20 * S;
+
+  // Tower stalk — 2 vertical walls (narrow rectangle rising from dorsal hull)
+  drawWall(pts, -2 * S, towerBase, towerZ, -2 * S, towerTop, towerZ, IND10);
+  drawWall(pts,  2 * S, towerBase, towerZ,  2 * S, towerTop, towerZ, IND10);
+  // Tower front/back faces
+  drawWall(pts, -2 * S, towerBase, towerZ - 2 * S, -2 * S, towerTop, towerZ - 2 * S, IND10);
+  drawWall(pts,  2 * S, towerBase, towerZ + 2 * S,  2 * S, towerTop, towerZ + 2 * S, IND10);
+
+  // T-shaped command bridge — wide horizontal bar at top of stalk
+  const bridgeY = towerTop;
+  const bridgeHW = 12 * S;  // half-width of the command bridge
+  drawWall(pts, -bridgeHW, bridgeY, towerZ - 3 * S, bridgeHW, bridgeY, towerZ - 3 * S, CNC8);
+  drawWall(pts, -bridgeHW, bridgeY, towerZ + 3 * S, bridgeHW, bridgeY, towerZ + 3 * S, CNC8);
+  drawWall(pts, -bridgeHW, bridgeY + 2 * S, towerZ, bridgeHW, bridgeY + 2 * S, towerZ, CNC8);
+
+  // Bridge viewport windows (dark band)
+  drawWall(pts, -bridgeHW * 0.8, bridgeY + 3.5 * S, towerZ, bridgeHW * 0.8, bridgeY + 3.5 * S, towerZ, CNC4);
+
+  // ── SHIELD GENERATOR DOMES — two spherical bumps on bridge wings ──────────
+  for (const side of [-1, 1] as const) {
+    const domeX = side * (bridgeHW - 2 * S);
+    const domeY = bridgeY + 4 * S;
+    // 3 stacked rings approximate a small dome
+    for (const dr of [0, 1.2, 2.2] as const) {
+      const r = (2.5 - dr * 0.6) * S;
+      if (r > 0.5) drawRing(pts, domeX, domeY + dr * S, towerZ, r, CNC4);
+    }
+    // Dome cap
+    pts.push({ x: domeX, y: domeY + 3 * S, z: towerZ, yaw: 0, pitch: -90, name: CNC4 });
+  }
+
+  // ── ENGINE BANK — 3 large + 2 small nozzle rings at stern ─────────────────
+  const sternZ = L / 2 - 2 * S;
+  // 3 main engines (center, left, right)
+  for (const ex of [-10, 0, 10] as const) {
+    drawRing(pts, ex * S, 0, sternZ, 5 * S, IND10);
+    // Glowing nozzle inner ring
+    drawRing(pts, ex * S, 0, sternZ + 1 * S, 3 * S, "barrel_blue");
+  }
+  // 2 smaller auxiliary engines
+  for (const ex of [-20, 20] as const) {
+    drawRing(pts, ex * S, 2 * S, sternZ, 3 * S, MILCNC);
+  }
+
+  // ── VENTRAL HANGAR BAY — dark recessed rectangle ──────────────────────────
+  const hangarZ = 20 * S;
+  const hangarY = -0.45 * TH * ((hangarZ / L + 0.5)) - 1 * S;
+  drawRect(pts, 0, hangarY, hangarZ, 8 * S, 6 * S, STONE);
+
   return pts;
 }
 
