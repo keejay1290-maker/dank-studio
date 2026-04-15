@@ -103,6 +103,7 @@ const SCI_FI: BuildEntry[] = [
 const MONUMENTS: BuildEntry[] = [
   {
     key: "eiffel_tower", label: "Eiffel Tower", category: "Monuments",
+    description: "Iconic Parisian wrought-iron lattice spire",
     defaultParams: { scale: 1 },
     params: [
       { key: "scale", label: "Scale", min: 0.5, max: 3, step: 0.25, default: 1 },

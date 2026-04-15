@@ -979,37 +979,76 @@ export function gen_xwing(p: GenParams): Point3D[] {
 export function gen_eiffel_tower(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
   const S = Math.max(0.5, p.scale ?? 1);
+  const IRON = CNC4;       // We use CNC4 for the dark structural iron look
+  const IRON_H = 4.744 * S;
+  const METAL = IND10;     
+  const METAL_H = 9.758 * S;
 
-  // 4 legs — each a tapered curve from wide base to central shaft
-  const legSegs = 20;
-  const legAngs = [0, Math.PI/2, Math.PI, 3*Math.PI/2];
-  for (const baseAngle of legAngs) {
-    for (let s = 0; s < legSegs; s++) {
-      const t0 = s / legSegs, t1 = (s+1) / legSegs;
-      // base radius shrinks from 40m at ground to 3m at 50m
-      const r0 = (40 - t0*37) * S, r1 = (40 - t1*37) * S;
-      const y0 = t0 * 50 * S,      y1 = t1 * 50 * S;
-      drawWall(pts,
-        r0*Math.cos(baseAngle), y0, r0*Math.sin(baseAngle),
-        r1*Math.cos(baseAngle), y1, r1*Math.sin(baseAngle),
-        IND10,
-      );
+  // ── Key architectural heights & dimensions ───────────────────────────────
+  const hL1 = 57 * S;      // First platform
+  const hL2 = 115 * S;     // Second platform
+  const topH = 276 * S;    // Tower top before spire
+
+  const wBase = 45 * S;    // Spread of legs at ground
+  const wL1 = 25 * S;
+  const wL2 = 10 * S;
+  const wTop = 2 * S;
+
+  // 1. ANCHOR LEGS (Ground to L1)
+  // Four massive structural pillars sweeping upward to merge at the first deck
+  for (let y = 0; y < hL1; y += IRON_H) {
+    const t = y / hL1;
+    // Dramatic exponential curve inward
+    const curveT = Math.pow(t, 0.75); 
+    const cx = wBase - (wBase - wL1) * curveT;
+    const cz = cx;
+    
+    // The pillar itself is a square column that tapers in thickness
+    const legW = 8 * S * (1 - t * 0.4); 
+
+    // Draw the 4 discrete structural boxes
+    drawRect(pts,  cx, y,  cz, legW, legW, IRON);
+    drawRect(pts, -cx, y,  cz, legW, legW, IRON);
+    drawRect(pts,  cx, y, -cz, legW, legW, IRON);
+    drawRect(pts, -cx, y, -cz, legW, legW, IRON);
+    
+    // Draw the monumental connecting arches filling the space under L1
+    if (y > hL1 * 0.4) {
+       drawRect(pts, 0, y, 0, cx, cx, IRON);
     }
-    // Cross-bracing — rings at 15m, 30m, 50m
-    [15, 30, 50].forEach(hy => drawRing(pts, 0, hy*S, 0, (40 - hy*37/50)*S+1, IND10));
   }
-  // Shaft 50–115m
-  for (let y = 50*S; y <= 115*S; y += 8*S) drawRing(pts, 0, y, 0, 3*S, IND10);
-  // First platform at 57m
-  drawDisk(pts, 0, 57*S, 0, 8*S, IND10);
-  // Second platform at 115m
-  drawDisk(pts, 0, 115*S, 0, 5*S, IND10);
-  // Spire 115–150m
-  for (let y = 115*S; y <= 148*S; y += 6*S) {
-    const r = 3*S * (1 - (y - 115*S)/(33*S));
-    if (r > 0.5*S) drawRing(pts, 0, y, 0, Math.max(0.5*S, r), IND10);
+
+  // 2. FIRST PLATFORM DECK
+  const deck1W = wL1 + 8 * S;
+  drawRect(pts, 0, hL1, 0, deck1W, deck1W, METAL);
+  drawRect(pts, 0, hL1 + 2*S, 0, deck1W, deck1W, METAL);
+
+  // 3. MIDDLE TOWER (L1 to L2)
+  // The 4 legs structurally merge into a sweeping central shaft
+  for (let y = hL1 + IRON_H; y < hL2; y += IRON_H) {
+    const t = (y - hL1) / (hL2 - hL1);
+    const curveT = Math.pow(t, 0.85); // Gentle taper
+    const w = wL1 - (wL1 - wL2) * curveT;
+    drawRect(pts, 0, y, 0, w + 4*S, w + 4*S, IRON);
   }
-  pts.push({ x:0, y:150*S, z:0, yaw:0, name:IND10 });
+
+  // 4. SECOND PLATFORM DECK
+  const deck2W = wL2 + 5 * S;
+  drawRect(pts, 0, hL2, 0, deck2W, deck2W, METAL);
+  
+  // 5. UPPER TOWER (L2 to Top)
+  for (let y = hL2 + IRON_H; y < topH; y += IRON_H) {
+    const t = (y - hL2) / (topH - hL2);
+    const curveT = Math.pow(t, 1.2); // Tapers aggressively near the very tip
+    const w = wL2 - (wL2 - wTop) * curveT;
+    drawRect(pts, 0, y, 0, w + 2*S, w + 2*S, IRON);
+  }
+
+  // 6. CUPOLA & SPIRE
+  drawDome(pts, 0, topH, 0, wTop + 4*S, IRON);
+  drawWall(pts, 0, topH, 0, 0, topH + 24*S, 0, METAL); // Needle antenna
+  pts.push({ x: 0, y: topH + 24*S, z: 0, yaw: 0, name: "barrel_red" }); // Aviation safety light
+
   return pts;
 }
 
