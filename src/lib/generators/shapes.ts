@@ -647,25 +647,84 @@ export function gen_star_destroyer(p: GenParams): Point3D[] {
 
 /**
  * ⭕ STARGATE PORTAL
+ * A massive upright ring resting in a base structure, complete with 9 locking
+ * chevrons, a glowing blue event horizon, and an approach ramp.
  */
 export function gen_stargate_portal(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const r = p.r ?? 14;
-  // Ring
-  for (let dr = 0; dr < 2; dr++) {
-    drawRing(pts, 0, 0, 0, r + dr, IND10);
-    drawRing(pts, 0, 0.5, 0, r + dr, IND10);
+  const R = p.r ?? 18; // Default 18m radius for a truly epic standing Stargate
+
+  const PW = 4.052; // MILCNC horizontal width
+  const circ = 2 * Math.PI * R;
+  const nPanels = Math.max(8, Math.floor(circ / PW));
+  const arcStep = (2 * Math.PI) / nPanels;
+  const scale = (circ / nPanels) / PW;
+
+  // 1. THE STARGATE RING (Standing vertically in the XY plane)
+  // We stack 3 layers along the Z-axis to give the gate massive thickness
+  for (const zOffset of [ -2, 0, 2 ]) {
+    for (let i = 0; i < nPanels; i++) {
+       const a = i * arcStep;
+       const x = R * Math.cos(a);
+       const y = R + R * Math.sin(a); // Origin rests perfectly on the ground (y=0)
+       
+       // Using roll to tilt the panel tangentially along the circle outline!
+       const roll = (a * 180 / Math.PI) - 90;
+       
+       pts.push({ x, y, z: zOffset, yaw: 0, pitch: 0, roll, scale, name: MILCNC });
+    }
   }
-  // Chevrons (9 chevrons spaced around the ring)
+
+  // 2. CHEVRONS (9 locking points distributed around the outer rim)
   for (let i = 0; i < 9; i++) {
-    const a = (i / 9) * Math.PI * 2 - Math.PI / 2;
-    const cx = (r + 3) * Math.cos(a), cz = (r + 3) * Math.sin(a);
-    const yaw = -a * 180 / Math.PI + 90;
-    pts.push({ x: cx, y: 0, z: cz, yaw, name: "barrel_red" });
-    pts.push({ x: cx, y: 1.5, z: cz, yaw, name: "barrel_red" });
+    // Chervons start at the very top of the gate (a = 90 deg)
+    const a = (Math.PI / 2) + (i / 9) * Math.PI * 2;
+    // Protrude slightly out from the MILCNC ring
+    const cx = (R + 1.8) * Math.cos(a);
+    const cy = R + (R + 1.8) * Math.sin(a);
+    const roll = (a * 180 / Math.PI) - 90;
+
+    // Dark housing for the chevron
+    pts.push({ x: cx, y: cy, z: 0, yaw: 0, pitch: 0, roll, scale: 1.8, name: CNC4 });
+    // Glowing red locking lights pointing outwards on front and back
+    pts.push({ x: cx, y: cy, z: 2.5,  yaw: 0, pitch: 0, roll, scale: 1.5, name: "barrel_red" });
+    pts.push({ x: cx, y: cy, z: -2.5, yaw: 0, pitch: 0, roll, scale: 1.5, name: "barrel_red" });
   }
-  // Inner event horizon disk
-  drawDisk(pts, 0, 0, 0, r - 1, CNC8);
+
+  // 3. EVENT HORIZON (Concentric ripples of glowing blue plasma)
+  const rEH = R - 2.5; 
+  for (let rB = 0; rB <= rEH; rB += 1.5) {
+     if (rB === 0) {
+       pts.push({ x: 0, y: R, z: 0, yaw: 0, pitch: -90, roll: 0, name: "barrel_blue" });
+       continue;
+     }
+     const circB = 2 * Math.PI * rB;
+     const numB = Math.max(4, Math.floor(circB / 1.5));
+     for (let i = 0; i < numB; i++) {
+        const a = (i / numB) * Math.PI * 2;
+        const x = rB * Math.cos(a);
+        const y = R + rB * Math.sin(a);
+        // Pitching the blue barrel -90 lays it flat, so its glowing top aims at the traveller!
+        pts.push({ x, y, z: 0, yaw: 0, pitch: -90, roll: 0, name: "barrel_blue" });
+     }
+  }
+
+  // 4. BASE APPROACH RAMP (Stepped entrance leading into the event horizon)
+  // The bottom of the event horizon is at Y ≈ 2.5m off the ground.
+  for (let yLevel = 0; yLevel <= 3; yLevel++) {
+     const depth = 12 - yLevel * 2.5;
+     const width = R * 0.8 - yLevel * 1.5;
+     // Ramp levels stack vertically
+     drawRect(pts, 0, yLevel, 0, width, depth, CNC4);
+     
+     // Solid deck on top of each ramp step
+     const PW_RAMP = 4.052; // MILCNC
+     for(let x = -width + PW_RAMP/2; x <= width; x += PW_RAMP) {
+         pts.push({ x, y: yLevel + 1, z: depth, yaw: 0, pitch: -90, name: MILCNC });
+         pts.push({ x, y: yLevel + 1, z: -depth, yaw: 0, pitch: -90, name: MILCNC });
+     }
+  }
+
   return pts;
 }
 
