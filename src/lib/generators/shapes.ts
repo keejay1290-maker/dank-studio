@@ -388,89 +388,96 @@ export function gen_atat_walker(p: GenParams): Point3D[] {
 
 /**
  * 🛸 MILLENNIUM FALCON
- * Built with solid flat decks, forward mandibles, cylindrical cockpit arm, and rear engine glow.
+ * Highly detailed. Uses flat plate decking rigidly constrained to the hull,
+ * tapered mandibles instead of blocks, and concrete pipes for structural tubing.
  */
 export function gen_millennium_falcon(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
   const S = p.scale ?? 1;
   const R = 14 * S;
 
-  // Uses MILCNC for flat decks because 4.052 x 4.744m fits nicely inside a 28m saucer
   const PW = 4.052 * S; 
   const PD = 4.744 * S; 
-  const deckY = 1.5 * S;  // Dorsal deck height
-  const botY = -1.5 * S;  // Ventral deck height
+  const deckY = 1.5 * S;
+  const botY = -1.5 * S;
 
   // 1. SAUCER PERIMETER WALL
   drawRing(pts, 0, 0, 0, R, CNC4); 
 
   // 2. SAUCER FLAT DECKS (Dorsal & Ventral)
-  // Fill circle of radius R with flat panels (z from -R to +R)
+  // Deeply inset the floor so no blocky square corners poke through the smooth ring
   for (let z = -R + PD / 2; z <= R - PD / 2; z += PD) {
     const hw = Math.sqrt(R * R - z * z);
-    const currentHW = Math.max(0, hw - 1 * S);
+    const currentHW = Math.max(0, hw - 3.2 * S); // Deep inset to hide corners
+    if (currentHW <= 0) continue;
     const rows = Math.floor((currentHW * 2) / PW);
     const startX = -(rows * PW) / 2 + PW / 2;
     for (let i = 0; i < rows; i++) {
        const x = startX + i * PW;
-       pts.push({ x, y: deckY, z, yaw: 0, pitch: -90, name: MILCNC }); // Top Plate
-       pts.push({ x, y: botY,  z, yaw: 0, pitch: -90, name: MILCNC }); // Bottom Plate
+       pts.push({ x, y: deckY, z, yaw: 0, pitch: -90, name: MILCNC });
+       pts.push({ x, y: botY,  z, yaw: 0, pitch: -90, name: MILCNC });
     }
   }
 
-  // 3. FORWARD MANDIBLES
-  // Left and right prongs jutting forward from the saucer
+  // 3. TAPERED FORWARD MANDIBLES
   const mandL = 12 * S;
-  const mandZ = -R - mandL / 2 + 2 * S; // Centered past the front curve
-  // Left mandible perimeter
-  drawRect(pts, -4.5 * S, 0, mandZ, 2.5 * S, mandL / 2, CNC4);
-  // Right mandible perimeter
-  drawRect(pts,  4.5 * S, 0, mandZ, 2.5 * S, mandL / 2, CNC4);
+  const rootZ = -R + 2 * S;
+  const tipZ = -R - mandL + 2 * S;
   
-  // Fill the mandibles with flat decks
-  for (let mt = 0; mt < 3; mt++) { // 3 panels along Z to fill the 12m length
-     const mz = -R - 1 * S - mt * PD;
+  // Left mandible (tapers from width 4 down to 2)
+  drawWall(pts, -1 * S, 0, rootZ, -2 * S, 0, tipZ, CNC4); // Inner edge
+  drawWall(pts, -7 * S, 0, rootZ, -5 * S, 0, tipZ, CNC4); // Outer edge
+  drawWall(pts, -2 * S, 0, tipZ, -5 * S, 0, tipZ, CNC4);  // Tip face
+  
+  // Right mandible (tapers from width 4 down to 2)
+  drawWall(pts, 1 * S, 0, rootZ, 2 * S, 0, tipZ, CNC4);   // Inner edge
+  drawWall(pts, 7 * S, 0, rootZ, 5 * S, 0, tipZ, CNC4);   // Outer edge
+  drawWall(pts, 2 * S, 0, tipZ, 5 * S, 0, tipZ, CNC4);    // Tip face
+
+  // Mandible flat deck filling (kept safely inside the tapers)
+  for (let mt = 0; mt < 2; mt++) { 
+     const mz = -R - 3 * S - mt * PD;
      for (const side of [-1, 1] as const) {
-        pts.push({ x: side * 4.5 * S, y: deckY, z: mz, yaw: 0, pitch: -90, name: MILCNC });
-        pts.push({ x: side * 4.5 * S, y: botY,  z: mz, yaw: 0, pitch: -90, name: MILCNC });
+        pts.push({ x: side * 3.5 * S, y: deckY, z: mz, yaw: 0, pitch: -90, name: MILCNC });
+        pts.push({ x: side * 3.5 * S, y: botY,  z: mz, yaw: 0, pitch: -90, name: MILCNC });
      }
   }
 
   // 4. COCKPIT ARM & POD (Right side)
+  const armX = R + 7 * S;
+  const armZ = -R + 5 * S; 
+
   const innerX = R * 0.8;
   const innerZ = -1 * S;
-  const podX = R + 7 * S;
-  const podZ = -R + 5 * S; // Angles forward
-  // Arm structural walls (creates a corridor angling toward the front right)
-  drawWall(pts, innerX, 0, innerZ - 2 * S, podX, 0, podZ - 2 * S, CNC4); // Front wall
-  drawWall(pts, innerX, 0, innerZ + 2 * S, podX, 0, podZ + 2 * S, CNC4); // Back wall
+  // Arm structural walls (creates an access corridor angling toward the front right)
+  drawWall(pts, innerX, 0, innerZ - 2 * S, armX, 0, armZ - 2 * S, CNC4); // Front wall
+  drawWall(pts, innerX, 0, innerZ + 2 * S, armX, 0, armZ + 2 * S, CNC4); // Back wall
   
-  // Cockpit Pod (Cylinder)
-  drawRing(pts, podX, 0, podZ, 2.5 * S, CNC4);
-  // Cockpit roof cap
-  pts.push({ x: podX, y: deckY + 1 * S, z: podZ, yaw: 0, pitch: -90, name: CNC4 });
-  // Viewport/glass (blue glow at the very front of the pod)
-  pts.push({ x: podX, y: deckY - 0.5 * S, z: podZ - 2.5 * S, yaw: 0, pitch: 0, name: "barrel_blue" });
+  // Cockpit Pod (Cylinder rim)
+  drawRing(pts, armX, 0, armZ, 2.5 * S, CNC4);
+  pts.push({ x: armX, y: deckY + 1 * S, z: armZ, yaw: 0, pitch: -90, name: CNC4 }); // top cap
+  pts.push({ x: armX, y: botY - 1 * S, z: armZ, yaw: 0, pitch: -90, name: CNC4 }); // bot cap
+  // Cockpit viewport blue glow
+  pts.push({ x: armX, y: deckY - 0.5 * S, z: armZ - 2.5 * S, yaw: 0, pitch: 0, name: "barrel_blue" });
 
   // 5. REAR ENGINE GLOW
-  // Band of bright blue across the stern curve (arc from ~120° to ~240°)
   for (let a = Math.PI * 0.65; a <= Math.PI * 1.35; a += 0.1) {
      const ex = R * 0.95 * Math.sin(a);
      const ez = R * 0.95 * Math.cos(a);
-     // Standing upright drum creates a vertical glowing bar
      pts.push({ x: ex, y: 0, z: ez, yaw: 0, pitch: 0, name: "barrel_blue" });
   }
 
   // 6. CENTRAL QUAD LASER & RADAR DISH
-  // Raised central deck
   drawRing(pts, 0, deckY + 1 * S, 0, 4 * S, CNC4); 
-  pts.push({ x: 0, y: deckY + 2 * S, z: 0, yaw: 0, pitch: -90, name: MILCNC }); // cap
+  pts.push({ x: 0, y: deckY + 2 * S, z: 0, yaw: 0, pitch: -90, name: MILCNC }); // upper turret deck
+  drawRing(pts, 0, botY - 1 * S, 0, 4 * S, CNC4);
+  pts.push({ x: 0, y: botY - 2 * S, z: 0, yaw: 0, pitch: -90, name: MILCNC }); // lower turret deck
   
-  // Radar Dish (Offset to the right side of the spine)
+  // Radar Dish (Rectenna offset)
   const rx = 3 * S;
   const rz = 2 * S;
   drawRing(pts, rx, deckY + 2 * S, rz, 1.5 * S, CNC4);
-  pts.push({ x: rx, y: deckY + 3 * S, z: rz, yaw: 0, pitch: -90, name: CNC4 }); // Dish face
+  pts.push({ x: rx, y: deckY + 3 * S, z: rz, yaw: 0, pitch: -90, name: CNC4 });
 
   return pts;
 }
