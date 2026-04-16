@@ -405,7 +405,7 @@ const BuildObject = memo(function BuildObject({ pt, highCount }: { pt: Point3D; 
   const h = mimic.h * s;
   const d = mimic.d * s;
   const classname = pt.name ?? "";
-  const doShadow = !highCount;
+
 
   // Check availability from cache — skip HEAD fetch in high-count mode to avoid
   // 1000+ network requests that stall the renderer
@@ -737,7 +737,7 @@ function Scene({ points, ctrlRef }: { points: Point3D[]; ctrlRef: React.Ref<any>
 
       {/* ── Build objects ─────────────────────────────────────────────────── */}
       {points.map((pt, i) => (
-        <BuildObject key={`${pt.name}_${pt.x}_${pt.y}_${pt.z}_${i}`} pt={pt} highCount={points.length > 30} />
+        <BuildObject key={`${pt.name}_${pt.x}_${pt.y}_${pt.z}_${i}`} pt={pt} highCount={points.length > 900} />
       ))}
     </>
   );
