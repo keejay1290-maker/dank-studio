@@ -214,10 +214,11 @@ function BuildRenderer({ points, selectedId }: {
     points.forEach((p) => {
       const name = p.name ?? "staticobj_castle_wall3";
       if (!map.has(name)) map.set(name, []);
+      const DEG = Math.PI / 180;
       map.get(name)!.push({
         id: p.id || "un-id",
         pos: [p.x, p.y, p.z],
-        rot: new THREE.Euler(p.pitch || 0, p.yaw || 0, p.roll || 0, "YXZ"),
+        rot: new THREE.Euler((p.pitch || 0) * DEG, (p.yaw || 0) * DEG, (p.roll || 0) * DEG, "YXZ"),
         scale: p.scale || 1
       });
     });
