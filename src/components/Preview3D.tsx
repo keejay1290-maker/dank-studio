@@ -65,64 +65,66 @@ function getMaterialProps(classname: string) {
 
 function useSharedMaterial(classname: string, color: string) {
   const { props, texName } = useMemo(() => getMaterialProps(classname), [classname]);
-  // useTexture handles caching internally, but we useMemo to create the material once
   const tex = useTexture(`./textures/${texName}`);
-  
+  const mimic = getMimic(classname);
+
   return useMemo(() => {
     const matKey = `${classname}_${color}`;
     if (_sharedMaterials.has(matKey)) return _sharedMaterials.get(matKey)!;
-    
-    if (tex) {
-      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-      tex.repeat.set(1, 1);
-    }
+
+    // Tile texture so ~2m of real-world surface = one tile repeat
+    const tiledTex = tex.clone();
+    tiledTex.wrapS = tiledTex.wrapT = THREE.RepeatWrapping;
+    tiledTex.repeat.set(Math.max(1, mimic.w / 2), Math.max(1, mimic.h / 2));
+    tiledTex.needsUpdate = true;
 
     const mat = new THREE.MeshStandardMaterial({
       color: new THREE.Color(color),
-      map: tex,
+      map: tiledTex,
       ...props,
-      envMapIntensity: 1.0
+      envMapIntensity: 1.2,
     });
     _sharedMaterials.set(matKey, mat);
     return mat;
-  }, [classname, color, tex, props]);
+  }, [classname, color, tex, props, mimic]);
 }
 
 // ── Instanced Component for a specific Classname ─────────────────────────────
-const InstancedGroup = memo(function InstancedGroup({ 
-  classname, instances 
-}: { 
-  classname: string; 
-  instances: { pos: [number, number, number], rot: THREE.Euler, scale: number }[] 
+const InstancedGroup = memo(function InstancedGroup({
+  classname, instances
+}: {
+  classname: string;
+  instances: { pos: [number, number, number], rot: THREE.Euler, scale: number }[]
 }) {
   const gltf = useGLTF(`./models/${classname}.glb`);
-  
-  const mesh = useMemo(() => {
-    if (!gltf) return null;
-    let found: THREE.Mesh | null = null;
-    gltf.scene.traverse((c: any) => {
-      if (!found && c.isMesh) found = c;
-    });
-    return found;
-  }, [gltf]);
+  const { props, texName } = useMemo(() => getMaterialProps(classname), [classname]);
+  const tex = useTexture(`./textures/${texName}`);
+  const mimic = getMimic(classname);
 
-  if (!mesh) return null;
+  const { geo, mat } = useMemo(() => {
+    let geo: THREE.BufferGeometry | null = null;
+    gltf.scene.traverse((c: any) => { if (!geo && c.isMesh) geo = c.geometry; });
+    if (!geo) return { geo: null, mat: null };
+
+    const tiledTex = tex.clone();
+    tiledTex.wrapS = tiledTex.wrapT = THREE.RepeatWrapping;
+    tiledTex.repeat.set(Math.max(1, mimic.w / 2), Math.max(1, mimic.h / 2));
+    tiledTex.needsUpdate = true;
+
+    const mat = new THREE.MeshStandardMaterial({
+      map: tiledTex,
+      ...props,
+      envMapIntensity: 1.2,
+    });
+    return { geo, mat };
+  }, [gltf, tex, props, mimic]);
+
+  if (!geo || !mat) return null;
 
   return (
-    <Instances 
-      castShadow 
-      receiveShadow 
-      range={instances.length} 
-      geometry={(mesh as any).geometry} 
-      material={(mesh as any).material}
-    >
+    <Instances castShadow receiveShadow range={instances.length} geometry={geo} material={mat}>
       {instances.map((inst, i) => (
-        <Instance 
-          key={i} 
-          position={inst.pos} 
-          rotation={inst.rot} 
-          scale={[inst.scale, inst.scale, inst.scale]} 
-        />
+        <Instance key={i} position={inst.pos} rotation={inst.rot} scale={[inst.scale, inst.scale, inst.scale]} />
       ))}
     </Instances>
   );
@@ -229,25 +231,18 @@ function BuildRenderer({ points, selectedId }: {
     <>
       {groups.map(([name, instances]) => {
         const normalInsts = instances.filter(inst => inst.id !== selectedId);
-        const selectedInst = instances.filter(inst => inst.id === selectedId);
 
         return (
           <group key={name}>
             {availableGlbs.has(name) ? (
-              <ErrorBoundary fallback={<FastBox classname={name} color="#556677" instances={instances} />}>
-                <Suspense fallback={<FastBox classname={name} color="#556677" instances={instances} />}>
+              <ErrorBoundary fallback={<FastBox classname={name} color={getMimic(name).color} instances={instances} />}>
+                <Suspense fallback={<FastBox classname={name} color={getMimic(name).color} instances={instances} />}>
                   <InstancedGroup classname={name} instances={normalInsts} />
-                  {selectedInst.length > 0 && (
-                    <mesh position={selectedInst[0].pos} rotation={selectedInst[0].rot}>
-                      <boxGeometry args={[0.5, 5, 0.5]} />
-                      <meshBasicMaterial color="yellow" wireframe />
-                    </mesh>
-                  )}
                 </Suspense>
               </ErrorBoundary>
             ) : (
-              <Suspense fallback={<FastBox classname={name} color="#556677" instances={instances} />}>
-                <InstancedBoxes classname={name} color="#7a8a9a" instances={instances} />
+              <Suspense fallback={<FastBox classname={name} color={getMimic(name).color} instances={instances} />}>
+                <InstancedBoxes classname={name} color={getMimic(name).color} instances={instances} />
               </Suspense>
             )}
           </group>
@@ -386,7 +381,17 @@ export function Preview3D({
   // Background color for the canvas to prevent black screen if scene takes long to load
   return (
     <div className="w-full h-full relative cursor-crosshair bg-[#050507]">
-      <Canvas shadows gl={{ antialias: true, logarithmicDepthBuffer: true }} onPointerMissed={() => onSelect?.(null)}>
+      <Canvas
+        shadows={{ type: THREE.PCFSoftShadowMap }}
+        gl={{
+          antialias: true,
+          logarithmicDepthBuffer: true,
+          toneMapping: THREE.ACESFilmicToneMapping,
+          toneMappingExposure: 1.1,
+          outputColorSpace: THREE.SRGBColorSpace,
+        }}
+        onPointerMissed={() => onSelect?.(null)}
+      >
         <Suspense fallback={<Html center><div className="text-white text-[10px]">INITIALIZING ENGINE...</div></Html>}>
           <Scene 
             points={points} 
