@@ -84,8 +84,8 @@ export function drawRing(
   else if (typeof wallClass === "number") panelW = wallClass;
 
   const circ    = 2 * Math.PI * r;
-  // floor() → scale always ≥ 1 → no horizontal gaps ever
-  const nPanels = Math.max(4, Math.floor(circ / panelW));
+  // Use ceil + explicit overlap to ensure zero-gap coverage
+  const nPanels = Math.max(4, Math.ceil(circ / (panelW * 0.98))); 
   const arcStep = (2 * Math.PI) / nPanels;
   const scale   = (circ / nPanels) / panelW;
 
@@ -160,7 +160,8 @@ export function _drawSphereRings(
 
     const ringY   = r * Math.cos(phi);
     const circ    = 2 * Math.PI * ringR;
-    const nPanels = Math.max(4, Math.floor(circ / panelW)); // floor → scale≥1 → no seam gaps
+    // Use ceil to force overlap and eliminate "seam" gaps in spheres
+    const nPanels = Math.max(4, Math.ceil(circ / (panelW * 0.98))); 
     const arcStep = (2 * Math.PI) / nPanels;
     const scale   = (circ / nPanels) / panelW;
     const pitch   = (phi - Math.PI / 2) * 180 / Math.PI;

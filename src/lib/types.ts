@@ -12,23 +12,15 @@ export interface Point3D {
   roll?:  number;   // degrees
   scale?: number;   // 1.0 = default
   name?:  string;   // DayZ class name e.g. "staticobj_castle_wall3"
+  id?:    string;   // unique selection id
 }
 
-/** An entry in the build library. */
-export interface BuildEntry {
-  id:          string;
-  category:    string;
-  icon:        string;
-  name:        string;
-  tagline:     string;
-  shape:       string;             // generator key
-  params:      Record<string, number>;
-  frameObj:    string;             // primary object class
-  posX:        number;
-  posY:        number;
-  posZ:        number;
-  isSTier?:    boolean;
+export interface GenParams {
+  scale?: number;
+  r?: number;
+  [key: string]: number | undefined;
 }
+
 
 /** A placed object in Draw/Panel mode. */
 export interface DrawnObject {
@@ -60,6 +52,31 @@ export interface ObjectDef {
   height:    number;   // metres
   depth:     number;   // metres (thickness)
   color:     string;   // preview hex
+}
+
+export interface ParamDef {
+  key:     string;
+  label:   string;
+  min:     number;
+  max:     number;
+  step:    number;
+  default: number;
+}
+
+export interface BuildEntry {
+  key:           string;        // registry key in generators/index.ts
+  label:         string;
+  category:      string;
+  description?:  string;
+  defaultParams?: Record<string, number>;
+  params:        ParamDef[];
+}
+
+export interface PanelState {
+  width: number;
+  height: number;
+  cells: any[];
+  wallEdges: any[];
 }
 
 /** App-level mode. */

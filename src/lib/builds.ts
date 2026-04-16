@@ -26,9 +26,9 @@ const SCI_FI: BuildEntry[] = [
   {
     key: "death_star", label: "Death Star", category: "Sci-Fi",
     description: "Imperial battle station — superlaser dish, equatorial trench, panelled hull",
-    defaultParams: { r: 42 },
+    defaultParams: { r: 35 },
     params: [
-      { key: "r", label: "Radius (m)", min: 20, max: 80, step: 2, default: 42 },
+      { key: "r", label: "Radius (m)", min: 20, max: 60, step: 2, default: 35 },
     ],
   },
   {

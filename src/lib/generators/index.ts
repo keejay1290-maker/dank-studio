@@ -1,11 +1,8 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// DANK STUDIO — Generator Index
-// Routes shape key → generator function.
-// To add a new generator: write the function below, add a case here.
-// ─────────────────────────────────────────────────────────────────────────────
-import type { Point3D } from "../types";
-import { applyLimit } from "../draw";
+import type { Point3D, DrawnWall, DrawnObject, PanelState } from "../types";
+import { applyLimit, drawWall } from "../draw";
 import * as G from "./shapes";
+
+export { exportDrawnWalls, exportDrawnObjects } from "../exporter";
 
 export type GenParams = Record<string, number>;
 
@@ -90,3 +87,46 @@ const REGISTRY: Record<string, (p: GenParams) => Point3D[]> = {
   wall_line:               G.gen_wall_line,
   arc:                     G.gen_arc,
 };
+
+// ── Utilities ─────────────────────────────────────────────────────────────
+
+/** Convert free-draw wall segments into a flat list of renderable points. */
+export function wallsToPoints(walls: DrawnWall[]): Point3D[] {
+  const pts: Point3D[] = [];
+  for (const w of walls) {
+    drawWall(pts, w.x1, w.y1, w.z1, w.x2, w.y2, w.z2, w.classname);
+  }
+  return pts;
+}
+
+/** Convert a the cellular PanelBuilder state into renderable wall/object lists. */
+export function panelStateToPoints(state: PanelState): { walls: DrawnWall[], objects: DrawnObject[] } {
+  const walls: DrawnWall[] = [];
+  const objects: DrawnObject[] = [];
+  const CELL_SIZE = 4; // Each grid cell is 4m x 4m
+
+  // Floors are represented as objects at cell centers
+  for (const cell of state.cells) {
+    objects.push({
+      id: `floor-${cell.x}-${cell.y}`,
+      x: cell.x * CELL_SIZE + CELL_SIZE / 2,
+      y: 0,
+      z: cell.y * CELL_SIZE + CELL_SIZE / 2,
+      yaw: 0, pitch: -90, roll: 0, scale: 1,
+      classname: cell.type || "staticobj_platform1_block"
+    });
+  }
+
+  // Edges are converted to wall segments
+  for (const edge of state.wallEdges) {
+    // Align wall to the edge of the cell
+    walls.push({
+      id: `edge-${edge.x1}-${edge.y1}-${edge.x2}-${edge.y2}`,
+      x1: edge.x1 * CELL_SIZE, y1: 0, z1: edge.y1 * CELL_SIZE,
+      x2: edge.x2 * CELL_SIZE, y2: 0, z2: edge.y2 * CELL_SIZE,
+      classname: edge.type || "staticobj_castle_wall3"
+    });
+  }
+
+  return { walls, objects };
+}

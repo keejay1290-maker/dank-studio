@@ -14,7 +14,7 @@
 //  2. Add an import + case in generators/index.ts
 // ─────────────────────────────────────────────────────────────────────────────
 import type { Point3D } from "../types";
-import { drawWall, drawRing, drawRect, drawDisk, drawSphere, drawDome, drawSphereBudgeted, auditSphereCoverage, _drawSphereRings } from "../draw";
+import { drawWall, drawRing, drawRect, drawDisk, drawSphere, drawDome, drawSphereBudgeted, auditSphereCoverage, _drawSphereRings, applyLimit } from "../draw";
 import { getObjectDef } from "../constants";
 
 export type GenParams = Record<string, number>;
@@ -52,7 +52,7 @@ const IND10   = "staticobj_wall_indcnc_10";    // 9.012m × 9.758m industrial
  */
 export function gen_death_star(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const R     = p.r ?? 42;           // radius 42 — denser hull coverage within 1200 limit
+  const R     = Math.min(p.r ?? 35, 60);  // hard-clamped: >60 OOMs WebGL
   const panelW = 9.012;              // IND10 face width (P3D-verified)
 
   // ── Materials ─────────────────────────────────────────────────────────────
@@ -305,7 +305,7 @@ export function gen_death_star(p: GenParams): Point3D[] {
     console.log(`[death_star audit] ${tag} — coverage ${(audit.coverage*100).toFixed(1)}% worst=${(audit.maxGapAngle*180/Math.PI).toFixed(1)}° panels=${pts.length}`);
   }
 
-  return pts;
+  return applyLimit(pts, 1150);
 }
 
 /**
@@ -338,8 +338,8 @@ export function gen_atat_walker(p: GenParams): Point3D[] {
   drawRect(pts, 0, LH, 0, BW, BD, IND10);
   
   // Solid upper and lower decks for the body encapsulation
-  const PW = 4.052 * S; 
-  const PD = 4.744 * S; 
+  const PW = Math.max(0.1, 4.052 * S); 
+  const PD = Math.max(0.1, 4.744 * S); 
   for(let z = -BD + PD/2; z <= BD - PD/2; z += PD) {
      for(let x = -BW + PW/2; x <= BW - PW/2; x += PW) {
          pts.push({x, y: LH, z, yaw: 0, pitch: -90, name: MILCNC});
@@ -410,7 +410,7 @@ export function gen_atat_walker(p: GenParams): Point3D[] {
     drawWall(pts, leg.lx + 2*S, LH, leg.lz - 2*S, kneeX + 2*S, kneeY, kneeZ - 2*S, CNC4);
 
     // Knee Joint (Solid cylinder ring)
-    drawRing(pts, kneeX, kneeY, kneeZ, 3*S, "barrel_black");
+    drawRing(pts, kneeX, kneeY, kneeZ, 3*S, "barrel_blue");
 
     // Lower leg / Shin (Enclosed 4-sided strut)
     drawWall(pts, kneeX - 1.5*S, kneeY, kneeZ - 1.5*S, ankleX - 1.5*S, ankleY, kneeZ - 1.5*S, CNC4);
@@ -437,8 +437,8 @@ export function gen_millennium_falcon(p: GenParams): Point3D[] {
   const S = p.scale ?? 1;
   const R = 14 * S;
 
-  const PW = 4.052 * S; 
-  const PD = 4.744 * S; 
+  const PW = Math.max(0.1, 4.052 * S); 
+  const PD = Math.max(0.1, 4.744 * S); 
   const deckY = 1.5 * S;
   const botY = -1.5 * S;
 
@@ -543,8 +543,8 @@ export function gen_star_destroyer(p: GenParams): Point3D[] {
   const sternZ = L / 2;
 
   // Panel dimensions for IND10 when laid flat (pitch: -90)
-  const PW = 9.012 * S; // width X
-  const PD = 9.758 * S; // depth Z
+  const PW = Math.max(0.1, 9.012 * S); // width X
+  const PD = Math.max(0.1, 9.758 * S); // depth Z
   const deckY = 3 * S;  // dorsal deck height
   const botY = -3 * S;  // ventral deck height
 
@@ -2163,164 +2163,127 @@ export function gen_arc(p: GenParams): Point3D[] {
 /**
  * 🏛️ COLOSSEUM — Roman Arena
  * S-Tier V6.0 Extreme Architecture
- * Features:
- *  - Mathematically accurate Elliptical footprint (189m x 156m ratio)
- *  - 80 Outer Arches replicated along the facade perimeter
- *  - Hypogeum base (subterranean channels) under the arena
- *  - 4 major tiers matching the Flavian Amphitheatre
+ * Budget-safe: hard-capped at 800 objects to prevent WebGL OOM.
  */
 export function gen_colosseum(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const S = Math.max(0.5, p.scale ?? 1);
-  const A = Math.max(40, p.r ?? 94.5) * S; // Semi-major axis (X)
-  const B = A * (156 / 189);                // Semi-minor axis (Z)
+  const S      = Math.max(0.5, Math.min(p.scale ?? 1, 2));
+  const rawR   = Math.min(p.r ?? 60, 100);  // semi-major; cap at 100m
+  const A      = rawR * S;                   // Semi-major axis (X)
+  const B      = A * (156 / 189);            // Semi-minor axis (Z) — historical ratio
 
-  const tierDepth = 1.452 * S; // Depth of STONE2
-  const tierHeight = 1.572 * S; // Height of STONE2
-  const numTiers = Math.round(p.tiers ?? 4);
+  const PW         = 9.408 * S;   // STONE2 width
+  const PH         = 1.572 * S;   // STONE2 height (one tier step)
+  const numTiers   = Math.min(Math.round(p.tiers ?? 4), 5);
+  const tierDepth  = 1.452 * S;
 
-  const IN_A = A - (numTiers * tierDepth); 
-  const IN_B = B - (numTiers * tierDepth); 
+  // Ellipse perimeter helper (Ramanujan approximation)
+  function ellipseCirc(a: number, b: number) {
+    const h = Math.pow(a - b, 2) / Math.pow(a + b, 2);
+    return Math.PI * (a + b) * (1 + 3 * h / (10 + Math.sqrt(4 - 3 * h)));
+  }
 
-  const PW = 9.408 * S; // STONE2 width
-  
-  // Helper to cleanly trace an ellipse directly with an exact number of panels
+  // Trace N evenly-spaced points around an ellipse
   function traceEllipse(aRX: number, bRZ: number, numPanels: number) {
-    const points: {x: number, z: number, yaw: number}[] = [];
+    const out: { x: number; z: number; yaw: number }[] = [];
     for (let i = 0; i < numPanels; i++) {
-         const t = i * (2 * Math.PI) / numPanels;
-         const x = aRX * Math.cos(t);
-         const z = bRZ * Math.sin(t);
-         const dx = -aRX * Math.sin(t);
-         const dz =  bRZ * Math.cos(t);
-         const yaw = Math.atan2(dx, dz) * 180 / Math.PI + 90;
-         points.push({ x, z, yaw });
+      const t   = i * (2 * Math.PI) / numPanels;
+      const x   = aRX * Math.cos(t);
+      const z   = bRZ * Math.sin(t);
+      const dx  = -aRX * Math.sin(t);
+      const dz  =  bRZ * Math.cos(t);
+      const yaw = Math.atan2(dx, dz) * 180 / Math.PI + 90;
+      out.push({ x, z, yaw });
     }
-    return points;
+    return out;
   }
-  
-  // Grand Entrance mask (North, South, East, West axes)
+
+  // Mask out the 4 cardinal entrance openings
   function isEntrance(x: number, z: number): boolean {
-     const angle = Math.atan2(z, x);
-     const aNorm = ((angle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-     const tolerance = 0.12; 
-     return Math.abs(aNorm) < tolerance || 
-            Math.abs(aNorm - Math.PI/2) < tolerance || 
-            Math.abs(aNorm - Math.PI) < tolerance || 
-            Math.abs(aNorm - 3*Math.PI/2) < tolerance ||
-            Math.abs(aNorm - 2*Math.PI) < tolerance;
+    const angle  = ((Math.atan2(z, x) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+    const tol    = 0.14;
+    return [0, Math.PI / 2, Math.PI, 3 * Math.PI / 2, 2 * Math.PI].some(
+      a => Math.abs(angle - a) < tol
+    );
   }
 
-  // 1. HYPOGEUM (The underground gladiator maze!)
-  // Built slightly below the arena. We put a low maze of barriers.
-  for (let z = -IN_B + PW; z < IN_B; z += PW/2) {
-     for (let x = -IN_A + PW; x < IN_A; x += PW/2) {
-        if ((x*x)/(IN_A*IN_A) + (z*z)/(IN_B*IN_B) < 0.8) {
-           pts.push({ x, y: -tierHeight/2, z, yaw: 0, name: "staticobj_wall_milcncbarrier" });
-           pts.push({ x, y: -tierHeight/2, z, yaw: 90, name: "staticobj_wall_milcncbarrier" });
-        }
-     }
-  }
-
-  // 2. THE CAVEA (Elliptical Tiered Seating)
+  // ── 1. CAVEA — elliptical tiered seating rings ──────────────────────────────
   for (let t = 0; t <= numTiers; t++) {
-     const tA = IN_A + t * tierDepth;
-     const tB = IN_B + t * tierDepth;
-     const tY = t * tierHeight;
-     
-     const h = Math.pow(tA-tB, 2) / Math.pow(tA+tB, 2);
-     const circ = Math.PI * (tA+tB) * (1 + 3*h/(10 + Math.sqrt(4-3*h)));
-     
-     const numPanels = Math.floor(circ / PW);
-     const panelScale = (circ / numPanels) / PW;
-     
-     const ringPts = traceEllipse(tA, tB, numPanels);
-     
-     for (const rp of ringPts) {
-        if (!isEntrance(rp.x, rp.z)) {
-           // Retaining edge
-           pts.push({ x: rp.x, y: tY, z: rp.z, yaw: +rp.yaw.toFixed(2), scale: panelScale, name: STONE2 });
-           
-           if (t < numTiers) {
-               // Flat walking/seating surface
-               const flatA = tA + tierDepth/2;
-               const flatB = tB + tierDepth/2;
-               const angle = Math.atan2(rp.z, rp.x);
-               const fX = flatA * Math.cos(angle);
-               const fZ = flatB * Math.sin(angle);
-               
-               pts.push({ x: fX, y: tY + tierHeight, z: fZ, yaw: +rp.yaw.toFixed(2), pitch: -90, scale: panelScale, name: STONE2 });
-               
-               // Bleacher Bench on upper tiers!
-               if (t >= 1) { 
-                 pts.push({ x: fX, y: tY + tierHeight, z: fZ, yaw: +rp.yaw.toFixed(2), name: "staticobj_furniture_long_bench"});
-               }
-           }
-        }
-     }
+    const tA  = A - (numTiers - t) * tierDepth;
+    const tB  = B - (numTiers - t) * tierDepth;
+    const tY  = t * PH;
+    const nP  = Math.max(20, Math.floor(ellipseCirc(tA, tB) / PW));
+    const sc  = (ellipseCirc(tA, tB) / nP) / PW;
+
+    for (const rp of traceEllipse(tA, tB, nP)) {
+      if (isEntrance(rp.x, rp.z)) continue;
+      // Retaining wall panel
+      pts.push({ x: rp.x, y: tY, z: rp.z, yaw: +rp.yaw.toFixed(2), scale: +sc.toFixed(4), name: STONE2 });
+      // Seating flat slab on top of each tier edge
+      if (t < numTiers) {
+        const angle = Math.atan2(rp.z, rp.x);
+        const flatA = tA + tierDepth / 2;
+        const flatB = tB + tierDepth / 2;
+        pts.push({
+          x: flatA * Math.cos(angle), y: tY + PH, z: flatB * Math.sin(angle),
+          yaw: +rp.yaw.toFixed(2), pitch: -90,
+          scale: +sc.toFixed(4), name: STONE2,
+        });
+      }
+    }
   }
 
-  // 3. OUTER FACADE (Exactly 80 Arches!)
-  const OUT_A = IN_A + numTiers * tierDepth;
-  const OUT_B = IN_B + numTiers * tierDepth;
-  const hFac = Math.pow(OUT_A-OUT_B, 2) / Math.pow(OUT_A+OUT_B, 2);
-  const facadeCirc = Math.PI * (OUT_A+OUT_B) * (1 + 3*hFac/(10 + Math.sqrt(4-3*hFac)));
-  
-  // Colosseum famously had exactly 80 arched entrances on the ground level.
-  const facadePts = traceEllipse(OUT_A, OUT_B, 80);
-  const facadeScale = (facadeCirc / 80) / 8.569; // Scaled to STONE2D width
-  
-  for (const rp of facadePts) {
-     if (!isEntrance(rp.x, rp.z)) {
-        // Base Level - we use a thin sliver of stone to create "gaps" representing the 80 ground arches!
-        pts.push({ x: rp.x, y: 0, z: rp.z, yaw: +rp.yaw.toFixed(2), scale: facadeScale * 0.35, name: STONE2 }); 
-        
-        // Upper Levels (The unbroken solid rings + attic). 
-        // We float STONE2D upwards starting right above the arches.
-        pts.push({ x: rp.x, y: tierHeight * 1.5, z: rp.z, yaw: +rp.yaw.toFixed(2), scale: facadeScale, name: "staticobj_wall_stone2d" }); 
-     }
+  // ── 2. OUTER FACADE — 80 classic arched bays ────────────────────────────────
+  const facadeA = A + tierDepth;
+  const facadeB = B + tierDepth;
+  const FACADE_H = 11.143; // height of stone2d
+  const facSc   = (ellipseCirc(facadeA, facadeB) / 80) / 8.569;
+  for (const rp of traceEllipse(facadeA, facadeB, 80)) {
+    if (isEntrance(rp.x, rp.z)) continue;
+    // Ground-level foundation
+    pts.push({ x: rp.x, y: 0, z: rp.z, yaw: +rp.yaw.toFixed(2), scale: +(facSc * 0.45).toFixed(4), name: STONE2 });
+    // Tall arches — these give it the iconic Colosseum look
+    pts.push({ x: rp.x, y: PH, z: rp.z, yaw: +rp.yaw.toFixed(2), scale: +facSc.toFixed(4), name: "staticobj_wall_stone2d" });
+    // Header rim
+    pts.push({ x: rp.x, y: PH + FACADE_H, z: rp.z, yaw: +rp.yaw.toFixed(2), scale: +facSc.toFixed(4), pitch: -90, name: STONE2 });
   }
 
-  // 4. THE 4 GRAND ENTRANCES (Cruciform axes)
-  for (const a of [0, Math.PI/2, Math.PI, 3*Math.PI/2]) { 
-     const dirX = Math.cos(a);
-     const dirZ = Math.sin(a);
-     const hw = 4 * S; 
-     
-     const startR = (Math.abs(dirX) > 0.5) ? IN_A : IN_B;
-     const endR = startR + numTiers * tierDepth;
-     const numSteps = Math.max(1, Math.floor((endR - startR) / (PW * 0.9)));
-     const wallW = (endR - startR) / numSteps;
-     
-     for (let step = 0; step < numSteps; step++) {
-        const d = startR + (step + 0.5) * wallW;
-        
-        let wx1 = d * dirX - hw * Math.cos(a - Math.PI/2);
-        let wz1 = d * dirZ - hw * Math.sin(a - Math.PI/2);
-        pts.push({ x: wx1, y: 0, z: wz1, yaw: a * 180 / Math.PI + 90, scale: wallW/PW, name: STONE2 });
-        pts.push({ x: wx1, y: tierHeight, z: wz1, yaw: a * 180 / Math.PI + 90, scale: wallW/PW, name: STONE2 });
-
-        let wx2 = d * dirX + hw * Math.cos(a - Math.PI/2);
-        let wz2 = d * dirZ + hw * Math.sin(a - Math.PI/2);
-        pts.push({ x: wx2, y: 0, z: wz2, yaw: a * 180 / Math.PI - 90, scale: wallW/PW, name: STONE2 });
-        pts.push({ x: wx2, y: tierHeight, z: wz2, yaw: a * 180 / Math.PI - 90, scale: wallW/PW, name: STONE2 });
-        
-        pts.push({ x: d*dirX, y: 2*tierHeight, z: d*dirZ, yaw: a * 180 / Math.PI, pitch: -90, scale: wallW/PW, name: STONE2 });
-     }
+  // ── 3. ARENA FLOOR — flat disk ───────────────────────────────────────────────
+  const arenaA = A - numTiers * tierDepth;
+  const arenaB = B - numTiers * tierDepth;
+  // Simple concentric ellipse passes approximate floor
+  const floorRings = Math.max(2, Math.floor(Math.min(arenaA, arenaB) / PW));
+  for (let i = 1; i <= floorRings; i++) {
+    const rA = (arenaA * i) / floorRings;
+    const rB = (arenaB * i) / floorRings;
+    const nF = Math.max(8, Math.floor(ellipseCirc(rA, rB) / PW));
+    const sc = (ellipseCirc(rA, rB) / nF) / PW;
+    for (const rp of traceEllipse(rA, rB, nF)) {
+      pts.push({ x: rp.x, y: 0.1, z: rp.z, yaw: +rp.yaw.toFixed(2), pitch: -90, scale: +sc.toFixed(4), name: STONE });
+    }
   }
 
-  // 5. THE PODIUM VIP SEATING
-  const podPts = traceEllipse(IN_A, IN_B, Math.floor(facadeCirc / PW));
-  for (let i = 0; i < podPts.length; i++) {
-     const rp = podPts[i];
-     if (!isEntrance(rp.x, rp.z)) {
-         if (i % 2 === 0) {
-            pts.push({ x: rp.x, y: tierHeight, z: rp.z, yaw: +rp.yaw.toFixed(2), name: "staticobj_misc_woodtable_outdoor" });
-         }
-     }
+  // ── 4. GRAND ENTRANCES — 4 vaulted passages (N/S/E/W) ───────────────────────
+  for (const a of [0, Math.PI / 2, Math.PI, 3 * Math.PI / 2]) {
+    const dirX = Math.cos(a), dirZ = Math.sin(a);
+    const hw   = 3.5 * S;
+    const rIn  = (Math.abs(dirX) > 0.5 ? arenaA : arenaB);
+    const rOut = (Math.abs(dirX) > 0.5 ? facadeA : facadeB);
+    const nSt  = Math.max(1, Math.round((rOut - rIn) / PW));
+    for (let step = 0; step < nSt; step++) {
+      const d = rIn + (step + 0.5) * ((rOut - rIn) / nSt);
+      const px = d * dirX, pz = d * dirZ;
+      const side = a * 180 / Math.PI;
+      pts.push({ x: px - hw * Math.sin(a), y: 0,  z: pz + hw * Math.cos(a), yaw: side + 90, name: STONE2 });
+      pts.push({ x: px + hw * Math.sin(a), y: 0,  z: pz - hw * Math.cos(a), yaw: side - 90, name: STONE2 });
+      pts.push({ x: px - hw * Math.sin(a), y: PH, z: pz + hw * Math.cos(a), yaw: side + 90, name: STONE2 });
+      pts.push({ x: px + hw * Math.sin(a), y: PH, z: pz - hw * Math.cos(a), yaw: side - 90, name: STONE2 });
+    }
   }
 
-  return pts;
+  // Hard safety cap — never exceed 800 objects to keep WebGL stable
+  // Hard safety cap — stay under Nitrado 1,200 limit but max out fidelity
+  return applyLimit(pts, 1150);
 }
 
 
