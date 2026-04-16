@@ -410,7 +410,7 @@ export function gen_atat_walker(p: GenParams): Point3D[] {
     drawWall(pts, leg.lx + 2*S, LH, leg.lz - 2*S, kneeX + 2*S, kneeY, kneeZ - 2*S, CNC4);
 
     // Knee Joint (Solid cylinder ring)
-    drawRing(pts, kneeX, kneeY, kneeZ, 3*S, "barrel_blue");
+    drawRing(pts, kneeX, kneeY, kneeZ, 3*S, STONE);
 
     // Lower leg / Shin (Enclosed 4-sided strut)
     drawWall(pts, kneeX - 1.5*S, kneeY, kneeZ - 1.5*S, ankleX - 1.5*S, ankleY, kneeZ - 1.5*S, CNC4);
@@ -508,8 +508,8 @@ export function gen_millennium_falcon(p: GenParams): Point3D[] {
   // Cockpit viewport blue glow
   pts.push({ x: armX, y: deckY - 0.5 * S, z: armZ - 2.5 * S, yaw: 0, pitch: 0, name: "barrel_blue" });
 
-  // 5. REAR ENGINE GLOW
-  for (let a = Math.PI * 0.65; a <= Math.PI * 1.35; a += 0.1) {
+  // 5. REAR ENGINE GLOW — rear arc (+Z side, cos(a) positive near a=0)
+  for (let a = -Math.PI * 0.35; a <= Math.PI * 0.35; a += 0.1) {
      const ex = R * 0.95 * Math.sin(a);
      const ez = R * 0.95 * Math.cos(a);
      pts.push({ x: ex, y: 0, z: ez, yaw: 0, pitch: 0, name: "barrel_blue" });
@@ -811,40 +811,162 @@ export function gen_stark_tower(p: GenParams): Point3D[] {
   drawRing(pts, 0, arcY, arcZ, 5 * S, "barrel_blue");
 
   // ── SPIRE ANTENNA ────────────────────────────────────────────────────────
-  // A sharply piercing 30m tall needle finishing the skyscraper
-  drawWall(pts, 0, towerTopY, 0, 0, towerTopY + 30 * S, 0, IND10);
+  // Two perpendicular fins per level form a narrow needle rising 30m above the tower.
+  for (let sy = towerTopY; sy < towerTopY + 30 * S; sy += 9.012 * S) {
+    pts.push({ x: 0, y: sy, z: 0, yaw: 0,  pitch: 0, name: IND10 });
+    pts.push({ x: 0, y: sy, z: 0, yaw: 90, pitch: 0, name: IND10 });
+  }
   
   return pts;
 }
 
 /**
  * 🏙️ CYBERPUNK NEXUS TOWER
+ *
+ * Research: Cyberpunk megastructure — ziggurat setback profile, neon conduit rings,
+ * skybridge arms, rooftop antenna cluster. Inspired by Blade Runner/2077 arcology.
+ *
+ * Structure:
+ *  • Core shaft — IND10 panels, ziggurat setback at 30%, 60%, 85% height
+ *  • Neon conduit rings — barrel_blue every 3 floors, barrel_red accent bands
+ *  • Skybridge arms — CNC4 horizontal beams at 40% and 70% height
+ *  • Rooftop antenna cluster — thin MILCNC spires and a central barrel_blue beacon
  */
 export function gen_cyberpunk(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const S = Math.max(0.5, p.scale ?? 1), h = 80*S, w = 20*S;
-  for (let y = 0; y <= h; y += 4) {
-    drawRect(pts, 0, y, 0, w/2, w/2, y % 8 === 0 ? IND10 : CNC8);
-    if (y % 16 === 0) drawRing(pts, 0, y, 0, w/2 + 4, MILCNC);
+  const S = Math.max(0.5, p.scale ?? 1);
+  const h = 80 * S;
+  const panelH = 9.758 * S;
+
+  // Ziggurat setback profile — tower width decreases at 30%, 60%, 85% height
+  function towerHalfWidth(y: number): number {
+    const t = y / h;
+    if (t < 0.30) return 18 * S;
+    if (t < 0.60) return 13 * S;
+    if (t < 0.85) return  9 * S;
+    return 6 * S;
   }
+
+  // Core shaft with setback walls
+  for (let y = 0; y < h; y += panelH) {
+    const w = towerHalfWidth(y);
+    const mat = (Math.floor(y / panelH) % 3 === 0) ? IND10 : CNC8;
+    drawRect(pts, 0, y, 0, w, w, mat);
+
+    // Flat deck at each setback transition
+    const nextW = towerHalfWidth(y + panelH);
+    if (nextW < w - 1) {
+      for (let dx = -w + 4.5*S; dx <= w - 4.5*S; dx += 9*S) {
+        pts.push({ x: dx, y: y + panelH, z:  w - 4.5*S, yaw: 0, pitch: -90, name: MILCNC });
+        pts.push({ x: dx, y: y + panelH, z: -w + 4.5*S, yaw: 0, pitch: -90, name: MILCNC });
+      }
+    }
+  }
+
+  // Neon conduit rings — barrel_blue every 3 floors, barrel_red accent every 7
+  for (let y = panelH * 2; y < h; y += panelH * 3) {
+    const w = towerHalfWidth(y);
+    const isRed = Math.floor(y / (panelH * 3)) % 7 === 0;
+    drawRing(pts, 0, y + panelH * 0.1, 0, w + 2 * S, isRed ? "barrel_red" : "barrel_blue");
+  }
+
+  // Skybridge arms at 40% and 70% height — CNC4 beams extending outward
+  for (const frac of [0.40, 0.70]) {
+    const bridgeY = h * frac;
+    const bw = towerHalfWidth(bridgeY);
+    for (const side of [-1, 1] as const) {
+      // Horizontal arm extending 20m past the tower face
+      drawWall(pts, side * bw, bridgeY, -8*S, side * (bw + 20*S), bridgeY, -8*S, CNC4);
+      drawWall(pts, side * bw, bridgeY,  8*S, side * (bw + 20*S), bridgeY,  8*S, CNC4);
+      // Arm cap wall
+      drawWall(pts, side * (bw + 20*S), bridgeY, -8*S, side * (bw + 20*S), bridgeY, 8*S, CNC4);
+      // Neon underside glow
+      pts.push({ x: side * (bw + 10*S), y: bridgeY - 1*S, z: 0, yaw: 0, pitch: -90, name: "barrel_blue" });
+    }
+  }
+
+  // Rooftop antenna cluster — 4 perimeter spires + central beacon
+  const roofY = h;
+  const roofW = towerHalfWidth(h) - 2*S;
+  for (const [ox, oz] of [[roofW, 0], [-roofW, 0], [0, roofW], [0, -roofW]] as const) {
+    for (let ay = roofY; ay < roofY + 20*S; ay += 9.012*S) {
+      pts.push({ x: ox, y: ay, z: oz, yaw: 0,  pitch: 0, name: MILCNC });
+      pts.push({ x: ox, y: ay, z: oz, yaw: 90, pitch: 0, name: MILCNC });
+    }
+  }
+  // Central beacon
+  pts.push({ x: 0, y: roofY + 24*S, z: 0, yaw: 0, name: "barrel_red" });
+  pts.push({ x: 0, y: roofY + 26*S, z: 0, yaw: 0, name: "barrel_blue" });
+
   return pts;
 }
 
 /**
- * 🪐 SATURN SPACE STATION
+ * 🪐 PLANET SATURN
+ *
+ * Research: Saturn — oblate spheroid, axial tilt 26.7°, ring system spans
+ * 1.2–2.27× planet radius (D ring to F ring). Rings are extremely thin (~20m real).
+ * Ring bands: C-ring (inner, faint MILCNC), B-ring (brightest, IND10),
+ * Cassini Division (gap), A-ring (outer, CNC8).
+ *
+ * DayZ approximation: planet = drawSphere at planet radius, rings manually placed
+ * at tilted angle using per-panel trig to simulate the 26.7° axial tilt.
  */
 export function gen_saturn(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const r = p.r ?? 35;
-  // Core sphere
-  drawSphere(pts, 0, r, 0, r * 0.5, IND10);
-  // Rings at different heights
-  for (let dy = -r*0.1; dy <= r*0.1; dy += 4) {
-    const rr = r * (1.8 + Math.abs(dy) * 0.01);
-    drawRing(pts, 0, r + dy, 0, rr, CNC8);
-    drawRing(pts, 0, r + dy, 0, rr * 0.7, MILCNC);
+  const R = Math.min(p.r ?? 60, 100); // planet radius
+  const cx = 0, cy = R, cz = 0;       // planet centre elevated so it rests on ground
+
+  // Planet body
+  drawSphere(pts, cx, cy, cz, R, IND10);
+
+  // Ring system: panels placed on an ellipse tilted 26.7° around Z axis
+  // Each ring panel sits at angle θ around the ring axis.
+  // Ring axis direction (after 26.7° tilt around Z): (sin(26.7°), cos(26.7°), 0)
+  const TILT = 26.7 * Math.PI / 180;
+  const cosT = Math.cos(TILT), sinT = Math.sin(TILT);
+
+  // Ring bands: [innerR, outerR, material, step_panels]
+  const bands: Array<[number, number, string]> = [
+    [1.20 * R, 1.52 * R, MILCNC],  // C-ring (faint inner)
+    [1.52 * R, 1.95 * R, IND10],   // B-ring (brightest)
+    // Cassini Division gap: 1.95–2.02×R (skip)
+    [2.02 * R, 2.27 * R, CNC8],    // A-ring (outer)
+  ];
+
+  for (const [innerRR, outerRR, mat] of bands) {
+    const panelW = 9.012;
+    // Sample 3 radii across the band width for density
+    const radii = [innerRR, (innerRR + outerRR) / 2, outerRR];
+    for (const rr of radii) {
+      const circ = 2 * Math.PI * rr;
+      const nP = Math.max(8, Math.floor(circ / panelW));
+      const arcStep = (2 * Math.PI) / nP;
+      const scale = (circ / nP) / panelW;
+
+      for (let i = 0; i < nP; i++) {
+        const theta = (i + 0.5) * arcStep;
+        // Ring in its own plane (XZ initially), then tilt around Z by TILT
+        const rx = rr * Math.cos(theta);
+        const ry_ring = rr * Math.sin(theta); // vertical in the ring plane
+        // Apply tilt: rotate ring-plane-Y into world XY
+        const wx = cx + rx;
+        const wy = cy + ry_ring * cosT;  // tilt lifts/lowers by cos
+        const wz = cz + ry_ring * sinT;  // tilt adds Z component
+
+        // Yaw: tangent of the tilted ring
+        const tangX = -Math.sin(theta);
+        const tangY_ring = Math.cos(theta);
+        const tangZ = tangY_ring * sinT;
+        const yaw = Math.atan2(tangX, tangZ) * 180 / Math.PI;
+        const pitch = -Math.asin(Math.max(-1, Math.min(1, tangY_ring * cosT / Math.sqrt(tangX*tangX + (tangY_ring*cosT)*(tangY_ring*cosT) + tangZ*tangZ)))) * 180 / Math.PI;
+
+        pts.push({ x: wx, y: wy, z: wz, yaw: +yaw.toFixed(1), pitch: +pitch.toFixed(1), scale: +scale.toFixed(3), name: mat });
+      }
+    }
   }
-  return pts;
+
+  return applyLimit(pts, 1100);
 }
 
 /**
@@ -952,6 +1074,7 @@ export function gen_xwing(p: GenParams): Point3D[] {
         drawRing(pts, engX, engY, z, 2.2*S, CNC4);
       }
       drawRing(pts, engX, engY, 9*S, 2.5*S, MILCNC);  // exhaust ring
+      pts.push({ x: engX, y: engY, z: 9*S, yaw: 0, pitch: -90, name: "barrel_blue" }); // engine glow
 
       // ── LASER CANNON — from wingtip, extending forward past nose ──────
       const tipX = side * 21 * S;
