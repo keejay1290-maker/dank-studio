@@ -403,20 +403,20 @@ export function gen_atat_walker(p: GenParams): Point3D[] {
     const ankleX = leg.lx * 1.15;
     const ankleY = 2 * S;
 
-    // Upper leg / Hip (Enclosed 4-sided strut)
-    drawWall(pts, leg.lx - 2*S, LH, leg.lz - 2*S, kneeX - 2*S, kneeY, kneeZ - 2*S, CNC4);
-    drawWall(pts, leg.lx + 2*S, LH, leg.lz + 2*S, kneeX + 2*S, kneeY, kneeZ + 2*S, CNC4);
-    drawWall(pts, leg.lx - 2*S, LH, leg.lz + 2*S, kneeX - 2*S, kneeY, kneeZ + 2*S, CNC4);
-    drawWall(pts, leg.lx + 2*S, LH, leg.lz - 2*S, kneeX + 2*S, kneeY, kneeZ - 2*S, CNC4);
+    // Upper leg — 4-sided box strut: front/back offset Z only, inner/outer offset X only
+    drawWall(pts, leg.lx,       LH,    leg.lz - 2*S, kneeX,       kneeY, kneeZ - 2*S, CNC4); // front face
+    drawWall(pts, leg.lx,       LH,    leg.lz + 2*S, kneeX,       kneeY, kneeZ + 2*S, CNC4); // back face
+    drawWall(pts, leg.lx - 2*S, LH,    leg.lz,       kneeX - 2*S, kneeY, kneeZ,       CNC4); // inner face
+    drawWall(pts, leg.lx + 2*S, LH,    leg.lz,       kneeX + 2*S, kneeY, kneeZ,       CNC4); // outer face
 
-    // Knee Joint (Solid cylinder ring)
+    // Knee Joint
     drawRing(pts, kneeX, kneeY, kneeZ, 3*S, STONE);
 
-    // Lower leg / Shin (Enclosed 4-sided strut)
-    drawWall(pts, kneeX - 1.5*S, kneeY, kneeZ - 1.5*S, ankleX - 1.5*S, ankleY, kneeZ - 1.5*S, CNC4);
-    drawWall(pts, kneeX + 1.5*S, kneeY, kneeZ + 1.5*S, ankleX + 1.5*S, ankleY, kneeZ + 1.5*S, CNC4);
-    drawWall(pts, kneeX - 1.5*S, kneeY, kneeZ + 1.5*S, ankleX - 1.5*S, ankleY, kneeZ + 1.5*S, CNC4);
-    drawWall(pts, kneeX + 1.5*S, kneeY, kneeZ - 1.5*S, ankleX + 1.5*S, ankleY, kneeZ - 1.5*S, CNC4);
+    // Lower leg — same box-strut pattern, narrower (1.5S offset)
+    drawWall(pts, kneeX,        kneeY, kneeZ - 1.5*S, ankleX,        ankleY, kneeZ - 1.5*S, CNC4); // front
+    drawWall(pts, kneeX,        kneeY, kneeZ + 1.5*S, ankleX,        ankleY, kneeZ + 1.5*S, CNC4); // back
+    drawWall(pts, kneeX - 1.5*S, kneeY, kneeZ,        ankleX - 1.5*S, ankleY, kneeZ,        CNC4); // inner
+    drawWall(pts, kneeX + 1.5*S, kneeY, kneeZ,        ankleX + 1.5*S, ankleY, kneeZ,        CNC4); // outer
 
     // Foot pad (Large rounded disc)
     drawDisk(pts, ankleX, 0.5 * S, kneeZ, 4.5 * S, CNC4);
@@ -531,115 +531,117 @@ export function gen_millennium_falcon(p: GenParams): Point3D[] {
 }
 
 /**
- * 🛰️ STAR DESTROYER — Imperial-class
- * Built using solid flat deck plating and stacked architectural tiers.
+ * 🛰️ IMPERIAL STAR DESTROYER (ISD-I)
+ *
+ * Research: 1,600m long triangular warship. At S=1 → 160m model (~1:10 scale).
+ * Key anatomy: flat triangular dorsal hull, 1-row-high IND10 edge walls,
+ * command superstructure at stern (3 tiers + bridge stalk + globes),
+ * twin-barrelled turbolaser towers across dorsal, 3 primary ion drives + 2 aux.
+ *
+ * Hull layout (Y-axis):
+ *  y=0          — ground (hull bottom / keel)
+ *  y=9.758      — top of IND10 hull walls (deckY)
+ *  y=deckY+...  — superstructure and towers
+ *
+ * Orientations:
+ *  Bow → -Z (South) | Stern → +Z (North) | Port → -X | Starboard → +X
  */
 export function gen_star_destroyer(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const S = Math.max(0.5, p.scale ?? 1);
-  const L = 160 * S;
-  const HW = 45 * S; // Half-width at stern
-  const bowZ = -L / 2;
-  const sternZ = L / 2;
+  const S      = Math.max(0.5, p.scale ?? 1);
+  const L      = 160 * S;
+  const HW     = 45  * S;   // half-width at stern
+  const bowZ   = -L / 2;
+  const sternZ =  L / 2;
+  const PW     = 9.012 * S; // IND10 face width (X)
+  const PD     = 9.758 * S; // IND10 face height → hull wall height
+  const deckY  = PD;        // dorsal deck sits on top of one row of hull walls
 
-  // Panel dimensions for IND10 when laid flat (pitch: -90)
-  const PW = Math.max(0.1, 9.012 * S); // width X
-  const PD = Math.max(0.1, 9.758 * S); // depth Z
-  const deckY = 3 * S;  // dorsal deck height
-  const botY = -3 * S;  // ventral deck height
+  // ── 1. HULL SIDE WALLS — two diagonal edges + flat stern ─────────────────
+  drawWall(pts, -HW, 0, sternZ,  0,  0, bowZ,   IND10); // port edge
+  drawWall(pts,  HW, 0, sternZ,  0,  0, bowZ,   IND10); // starboard edge
+  drawWall(pts, -HW, 0, sternZ, HW,  0, sternZ, IND10); // stern flat wall
 
-  // 1. PERIMETER WALLS (The wedge border)
-  drawWall(pts, -HW, 0, sternZ, 0, 0, bowZ, IND10);
-  drawWall(pts, HW, 0, sternZ, 0, 0, bowZ, IND10);
-  drawWall(pts, -HW, 0, sternZ, HW, 0, sternZ, IND10);
+  // ── 2. DORSAL DECK — IND10 panels filling the triangular upper surface ───
+  // Each row at z sweeps -(halfW) to +(halfW) with panels matched to fit.
+  for (let z = bowZ + PD * 0.5; z <= sternZ - PD * 0.5; z += PD) {
+    const frac  = (z - bowZ) / L;
+    const halfW = HW * frac;
+    if (halfW < PW * 0.5) continue;
 
-  // 2. MAIN HULL DORSAL & VENTRAL DECKS (Flat horizontal panels)
-  // Instead of an exposed blocky grid pushing out, we lay several perfectly 
-  // tangent layers of deck plates exactly parallel to the diagonal outer hull.
-  // This swallows the rough edges of the inner grid into a smooth border.
-  const edgeLen = Math.sqrt(HW * HW + L * L);
-  const nEdgeP = Math.floor(edgeLen / PW);
-  const eScale = edgeLen / (nEdgeP * PW);
-  
-  for(const side of [-1, 1]) {
-     // Yaw aligns tangent to the diagonal
-     const edgeYaw = side * Math.atan2(HW, L) * 180 / Math.PI + 90; 
-     
-     // 3 layers deep of parallel border plating
-     for(let layer = 0; layer < 3; layer++) {
-        // Shift inwardly towards the central spine
-        const innerShiftX = side * (layer * PD * 0.9 * Math.cos(Math.atan2(HW, L)));
-        const innerShiftZ = layer * PD * 0.9 * Math.sin(Math.atan2(HW, L));
-        
-        for (let i = 0; i < nEdgeP; i++) {
-           const t = (i + 0.5) / nEdgeP;
-           let z = bowZ + t * L + innerShiftZ;
-           let x = (side * t * HW) - innerShiftX;
-           
-           if (z > sternZ - 2*S) continue; // Keep within rear bound
-           
-           pts.push({x, y: deckY, z, yaw: edgeYaw, pitch: -90, scale: eScale, name: IND10});
-           pts.push({x, y: botY, z, yaw: edgeYaw, pitch: -90, scale: eScale, name: IND10});
-        }
-     }
-  }
+    const nP    = Math.max(1, Math.floor(halfW * 2 / PW));
+    const slot  = (halfW * 2) / nP;
+    const scale = slot / PW;
 
-  // Deep internal grid (now safely shielded 3 layers deep, preventing any jagged edges poking out)
-  for (let z = bowZ + (3*PD); z <= sternZ - PD; z += PD) {
-    const fraction = (z - bowZ) / L;
-    const currentHW = (HW * fraction) - (3 * PD * 0.9); 
-    if (currentHW <= 0) continue;
-    
-    const rows = Math.floor((currentHW * 2) / PW);
-    const startX = -(rows * PW) / 2 + PW / 2;
-
-    for (let i = 0; i < rows; i++) {
-      const x = startX + i * PW;
-      pts.push({ x, y: deckY, z, yaw: 0, pitch: -90, name: IND10 });
-      if (fraction > 0.4) {
-        pts.push({ x, y: botY, z, yaw: 0, pitch: -90, name: IND10 });
-      }
+    for (let i = 0; i < nP; i++) {
+      const x = -halfW + (i + 0.5) * slot;
+      pts.push({ x, y: deckY, z, yaw: 0, pitch: -90, scale: +scale.toFixed(3), name: IND10 });
     }
   }
 
-  // 3. TIERED SUPERSTRUCTURE (The layered city-blocks on the dorsal deck)
-  // Tier 1 (Base wide tier)
-  drawRect(pts, 0, deckY + 2 * S, sternZ - 25 * S, 14 * S, 20 * S, CNC8); // 8m walls
-  // Tier 2 (Middle narrower tier)
-  drawRect(pts, 0, deckY + 5 * S, sternZ - 20 * S, 10 * S, 15 * S, CNC4); // 4m walls
+  // ── 3. SUPERSTRUCTURE — 3-tier command island at stern ───────────────────
+  const ssZ = sternZ - 28 * S; // superstructure centre Z
 
-  // 4. BRIDGE TOWER (The iconic command neck and head)
-  const towerZ = sternZ - 12 * S;
-  const neckY = deckY + 7 * S;
-  // Neck (Stalk)
-  drawRect(pts, 0, neckY, towerZ, 3 * S, 3 * S, IND10);
-  drawRect(pts, 0, neckY + 4 * S, towerZ, 3 * S, 3 * S, IND10);
-  
-  // Command Bridge (T-Shape wide head at the top)
-  const bridgeY = neckY + 9 * S;
-  drawWall(pts, -10 * S, bridgeY, towerZ, 10 * S, bridgeY, towerZ, IND10);
-  // Viewport windows
-  drawWall(pts, -9 * S, bridgeY + 3.5 * S, towerZ - 1 * S, 9 * S, bridgeY + 3.5 * S, towerZ - 1 * S, CNC4);
-
-  // Shield Generator Domes (Two spheres on bridge wings)
-  for (const side of [-1, 1] as const) {
-    const domeX = side * 8 * S;
-    for (let h = 0; h <= 2; h++) {
-       const r = (2.5 - h * 0.6) * S;
-       if (r > 0) drawRing(pts, domeX, bridgeY + 4 * S + h * S, towerZ, r, CNC4);
+  // Tier 1 — wide armour base (2 IND10 rows tall)
+  drawRect(pts, 0, deckY,        ssZ, 18*S, 22*S, IND10);
+  drawRect(pts, 0, deckY + PD,   ssZ, 18*S, 22*S, IND10);
+  // Tier 1 flat roof deck
+  for (let z = ssZ - 20*S; z <= ssZ + 20*S; z += 4.052*S) {
+    for (let x = -16*S; x <= 16*S; x += 4.052*S) {
+      pts.push({ x, y: deckY + PD * 2, z, yaw: 0, pitch: -90, name: MILCNC });
     }
-    pts.push({ x: side * 8 * S, y: bridgeY + 7 * S, z: towerZ, yaw: 0, pitch: -90, name: CNC4 });
   }
 
-  // 5. REAR ENGINE NOZZLES
-  // 3 Primary engines along the stern
-  for (const x of [-16, 0, 16] as const) {
-    drawRing(pts, x * S, 0, sternZ + 1 * S, 4.5 * S, IND10);
-    drawRing(pts, x * S, 0, sternZ + 2 * S, 2.5 * S, "barrel_blue"); // engine glow
+  // Tier 2 — narrower CNC8 midsection
+  const t2Y = deckY + PD * 2;
+  drawRect(pts, 0, t2Y,           ssZ + 3*S, 12*S, 15*S, CNC8);
+  drawRect(pts, 0, t2Y + 2.3*S,  ssZ + 3*S, 12*S, 15*S, CNC8);
+
+  // Tier 3 — narrow CNC4 upper level (recessed front)
+  const t3Y = t2Y + 4.6*S;
+  drawRect(pts, 0, t3Y,           ssZ + 5*S,  8*S, 10*S, CNC4);
+
+  // Bridge neck + head
+  const neckY   = t3Y + 2.3*S;
+  const bridgeY = neckY + PD;
+  drawRect(pts, 0, neckY, ssZ + 5*S, 4*S, 4*S, IND10); // neck stalk
+
+  // Command bridge — horizontal wing
+  drawWall(pts, -13*S, bridgeY,       ssZ + 5*S, 13*S, bridgeY,       ssZ + 5*S, IND10);
+  drawWall(pts, -13*S, bridgeY + PD,  ssZ + 5*S, 13*S, bridgeY + PD,  ssZ + 5*S, IND10);
+  drawWall(pts, -13*S, bridgeY,       ssZ + 5*S, -13*S, bridgeY + PD, ssZ + 5*S, IND10);
+  drawWall(pts,  13*S, bridgeY,       ssZ + 5*S,  13*S, bridgeY + PD, ssZ + 5*S, IND10);
+  // Viewport strip (CNC4 forward-angled glass band)
+  drawWall(pts, -11*S, bridgeY + 1*S, ssZ + 3.5*S, 11*S, bridgeY + 1*S, ssZ + 3.5*S, CNC4);
+
+  // Shield generator globes — the iconic spheres on bridge wings
+  for (const sx of [-10, 10] as const) {
+    for (let gh = 0; gh <= 3; gh++) {
+      const gr = Math.max(0.5, (3.5 - gh * 0.7)) * S;
+      drawRing(pts, sx*S, bridgeY + PD + gh*S, ssZ + 5*S, gr, CNC4);
+    }
+    pts.push({ x: sx*S, y: bridgeY + PD + 4.5*S, z: ssZ + 5*S, yaw: 0, pitch: -90, name: CNC4 });
   }
-  // 2 Auxiliary engines
-  for (const x of [-28, 28] as const) {
-    drawRing(pts, x * S, deckY, sternZ + 1 * S, 2 * S, CNC4);
+
+  // ── 4. TURBOLASER BATTERIES — 4 twin-barrelled towers on dorsal deck ─────
+  for (const [tx, tz] of [
+    [20*S, ssZ - 20*S], [-20*S, ssZ - 20*S],
+    [20*S, ssZ - 38*S], [-20*S, ssZ - 38*S],
+  ] as const) {
+    drawRing(pts, tx, deckY + 1*S, tz, 3*S, CNC8);  // rotating base ring
+    pts.push({ x: tx - 1.5*S, y: deckY + 4*S, z: tz - 4*S, yaw: 0, name: "barrel_red" });
+    pts.push({ x: tx + 1.5*S, y: deckY + 4*S, z: tz - 4*S, yaw: 0, name: "barrel_red" });
+  }
+
+  // ── 5. REAR ENGINE NOZZLES — 3 primary (stacked rings) + 2 aux ───────────
+  for (const ex of [-18, 0, 18] as const) {
+    drawRing(pts, ex*S, PD * 0.5, sternZ,       6*S, IND10);       // outer collar
+    drawRing(pts, ex*S, PD * 0.5, sternZ + 1*S, 4*S, CNC8);        // mid ring
+    drawRing(pts, ex*S, PD * 0.5, sternZ + 2*S, 2.5*S, "barrel_blue"); // ion glow
+  }
+  for (const ex of [-32, 32] as const) {
+    drawRing(pts, ex*S, PD * 0.3, sternZ,       3.5*S, CNC8);
+    drawRing(pts, ex*S, PD * 0.3, sternZ + 1*S, 2*S,   "barrel_blue");
   }
 
   return pts;
@@ -1120,23 +1122,26 @@ export function gen_borg_cube(p: GenParams): Point3D[] {
     return Math.abs(h) < 0.88;
   }
 
-  // Generate one cube face by sweeping two orthogonal axes
+  // Generate one cube face. Panels are scaled to fill the full H×H face so
+  // edges meet neighbouring faces exactly — no corner gaps.
   function addFace(
     ox: number, oy: number, oz: number,
     axU: [number, number, number],
     axV: [number, number, number],
     yaw: number, pitch: number
   ) {
-    const n = Math.floor((H * 2) / PW);
+    const n     = Math.floor((H * 2) / PW);
+    const slot  = (H * 2) / n;          // exact slot width so n slots fill H*2
+    const scale = slot / PW;            // stretch factor (<1.15 at any practical size)
     for (let i = 0; i < n; i++) {
       for (let j = 0; j < n; j++) {
-        const u = -H + (i + 0.5) * PW;
-        const v = -H + (j + 0.5) * PW;
+        const u = -H + (i + 0.5) * slot;
+        const v = -H + (j + 0.5) * slot;
         const x = ox + u * axU[0] + v * axV[0];
         const y = oy + u * axU[1] + v * axV[1];
         const z = oz + u * axU[2] + v * axV[2];
         if (!keep(x, y, z)) continue;
-        pts.push({ x, y, z, yaw, pitch, name: IND10 });
+        pts.push({ x, y, z, yaw, pitch, scale: +scale.toFixed(3), name: IND10 });
       }
     }
   }

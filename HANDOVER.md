@@ -90,12 +90,27 @@ dist-electron/win-unpacked/     — Portable desktop app (Dank Studio.exe)
 
 ---
 
+## RECENT CHANGES (2026-04-16)
+
+| What | Detail |
+|---|---|
+| Black screen fix | Removed `logarithmicDepthBuffer` (conflicts with EffectComposer), `multisampling` set to 0, ErrorBoundary replaced with real React class component |
+| Sci-fi rotation audit | Falcon engine glow moved to rear; Stark Tower spire fixed (was zero-panel drawWall); AT-AT knee → STONE; X-Wing exhaust glow added |
+| Cyberpunk Nexus | Full rebuild: ziggurat setback, neon rings, skybridge arms, rooftop spires |
+| Saturn | Correct ring bands at 1.2–2.27× planet radius, 26.7° axial tilt |
+| Borg Cube | New build: stochastic-erosion hull, CNC8 sub-modules, edge conduits, corner spires. Corners fixed: panels now scale-fill to exact H edge |
+| Halo Installation | New build: 3-layer ring, terrain surface, 12 ribs, Forerunner engines |
+| AT-AT legs | Leg struts rewritten: 4 walls now properly offset (Z-only for front/back, X-only for inner/outer) — previously all 4 walls were diagonal duplicates |
+| Star Destroyer | Full rewrite: correct deckY = IND10 height (9.758m); proper triangular deck fill; 3-tier superstructure; 4 turbolaser batteries; 3+2 engine nozzles with stacked depth rings |
+| barrel_green fix | getMaterialProps now maps barrel_green → barrel_green_co.png (was wrongly using barrel_red) |
+
+---
+
 ## KNOWN ACTIVE BUGS
 
-### AT-AT Walker — crash to investigate
-- Generator produces ~150-200 panels (not an OOM issue)
-- Likely: NaN position from a geometry edge case, or an uncaught Suspense error
-- **Debug**: open DevTools (Ctrl+Shift+I), select AT-AT Walker → Generate → check Console
+### AT-AT Walker — may still crash
+- Legs now use correct box-strut geometry
+- If it still crashes: open DevTools (Ctrl+Shift+I), Generate AT-AT, check Console for NaN or Three.js error
 
 ---
 
