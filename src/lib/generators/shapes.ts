@@ -1092,6 +1092,199 @@ export function gen_xwing(p: GenParams): Point3D[] {
 }
 
 
+/**
+ * 🟩 BORG CUBE — Assimilation Vessel
+ *
+ * Research: The Borg Cube (Star Trek) is a 3km perfect cube, every surface
+ * covered in technology protrusions, conduits, and tractor beam emitters.
+ * Characteristic green energy glow. Surfaces are NOT perfectly smooth —
+ * individual sub-modules create a lattice texture. ~15% stochastic decay
+ * (panels removed by noise) gives the "partially assimilated" look.
+ *
+ * Structure:
+ *  • 5 cube faces (bottom skipped, ground obscures it) — IND10, 15% erosion
+ *  • CNC8 sub-module clusters protruding from each face
+ *  • Exterior edge conduits — barrel_blue running all 4 top edges
+ *  • 4 corner assimilation spires rising from top corners
+ */
+export function gen_borg_cube(p: GenParams): Point3D[] {
+  const pts: Point3D[] = [];
+  const S  = Math.max(0.5, p.scale ?? 1);
+  const H  = 40 * S;   // half-edge — full cube is 80m × 80m × 80m
+  const CY = H;         // centre Y (cube rests on ground)
+  const PW = 9.012 * S; // IND10 face width
+
+  // Deterministic erosion — ~82% of panels survive (Borg surfaces are nearly complete)
+  function keep(x: number, y: number, z: number): boolean {
+    const h = Math.sin(x * 0.31 + 0.7) * Math.cos(y * 0.29 - 0.3) * Math.sin(z * 0.37 + 1.1);
+    return Math.abs(h) < 0.88;
+  }
+
+  // Generate one cube face by sweeping two orthogonal axes
+  function addFace(
+    ox: number, oy: number, oz: number,
+    axU: [number, number, number],
+    axV: [number, number, number],
+    yaw: number, pitch: number
+  ) {
+    const n = Math.floor((H * 2) / PW);
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < n; j++) {
+        const u = -H + (i + 0.5) * PW;
+        const v = -H + (j + 0.5) * PW;
+        const x = ox + u * axU[0] + v * axV[0];
+        const y = oy + u * axU[1] + v * axV[1];
+        const z = oz + u * axU[2] + v * axV[2];
+        if (!keep(x, y, z)) continue;
+        pts.push({ x, y, z, yaw, pitch, name: IND10 });
+      }
+    }
+  }
+
+  // 5 cube faces (skip floor — ground obscures it)
+  addFace(0,  CY,  H, [1,0,0], [0,1,0],   0,   0);  // +Z north
+  addFace(0,  CY, -H, [1,0,0], [0,1,0], 180,   0);  // -Z south
+  addFace( H, CY,  0, [0,0,1], [0,1,0],  90,   0);  // +X east
+  addFace(-H, CY,  0, [0,0,1], [0,1,0], -90,   0);  // -X west
+  addFace(0, CY+H, 0, [1,0,0], [0,0,1],   0, -90);  // +Y top
+
+  // CNC8 sub-module protrusions — lattice of tech blocks on 3 visible faces
+  const modStep = 18 * S;
+  for (let u = -H + 9*S; u <= H - 9*S; u += modStep) {
+    for (let v = -H + 9*S; v <= H - 9*S; v += modStep) {
+      if (keep(u, CY + v, H + 1)) {
+        pts.push({ x: u, y: CY + v, z: H + 3*S, yaw:  0, pitch: 0, name: CNC8 });
+      }
+      if (keep(H + 1, CY + v, u)) {
+        pts.push({ x: H + 3*S, y: CY + v, z: u, yaw: 90, pitch: 0, name: CNC8 });
+      }
+      if (keep(u, CY + H + 1, v)) {
+        pts.push({ x: u, y: CY + H + 3*S, z: v, yaw:  0, pitch: -90, name: CNC8 });
+      }
+    }
+  }
+
+  // Exterior edge conduits — barrel_blue along all 4 top edges of the cube
+  for (let t = -H + 6*S; t <= H - 6*S; t += 8*S) {
+    pts.push({ x: t,  y: CY + H + 2*S, z:  H, yaw:  0, pitch: 0, name: "barrel_blue" });
+    pts.push({ x: t,  y: CY + H + 2*S, z: -H, yaw:  0, pitch: 0, name: "barrel_blue" });
+    pts.push({ x:  H, y: CY + H + 2*S, z: t,  yaw: 90, pitch: 0, name: "barrel_blue" });
+    pts.push({ x: -H, y: CY + H + 2*S, z: t,  yaw: 90, pitch: 0, name: "barrel_blue" });
+  }
+
+  // 4 corner assimilation spires rising from top corners
+  for (const [cx, cz] of [[H, H], [-H, H], [H, -H], [-H, -H]] as const) {
+    for (let sy = CY + H; sy < CY + H + 20*S; sy += 9.012*S) {
+      pts.push({ x: cx, y: sy, z: cz, yaw:  0, pitch: 0, name: MILCNC });
+      pts.push({ x: cx, y: sy, z: cz, yaw: 90, pitch: 0, name: MILCNC });
+    }
+  }
+
+  return applyLimit(pts, 1100);
+}
+
+/**
+ * ⭕ HALO INSTALLATION (Installation 04)
+ *
+ * Research: A Forerunner megastructure — a ring ~10,000km diameter with a
+ * ~300km wide habitable inner surface. The ring stands vertically, approached
+ * through its centre. Key features: outer ring structure (IND10 lattice in 3
+ * depth layers), inner habitable terrain band (MILCNC tiles), 12 equidistant
+ * structural ribs, 4 Forerunner engine pulse emitters at the base, and
+ * two massive support pedestals where the ring meets the ground.
+ *
+ * Panel orientations: ring uses roll for tangential facing (same as Stargate).
+ * Inner surface uses outward-facing (yaw+pitch=-90) so terrain faces inward.
+ */
+export function gen_halo_ring(p: GenParams): Point3D[] {
+  const pts: Point3D[] = [];
+  const R   = Math.min(p.r ?? 60, 100);
+  const CY  = R;             // ring centre Y (rests on ground)
+  const RW  = R * 0.35;      // ring radial width
+  const IR  = R - RW;        // inner radius (edge of habitable surface)
+
+  const outerPW = 9.012;
+  const outerN  = Math.max(12, Math.floor(2 * Math.PI * R / outerPW));
+  const outerStep = (2 * Math.PI) / outerN;
+  const outerScale = (2 * Math.PI * R / outerN) / outerPW;
+
+  // ── 1. OUTER RING — 3 depth layers give the ring structural mass ─────────
+  for (const zOff of [-8, 0, 8]) {
+    for (let i = 0; i < outerN; i++) {
+      const a    = i * outerStep;
+      const x    = R * Math.cos(a);
+      const y    = CY + R * Math.sin(a);
+      const roll = a * 180 / Math.PI - 90;
+      pts.push({ x, y, z: zOff, yaw: 0, pitch: 0, roll, scale: outerScale, name: IND10 });
+    }
+  }
+
+  // ── 2. RING WIDTH — two inner structural bands (CNC8) ────────────────────
+  for (const rr of [R * 0.82, R * 0.91]) {
+    const circ  = 2 * Math.PI * rr;
+    const nP    = Math.max(12, Math.floor(circ / outerPW));
+    const step  = (2 * Math.PI) / nP;
+    const scale = (circ / nP) / outerPW;
+    for (let i = 0; i < nP; i++) {
+      const a    = i * step;
+      const x    = rr * Math.cos(a);
+      const y    = CY + rr * Math.sin(a);
+      const roll = a * 180 / Math.PI - 90;
+      pts.push({ x, y, z: 0, yaw: 0, pitch: 0, roll, scale, name: CNC8 });
+    }
+  }
+
+  // ── 3. HABITABLE INNER SURFACE — flat MILCNC terrain tiles ──────────────
+  // Tiles face inward toward ring axis: yaw = a*180/π - 90, pitch = -90
+  const milPW = 4.052;
+  const irCirc = 2 * Math.PI * IR;
+  const irN    = Math.max(12, Math.floor(irCirc / milPW));
+  const irStep = (2 * Math.PI) / irN;
+  const irScale = (irCirc / irN) / milPW;
+  for (let i = 0; i < irN; i++) {
+    const a   = i * irStep;
+    const x   = IR * Math.cos(a);
+    const y   = CY + IR * Math.sin(a);
+    const yaw = a * 180 / Math.PI - 90;
+    pts.push({ x, y, z: 0, yaw, pitch: -90, scale: irScale, name: MILCNC });
+  }
+
+  // ── 4. STRUCTURAL RIBS — 12 radial spokes from inner to outer ring ───────
+  const nRibs = 12;
+  for (let i = 0; i < nRibs; i++) {
+    const a    = (i / nRibs) * Math.PI * 2;
+    const cosA = Math.cos(a), sinA = Math.sin(a);
+    // Place 3 CNC4 panels along the radial direction
+    for (const frac of [0.2, 0.5, 0.8]) {
+      const rr  = IR + RW * frac;
+      const x   = rr * cosA;
+      const y   = CY + rr * sinA;
+      const yaw = a * 180 / Math.PI; // face tangentially (sidewall of rib)
+      pts.push({ x, y, z: 0, yaw, pitch: 0, name: CNC4 });
+      pts.push({ x, y, z: 6, yaw, pitch: 0, name: CNC4 });
+      pts.push({ x, y, z: -6, yaw, pitch: 0, name: CNC4 });
+    }
+  }
+
+  // ── 5. ENGINE PULSE EMITTERS — 4 Forerunner engines at the base arc ──────
+  for (let i = 0; i < 4; i++) {
+    const a   = Math.PI * 1.65 + (i / 4) * Math.PI * 0.7;
+    const rr  = R - RW * 0.5;
+    const x   = rr * Math.cos(a);
+    const y   = CY + rr * Math.sin(a);
+    for (const zo of [-4, 0, 4]) {
+      pts.push({ x, y, z: zo, yaw: 0, pitch: 0, name: "barrel_blue" });
+    }
+  }
+
+  // ── 6. GROUND SUPPORT PEDESTALS — two pillars where ring meets ground ────
+  for (const bx of [-R * 0.15, R * 0.15]) {
+    drawRect(pts, bx, 0, 0, 3, 4, CNC8);
+  }
+
+  return applyLimit(pts, 1100);
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 //  MONUMENTS
 // ═══════════════════════════════════════════════════════════════════════════════

@@ -90,6 +90,22 @@ const SCI_FI: BuildEntry[] = [
     ],
   },
   {
+    key: "borg_cube", label: "Borg Cube", category: "Sci-Fi",
+    description: "Borg assimilation vessel — stochastic decay hull, CNC8 sub-modules, green conduit glow",
+    defaultParams: { scale: 1 },
+    params: [
+      { key: "scale", label: "Scale", min: 0.5, max: 2, step: 0.1, default: 1 },
+    ],
+  },
+  {
+    key: "halo_installation", label: "Halo Installation", category: "Sci-Fi",
+    description: "Forerunner ring world — outer IND10 ring, terrain band, 12 structural ribs, Forerunner engines",
+    defaultParams: { r: 60 },
+    params: [
+      { key: "r", label: "Ring Radius (m)", min: 30, max: 100, step: 5, default: 60 },
+    ],
+  },
+  {
     key: "saturn", label: "Planet Saturn", category: "Sci-Fi",
     description: "Gas giant featuring mathematically perfect orbital rings",
     defaultParams: { r: 60 },

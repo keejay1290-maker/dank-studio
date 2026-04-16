@@ -25,6 +25,8 @@ const REGISTRY: Record<string, (p: GenParams) => Point3D[]> = {
   tony_stark_tower:        G.gen_stark_tower,
   cyberpunk_nexus:         G.gen_cyberpunk,
   saturn:                  G.gen_saturn,
+  borg_cube:               G.gen_borg_cube,
+  halo_installation:       G.gen_halo_ring,
 
   // ── Monuments ───────────────────────────────────────────────────────────
   eiffel_tower:            G.gen_eiffel_tower,

@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // DANK STUDIO — S-Tier V6.0 Extreme Renderer (game-engine quality)
 // ─────────────────────────────────────────────────────────────────────────────
-import { useRef, useEffect, useMemo, Suspense, forwardRef, memo, useState } from "react";
+import { useRef, useEffect, useMemo, Suspense, forwardRef, memo, useState, Component } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
 import { 
   OrbitControls, Grid, Environment, useGLTF, Sky, 
@@ -16,19 +16,17 @@ const MIN_DISTANCE = 5;
 const MAX_DISTANCE = 2000;
 
 // ── Error Boundary for 3D Components ──────────────────────────────────────────
-function ErrorBoundary({ children, fallback }: { children: React.ReactNode, fallback?: React.ReactNode }) {
-  const [hasError, setHasError] = useState(false);
-  useEffect(() => {
-    const handleErr = (e: ErrorEvent) => { 
-      if (e.message.includes("GLTF") || e.message.includes("texture") || e.message.includes("rendering")) {
-         setHasError(true); 
-      }
-    };
-    window.addEventListener("error", handleErr);
-    return () => window.removeEventListener("error", handleErr);
-  }, []);
-  if (hasError) return <>{fallback}</> || null;
-  return <>{children}</>;
+class ErrorBoundary extends Component<
+  { children: React.ReactNode; fallback?: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: any) { super(props); this.state = { hasError: false }; }
+  static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch() {}
+  render() {
+    if (this.state.hasError) return this.props.fallback ?? null;
+    return this.props.children;
+  }
 }
 
 
@@ -45,7 +43,7 @@ function getMaterialProps(classname: string) {
     texName = "container_co.png";
   } else if (k.includes("barrel")) {
     props = { roughness: 0.35, metalness: 0.7 };
-    texName = k.includes("blue") ? "barrel_blue_co.png" : "barrel_red_co.png";
+    texName = k.includes("blue") ? "barrel_blue_co.png" : k.includes("green") ? "barrel_green_co.png" : "barrel_red_co.png";
   } else if (k.includes("stone") || k.includes("castle")) {
     props = { roughness: 1.0, metalness: 0.0 };
     texName = "stone_co.png";
@@ -357,7 +355,7 @@ function Scene({
         <BuildRenderer points={points} selectedId={selectedId} />
       </Suspense>
 
-      <EffectComposer multisampling={4}>
+      <EffectComposer multisampling={0}>
         <Bloom luminanceThreshold={1.2} intensity={0.8} levels={8} mipmapBlur />
         <Vignette eskil={false} offset={0.1} darkness={0.4} />
       </EffectComposer>
@@ -385,7 +383,6 @@ export function Preview3D({
         shadows={{ type: THREE.PCFSoftShadowMap }}
         gl={{
           antialias: true,
-          logarithmicDepthBuffer: true,
           toneMapping: THREE.ACESFilmicToneMapping,
           toneMappingExposure: 1.1,
           outputColorSpace: THREE.SRGBColorSpace,
