@@ -7,7 +7,7 @@ import {
   OrbitControls, Grid, Environment, useGLTF, Sky, 
   Instances, Instance, Html, useTexture
 } from "@react-three/drei";
-import { EffectComposer, SSAO, Bloom, Vignette, ToneMapping } from "@react-three/postprocessing";
+import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
 import * as THREE from "three";
 import type { Point3D } from "../lib/types";
 import { getMimic } from "../lib/mimic";
@@ -95,7 +95,7 @@ const InstancedGroup = memo(function InstancedGroup({
   classname: string; 
   instances: { pos: [number, number, number], rot: THREE.Euler, scale: number }[] 
 }) {
-  const gltf = useGLTF(`./models/${classname}.glb`, true); 
+  const gltf = useGLTF(`./models/${classname}.glb`);
   
   const mesh = useMemo(() => {
     if (!gltf) return null;
@@ -334,7 +334,7 @@ function Scene({
       <hemisphereLight intensity={0.5} groundColor="#1a1a1a" />
       <Sky distance={450000} sunPosition={[100, 150, 50]} inclination={0} azimuth={0.25} />
       <Environment preset="forest" />
-      <fog attach="fog" args={["#1b1b1e", 50, 1500]} />
+      <fog attach="fog" args={["#a0b0c8", 400, 2000]} />
       
       <Grid 
         infiniteGrid 
@@ -363,10 +363,8 @@ function Scene({
       </Suspense>
 
       <EffectComposer multisampling={4}>
-        <SSAO radius={0.4} intensity={25} luminanceInfluence={0.5} color={new THREE.Color("black")} />
         <Bloom luminanceThreshold={1.2} intensity={0.8} levels={8} mipmapBlur />
-        <Vignette eskil={false} offset={0.1} darkness={0.8} />
-        <ToneMapping mode={THREE.ACESFilmicToneMapping} />
+        <Vignette eskil={false} offset={0.1} darkness={0.4} />
       </EffectComposer>
     </>
   );
