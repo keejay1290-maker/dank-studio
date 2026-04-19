@@ -2,10 +2,9 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { Preview3D } from "./components/Preview3D";
 import { ObjectPicker } from "./components/ObjectPicker";
 import { ALL_BUILDS, CATEGORIES } from "./lib/builds";
-import { 
-  exportDrawnWalls, 
-  exportDrawnObjects, 
-  wallsToPoints, 
+import {
+  exportCombinedDraw,
+  wallsToPoints,
   generate
 } from "./lib/generators";
 import type { Point3D, DrawnWall, DrawnObject, BuildEntry } from "./lib/types";
@@ -27,6 +26,9 @@ function App() {
   const [manualPoints, setManualPoints] = useState<Point3D[]>([]);
   const [nodeOverrides, setNodeOverrides] = useState<Record<string, string>>({});
 
+  // Container mode — replace wall panels with stacked land_container_1bo
+  const [containerMode, setContainerMode] = useState(false);
+
   // Origin shift
   const [originX, setOriginX] = useState(0);
   const [originY, setOriginY] = useState(0);
@@ -47,8 +49,8 @@ function App() {
     const initialParams: Record<string, number> = {};
     build.params.forEach(p => initialParams[p.key] = p.default);
     setParams(initialParams);
-    
-    const pts = generate(build.key, initialParams);
+
+    const pts = generate(build.key, { ...initialParams, container_mode: containerMode ? 1 : 0 });
     setPoints(pts);
     updateCode(pts);
   }
@@ -56,8 +58,8 @@ function App() {
   // ── Generate from current params ────────────────────────────────────────
   function handleGenerate(overrideParams?: Record<string, number>) {
     if (!selectedBuild) return;
-    const p = overrideParams || params;
-    
+    const p = { ...(overrideParams || params), container_mode: containerMode ? 1 : 0 };
+
     // Generate base points
     const basePoints = generate(selectedBuild.key, p);
     
@@ -82,26 +84,29 @@ function App() {
     updateCode(finalPoints);
   }
 
+  function ptsToEditorJSON(pts: Point3D[]): string {
+    return JSON.stringify({
+      Objects: pts.map(pt => ({
+        name:  pt.name ?? "staticobj_castle_wall3",
+        pos:   [
+          Math.round((pt.x + originX) * 1000) / 1000,
+          Math.round((pt.y + originY) * 1000) / 1000,
+          Math.round((pt.z + originZ) * 1000) / 1000,
+        ],
+        ypr:   [pt.yaw ?? 0, pt.pitch ?? 0, pt.roll ?? 0],
+        scale: pt.scale ?? 1,
+      })),
+    }, null, 4);
+  }
+
   function updateCode(pts: Point3D[]) {
-    const spawnCode = pts.map(pt => {
-      const x = (pt.x + originX).toFixed(3);
-      const y = (pt.y + originY).toFixed(3);
-      const z = (pt.z + originZ).toFixed(3);
-      return `SpawnObject("${pt.name}", "${x} ${y} ${z}", "${pt.pitch ?? 0} ${pt.yaw ?? 0} ${pt.roll ?? 0}");`;
-    }).join("\n");
-    setCode(spawnCode);
+    setCode(ptsToEditorJSON(pts));
   }
 
   // Update code when origin changes
   useEffect(() => {
     if (points.length > 0) {
-      const spawnCode = points.map(pt => {
-        const x = (pt.x + originX).toFixed(3);
-        const y = (pt.y + originY).toFixed(3);
-        const z = (pt.z + originZ).toFixed(3);
-        return `SpawnObject("${pt.name}", "${x} ${y} ${z}", "${pt.pitch ?? 0} ${pt.yaw ?? 0} ${pt.roll ?? 0}");`;
-      }).join("\n");
-      setCode(spawnCode);
+      setCode(ptsToEditorJSON(points));
     }
   }, [originX, originY, originZ, points]);
 
@@ -114,15 +119,18 @@ function App() {
 
   function handleDownloadJSON() {
     const data = {
-      EditorObjectList: points.map(p => ({
-        Type: p.name,
-        DisplayName: p.name,
-        Position: [p.x + originX, p.y + originY, p.z + originZ],
-        Orientation: [p.yaw ?? 0, p.pitch ?? 0, p.roll ?? 0],
-        Scale: p.scale ?? 1
+      Objects: points.map(p => ({
+        name:  p.name ?? "staticobj_castle_wall3",
+        pos:   [
+          Math.round((p.x + originX) * 1000) / 1000,
+          Math.round((p.y + originY) * 1000) / 1000,
+          Math.round((p.z + originZ) * 1000) / 1000,
+        ],
+        ypr:   [p.yaw ?? 0, p.pitch ?? 0, p.roll ?? 0],
+        scale: p.scale ?? 1,
       }))
     };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify(data, null, 4)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -132,9 +140,8 @@ function App() {
 
   // ── Free Draw: internal state management ──────────────────────────────────
   function applyExport(ws: DrawnWall[], os: DrawnObject[]) {
-    const wallCode = exportDrawnWalls(ws,  { originX, originY, originZ });
-    const objCode  = exportDrawnObjects(os, { originX, originY, originZ });
-    setCode([wallCode, objCode].filter(s => s.trim().length > 20).join("\n\n"));
+    const combined = exportCombinedDraw(ws, os, { originX, originY, originZ });
+    setCode(combined);
     setPoints([
       ...wallsToPoints(ws),
       ...os.map(o => ({ x: o.x, y: o.y, z: o.z, yaw: o.yaw, name: o.classname, id: o.id } as Point3D)),
@@ -370,6 +377,25 @@ function App() {
                   );
                 })}
                 <div className="w-px h-8 bg-white/10 mx-2" />
+                <button
+                  onClick={() => {
+                    const next = !containerMode;
+                    setContainerMode(next);
+                    if (selectedBuild) {
+                      const p = { ...params, container_mode: next ? 1 : 0 };
+                      const basePoints = generate(selectedBuild.key, p);
+                      const sanitized = basePoints.map((pt, i) => ({ ...pt, id: `auto-${i}`, name: pt.name ?? "staticobj_castle_wall3", x: isNaN(pt.x) ? 0 : pt.x, y: isNaN(pt.y) ? 0 : pt.y, z: isNaN(pt.z) ? 0 : pt.z, pitch: pt.pitch || 0, yaw: pt.yaw || 0, roll: pt.roll || 0 } as Point3D));
+                      const final = [...sanitized, ...manualPoints];
+                      setPoints(final);
+                      updateCode(final);
+                    }
+                  }}
+                  className={`px-3 py-2 text-[10px] font-black uppercase tracking-[0.2em] rounded-xl shadow-lg transition-all border ${
+                    containerMode
+                      ? "bg-amber-600 hover:bg-amber-500 text-white border-amber-400/50"
+                      : "bg-white/5 hover:bg-white/10 text-zinc-400 border-white/10"
+                  }`}
+                >📦 Containers</button>
                 <button
                   onClick={() => handleGenerate()}
                   className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-xl shadow-lg transition-all"

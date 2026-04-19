@@ -410,6 +410,26 @@ export function Preview3D({
         </div>
       </div>
 
+      <div className="absolute bottom-4 right-4 flex flex-col gap-1.5">
+        {[{ label: "+", factor: 0.75 }, { label: "−", factor: 1.33 }].map(({ label, factor }) => (
+          <button
+            key={label}
+            onClick={() => {
+              const ctrl = ctrlRef.current;
+              if (!ctrl) return;
+              const cam = ctrl.object as THREE.Camera & { position: THREE.Vector3 };
+              const target: THREE.Vector3 = ctrl.target;
+              const dir = cam.position.clone().sub(target);
+              const dist = dir.length();
+              const newDist = Math.min(MAX_DISTANCE, Math.max(MIN_DISTANCE, dist * factor));
+              cam.position.copy(target).addScaledVector(dir.normalize(), newDist);
+              ctrl.update();
+            }}
+            className="w-9 h-9 glass rounded-lg text-lg font-bold text-zinc-300 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center shadow-lg"
+          >{label}</button>
+        ))}
+      </div>
+
       {points.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="text-center">

@@ -63,14 +63,13 @@ export function gen_death_star(p: GenParams): Point3D[] {
 
   // ── Equatorial trench ─────────────────────────────────────────────────────
   const trenchPhi   = Math.PI / 2;
-  const trenchHalf  = 0.095;         // ±5.4° either side
-  const trenchDepth = 0.10 * R;      // ~7.2m deep — shallower so walls are manageable
+  const trenchHalf  = 0.13;          // ±7.5° — wider gap for visibility
+  const trenchDepth = 10.0;         // 10m deep — strong visual recession
 
   // ── Superlaser dish ───────────────────────────────────────────────────────
   const dishPhi   = Math.PI * 0.39;
   const dishTheta = Math.PI * 0.55;
-  const dishCone  = 0.60;
-  const dishDepth = 0.40 * R;
+  const dishCone  = 0.35;           // ~20° half-angle — correct scale (~24m dia on 70m sphere)
 
   const dcx = Math.sin(dishPhi) * Math.cos(dishTheta);
   const dcy = Math.cos(dishPhi);
@@ -82,11 +81,13 @@ export function gen_death_star(p: GenParams): Point3D[] {
 
   // North hemisphere (North Pole down to the top edge of trench)
   const arcN = trenchPhi - trenchHalf;
-  const nRingsN = Math.max(3, Math.round((arcN * R) / (panelH * 0.75)));
-  
+  // Ring density adapts with R so panel count stays under budget at high scale
+  const ringDensity = Math.min(1.6, 0.75 + Math.max(0, R - 35) * 0.028);
+  const nRingsN = Math.max(3, Math.round((arcN * R) / (panelH * ringDensity)));
+
   // South hemisphere (Bottom edge of trench down to South Pole)
   const arcS = Math.PI - (trenchPhi + trenchHalf);
-  const nRingsS = Math.max(3, Math.round((arcS * R) / (panelH * 0.75)));
+  const nRingsS = Math.max(3, Math.round((arcS * R) / (panelH * ringDensity)));
 
   const baseSphere: Point3D[] = [];
   
@@ -125,175 +126,135 @@ export function gen_death_star(p: GenParams): Point3D[] {
     pts.push({ ...panel, name: mat });
   }
 
-  // ── Trench walls — close the hull-to-trench-floor gap ───────────────────
-  // Vertical ring of panels just inside the trench cut, on both rims, sitting
-  // at half-depth so they bridge from the hull edge down to the trench floor.
+  // ── Trench walls — sphere-surface rings fill the trench band gaplessly ─────
+  // Using _drawSphereRings ensures seamless hull-to-trench transition.
   {
-    const equatorCirc = 2 * Math.PI * R;
-    const wallNP      = Math.max(8, Math.floor(equatorCirc / panelW));
-    const wallArc     = (2 * Math.PI) / wallNP;
-    for (const side of [-1, 1] as const) {
-      const phi  = trenchPhi + side * trenchHalf;
-      const sinP = Math.sin(phi);
-      const cosP = Math.cos(phi);
-      const midR = R - trenchDepth * 0.5;
-      const circ  = 2 * Math.PI * midR * sinP;
-      const scale = (circ / wallNP) / panelW;
-      const pitch = (phi - Math.PI / 2) * 180 / Math.PI;
-      for (let j = 0; j < wallNP; j++) {
-        const theta = (j + 0.5) * wallArc;
-        const x = midR * sinP * Math.cos(theta);
-        const y = midR * cosP;
-        const z = midR * sinP * Math.sin(theta);
-        const yaw = Math.atan2(x, z) * 180 / Math.PI;
+    const nWall = Math.max(4, Math.round((trenchHalf * 2 * R) / (panelH * 0.55)));
+    _drawSphereRings(pts, 0, R, 0, R,
+      trenchPhi - trenchHalf, trenchPhi + trenchHalf,
+      nWall, panelW, panelH / 2, MAT_RIM);
+  }
+
+  // ── Superlaser Dish — concave bowl with 8 spoke tributary channels ────────
+  // Each panel faces radially outward from the SPHERE centre (not the dish axis)
+  // giving the true concave bowl silhouette. 8 spoke gaps reveal the channels.
+  {
+    // Orthonormal tangent basis perpendicular to dish axis d̂
+    let ux: number, uy: number, uz: number;
+    if (Math.abs(dcy) < 0.99) {
+      const len = Math.sqrt(dcz * dcz + dcx * dcx);
+      ux = dcz / len; uy = 0; uz = -dcx / len;
+    } else {
+      ux = 1; uy = 0; uz = 0;
+    }
+    const vx = dcy * uz - dcz * uy;
+    const vy = dcz * ux - dcx * uz;
+    const vz = dcx * uy - dcy * ux;
+
+    const nDishRings = 10;
+    const nSpokes    = 8;
+    const spokeHalf  = Math.PI / (nSpokes * 2.8);
+
+    for (let ri = 0; ri <= nDishRings; ri++) {
+      const alpha = (ri / nDishRings) * dishCone;
+      const t     = ri / nDishRings;
+
+      if (ri === 0) {
+        // Central focus lens
+        const phiC = Math.acos(Math.max(-1, Math.min(1, dcy)));
         pts.push({
-          x, y: R + y, z, yaw,
-          pitch: +pitch.toFixed(2),
-          scale: Math.abs(scale - 1) > 0.005 ? +scale.toFixed(4) : undefined,
+          x: R * dcx, y: R + R * dcy - panelH / 2, z: R * dcz,
+          yaw:   +(Math.atan2(dcx, dcz) * 180 / Math.PI).toFixed(2),
+          pitch: +((phiC - Math.PI / 2) * 180 / Math.PI).toFixed(2),
+          name: "barrel_red",
+        });
+        continue;
+      }
+
+      // Color: dark CNC4 inner → MILCNC mid → hull grey outer → stone rim
+      const mat = t < 0.35 ? CNC4 : t < 0.65 ? MILCNC : t < 0.90 ? MAT_MAIN : MAT_RIM;
+
+      const sinAl = Math.sin(alpha), cosAl = Math.cos(alpha);
+      const ringR = R * sinAl;
+      const circ  = 2 * Math.PI * ringR;
+      const nP    = Math.max(6, Math.ceil(circ / (panelW * 0.97)));
+      const sc    = (circ / nP) / panelW;
+      const step  = (2 * Math.PI) / nP;
+
+      for (let j = 0; j < nP; j++) {
+        const az = (j + 0.5) * step;
+
+        // Spoke channel gaps on intermediate rings
+        if (ri > 1 && ri < nDishRings) {
+          const azN = ((az % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+          const nearest = Math.round(azN * nSpokes / (2 * Math.PI)) * (2 * Math.PI / nSpokes);
+          if (Math.abs(azN - nearest) < spokeHalf) continue;
+        }
+
+        // Dish-local direction → world space
+        const cosA = Math.cos(az), sinA = Math.sin(az);
+        const nx = cosAl * dcx + sinAl * (cosA * ux + sinA * vx);
+        const ny = cosAl * dcy + sinAl * (cosA * uy + sinA * vy);
+        const nz = cosAl * dcz + sinAl * (cosA * uz + sinA * vz);
+
+        // Panel faces radially outward from sphere centre (concave bowl)
+        const phiW = Math.acos(Math.max(-1, Math.min(1, ny)));
+        pts.push({
+          x: R * nx, y: R + R * ny - panelH / 2, z: R * nz,
+          yaw:   +(Math.atan2(nx, nz) * 180 / Math.PI).toFixed(2),
+          pitch: +((phiW - Math.PI / 2) * 180 / Math.PI).toFixed(2),
+          scale: Math.abs(sc - 1) > 0.005 ? +sc.toFixed(4) : undefined,
+          name: mat,
+        });
+      }
+    }
+
+    // Dish rim ring — raised lip at dishCone boundary
+    {
+      const sinC = Math.sin(dishCone), cosC = Math.cos(dishCone);
+      const rimCirc = 2 * Math.PI * R * sinC;
+      const nRim = Math.max(8, Math.floor(rimCirc / panelW));
+      const rimSc = (rimCirc / nRim) / panelW;
+      for (let j = 0; j < nRim; j++) {
+        const az = (j + 0.5) * (2 * Math.PI / nRim);
+        const cosA = Math.cos(az), sinA = Math.sin(az);
+        const nx = cosC * dcx + sinC * (cosA * ux + sinA * vx);
+        const ny = cosC * dcy + sinC * (cosA * uy + sinA * vy);
+        const nz = cosC * dcz + sinC * (cosA * uz + sinA * vz);
+        const phiW = Math.acos(Math.max(-1, Math.min(1, ny)));
+        pts.push({
+          x: R * nx, y: R + R * ny - panelH / 2, z: R * nz,
+          yaw:   +(Math.atan2(nx, nz) * 180 / Math.PI).toFixed(2),
+          pitch: +((phiW - Math.PI / 2) * 180 / Math.PI).toFixed(2),
+          scale: Math.abs(rimSc - 1) > 0.005 ? +rimSc.toFixed(4) : undefined,
           name: MAT_RIM,
         });
       }
     }
   }
 
-  // ── SUPERLASER DISH — dedicated concave builder ───────────────────────────
-  // Parameterized by angular distance α from the dish axis d̂ (α ∈ [0, dishCone])
-  // and azimuth a ∈ [0, 2π]. Each panel sits on a modified sphere where the
-  // radius is pushed inward near the dish axis, producing a true concave bowl.
-  //
-  //   position(α, a) = curR(α) * [cos(α)*d̂ + sin(α)*(cos(a)*û + sin(a)*v̂)]
-  //   curR(α)        = R − dishDepth * (1 − α/dishCone)^1.6
-  //
-  // At α=dishCone (rim) → curR=R → point sits exactly on the sphere surface,
-  // so the dish merges seamlessly with the rest of the hull.
-
-  // Orthonormal tangent basis (û, v̂) perpendicular to d̂
-  let ux: number, uy: number, uz: number;
-  if (Math.abs(dcy) < 0.99) {
-    // u = normalize(d × worldUp), worldUp = (0,1,0)
-    const cxv = dcz, czv = -dcx;
-    const len = Math.sqrt(cxv * cxv + czv * czv);
-    ux = cxv / len; uy = 0; uz = czv / len;
-  } else {
-    ux = 1; uy = 0; uz = 0;
-  }
-  // v̂ = d̂ × û
-  const vx = dcy * uz - dcz * uy;
-  const vy = dcz * ux - dcx * uz;
-  const vz = dcx * uy - dcy * ux;
-
-  // Pre-compute formatted strings — reused by center lens, spoke panels
-  const dishAxisYaw   = +(Math.atan2(dcx, dcz) * 180 / Math.PI).toFixed(2);
-  const dishAxisPitch = +(-Math.asin(Math.max(-1, Math.min(1, dcy))) * 180 / Math.PI).toFixed(2);
-
-  pts.push({
-    x: (R - dishDepth) * dcx,
-    y: R + (R - dishDepth) * dcy,
-    z: (R - dishDepth) * dcz,
-    yaw: dishAxisYaw, pitch: dishAxisPitch,
-    name: "barrel_red",
-  });
-
-  const dishRings = 16;
-  for (let ri = 1; ri <= dishRings; ri++) {
-    const t      = ri / dishRings;                       // 0 = near center, 1 = rim
-    const alpha  = t * dishCone;
-    const curR   = R - dishDepth * Math.pow(1 - t, 1.6); // pushed inward
-    const sinAl  = Math.sin(alpha);
-    const cosAl  = Math.cos(alpha);
-    const ringR  = curR * sinAl;                         // effective world ring radius
-
-    const circ   = 2 * Math.PI * ringR;
-    const nP     = Math.max(8, Math.floor(circ / (panelW * 0.85)));
-
-    // Material bands
-    let mat: string;
-    if (t < 0.20)      mat = "barrel_yellow";
-    else if (t < 0.42) mat = "staticobj_roadblock_cncblock";
-    else if (t < 0.88) mat = MILCNC;
-    else               mat = MAT_RIM;
-
-    for (let j = 0; j < nP; j++) {
-      const a    = (j + 0.5) * (2 * Math.PI) / nP;
-      const cosA = Math.cos(a), sinA = Math.sin(a);
-      // Direction in world: cos(α)*d̂ + sin(α)*(cosA*û + sinA*v̂)
-      const dirX = cosAl * dcx + sinAl * (cosA * ux + sinA * vx);
-      const dirY = cosAl * dcy + sinAl * (cosA * uy + sinA * vy);
-      const dirZ = cosAl * dcz + sinAl * (cosA * uz + sinA * vz);
-      const px = curR * dirX;
-      const py = curR * dirY;
-      const pz = curR * dirZ;
-
-      // Face normal: blend axial d̂ (center) with sphere-outward dir (rim)
-      // weighted by t — center panels face straight along d̂, rim panels face
-      // outward like the surrounding sphere.
-      const nnx = (1 - t) * dcx + t * dirX;
-      const nny = (1 - t) * dcy + t * dirY;
-      const nnz = (1 - t) * dcz + t * dirZ;
-      const nLen = Math.sqrt(nnx * nnx + nny * nny + nnz * nnz);
-      const NX = nnx / nLen, NY = nny / nLen, NZ = nnz / nLen;
-      const yaw   = Math.atan2(NX, NZ) * 180 / Math.PI;
-      const pitch = -Math.asin(Math.max(-1, Math.min(1, NY))) * 180 / Math.PI;
-
-      pts.push({
-        x: px, y: R + py, z: pz,
-        yaw:   +yaw.toFixed(2),
-        pitch: +pitch.toFixed(2),
-        name: mat,
-      });
-    }
-  }
-
-  // ── 8 radial emitter spokes across the dish ──────────────────────────────
-  const nSpokes  = 8;
-  const spokeSeg = 8;
-  for (let s = 0; s < nSpokes; s++) {
-    const a    = (s / nSpokes) * Math.PI * 2;
-    const cosA = Math.cos(a), sinA = Math.sin(a);
-    for (let k = 1; k <= spokeSeg; k++) {
-      const t      = k / (spokeSeg + 1);
-      const alpha  = t * dishCone;
-      const curR   = R - dishDepth * Math.pow(1 - t, 1.6) + 1.5; // raised slightly
-      const sinAl  = Math.sin(alpha);
-      const cosAl  = Math.cos(alpha);
-      const dirX = cosAl * dcx + sinAl * (cosA * ux + sinA * vx);
-      const dirY = cosAl * dcy + sinAl * (cosA * uy + sinA * vy);
-      const dirZ = cosAl * dcz + sinAl * (cosA * uz + sinA * vz);
-      pts.push({
-        x: curR * dirX,
-        y: R + curR * dirY,
-        z: curR * dirZ,
-        yaw: dishAxisYaw, pitch: dishAxisPitch,
-        name: MAT_RIM,
-      });
-    }
-  }
-
-  // ── Trench floor — rings spanning the full trench angular width ───────────
-  const trenchFloorR = R - trenchDepth;
-  const trenchRings  = 4;
-  for (let ti = 0; ti < trenchRings; ti++) {
-    // Span full ±trenchHalf so floor edges meet the trench walls — no bottom gap
-    const phi  = trenchPhi - trenchHalf + (ti / (trenchRings - 1)) * trenchHalf * 2;
-    const sinP = Math.sin(phi);
-    const circ    = 2 * Math.PI * trenchFloorR * sinP;
-    const nPanels = Math.max(4, Math.floor(circ / panelW));
-    const scale   = (circ / nPanels) / panelW;
-    const arcStep = (2 * Math.PI) / nPanels;
-    const pitch   = (phi - Math.PI / 2) * 180 / Math.PI;
-
-    for (let j = 0; j < nPanels; j++) {
-      const theta = (j + 0.5) * arcStep;
-      const x   = trenchFloorR * sinP * Math.cos(theta);
-      const y   = trenchFloorR * Math.cos(phi);
-      const z   = trenchFloorR * sinP * Math.sin(theta);
-      const yaw = Math.atan2(x, z) * 180 / Math.PI;
-      pts.push({
-        x, y: R + y, z, yaw,
-        pitch: +pitch.toFixed(2),
-        scale: Math.abs(scale - 1) > 0.005 ? +scale.toFixed(4) : undefined,
-        name: ti % 2 === 0 ? MAT_TRENCH : MAT_BAND,
-      });
+  // ── Trench floor — recessed inner ring at trenchDepth below hull ──────────
+  {
+    const floorR = R - trenchDepth;
+    const nFloorRings = 4;
+    for (let ti = 0; ti < nFloorRings; ti++) {
+      const phi  = trenchPhi - trenchHalf + (ti / (nFloorRings - 1)) * trenchHalf * 2;
+      const sinP = Math.sin(phi), cosP = Math.cos(phi);
+      const circ = 2 * Math.PI * floorR * sinP;
+      const nP   = Math.max(6, Math.floor(circ / panelW));
+      const sc   = (circ / nP) / panelW;
+      for (let j = 0; j < nP; j++) {
+        const theta = (j + 0.5) * (2 * Math.PI / nP);
+        const x = floorR * sinP * Math.cos(theta);
+        const z = floorR * sinP * Math.sin(theta);
+        pts.push({
+          x, y: R + floorR * cosP - panelH / 2, z,
+          yaw:   +(Math.atan2(x, z) * 180 / Math.PI).toFixed(2),
+          pitch: +((phi - Math.PI / 2) * 180 / Math.PI).toFixed(2),
+          scale: Math.abs(sc - 1) > 0.005 ? +sc.toFixed(4) : undefined,
+          name: MAT_TRENCH,
+        });
+      }
     }
   }
 
@@ -311,120 +272,159 @@ export function gen_death_star(p: GenParams): Point3D[] {
 /**
  * 🤖 AT-AT WALKER — Imperial All Terrain Armoured Transport
  *
- * Research: T-1 walker — 22.5m tall, 26m long, 8.6m wide.
- * At S=1 this generator is ~3× real scale for DayZ visibility.
+ * Silhouette: 3 dominant masses — large rectangular body elevated on 4 tall
+ * jointed legs, forward-protruding wedge head connected by a short neck block.
  *
- * Structure:
- *  • Body — huge IND10 armour-plate box on 4 articulated legs
- *  • Neck — short angled spar from front-top of body to head base
- *  • Head — CNC8 box, facing south (-Z). Two chin cannons with barrel_red tips.
- *  • Legs — MILCNC panels: upper thigh (angled outward), lower shin (near-vertical), foot pad
- *
- * The angled drawWall segments auto-calculate pitch → panels look rotated/mechanical.
- * barrel_red at cannon muzzles = the original working look.
+ * Panel constants (P3D-verified, NEVER scale heights):
+ *  IH = 9.758  (IND10 height) — body walls, 2 rows = 19.516m tall body
+ *  C8H = 2.300 (CNC8 height)  — head walls, 3 rows = 6.9m tall head
  */
 export function gen_atat_walker(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const S  = Math.max(0.5, p.scale ?? 1);
+  const S = Math.max(0.5, Math.min(2, p.scale ?? 1));
 
-  // ── Dimensions ────────────────────────────────────────────────────────────
-  const LH = 16 * S;        // leg height (ground to body floor)
-  const BW =  7 * S;        // body half-width  (full = 14m)
-  const BD = 12 * S;        // body half-depth  (full = 24m)
-  // Body is one row of IND10 (P3D height = 9.758m) → sits from LH to LH+9.758
-  const bodyTop = LH + 9.758 * S;
+  // Physical panel heights — NEVER multiply by S
+  const IH  = 9.758;
+  const C8H = 2.300;
+  const MF  = 4.052;  // MILCNC flat footprint
 
-  // ── BODY — IND10 armour plates (9.758m tall) ──────────────────────────────
-  drawRect(pts, 0, LH, 0, BW, BD, IND10);
-  
-  // Solid upper and lower decks for the body encapsulation
-  const PW = Math.max(0.1, 4.052 * S); 
-  const PD = Math.max(0.1, 4.744 * S); 
-  for(let z = -BD + PD/2; z <= BD - PD/2; z += PD) {
-     for(let x = -BW + PW/2; x <= BW - PW/2; x += PW) {
-         pts.push({x, y: LH, z, yaw: 0, pitch: -90, name: MILCNC});
-         pts.push({x, y: bodyTop, z, yaw: 0, pitch: -90, name: MILCNC});
-     }
+  // ── Layout ────────────────────────────────────────────────────────────────
+  const LH  = 16 * S;  // hip height = body bottom Y
+  const BW  =  7 * S;  // body half-width  (E-W)
+  const BD  = 12 * S;  // body half-depth  (N-S)
+  const bodyBot = LH;
+  const bodyTop = LH + 2 * IH;  // 2 IND10 rows = 19.516m fixed height
+
+  // ── 1. BODY — 2 IND10 rows, gapless floor & ceiling ──────────────────────
+  drawRect(pts, 0, bodyBot,      0, BW, BD, IND10);
+  drawRect(pts, 0, bodyBot + IH, 0, BW, BD, IND10);
+
+  // Floor — MILCNC grid at body bottom
+  const nBX = Math.max(1, Math.round(BW * 2 / MF));
+  const nBZ = Math.max(1, Math.round(BD * 2 / MF));
+  const scB  = +((BW * 2) / (nBX * MF)).toFixed(3);
+  for (let xi = 0; xi < nBX; xi++) {
+    for (let zi = 0; zi < nBZ; zi++) {
+      const x = -BW + (xi + 0.5) * (BW * 2 / nBX);
+      const z = -BD + (zi + 0.5) * (BD * 2 / nBZ);
+      pts.push({ x, y: bodyBot, z, yaw: 0, pitch: -90, scale: scB, name: MILCNC });
+    }
   }
-
-  // ── NECK — armored tube extending forward ─────────────────────────────────
-  const neckBX = 0, neckBY = bodyTop - 2 * S, neckBZ = -BD;
-  const neckTX = 0, neckTY = LH + 6 * S,      neckTZ = -BD - 10 * S;
-  // Four walls to construct a fully enclosed structural tunnel
-  drawWall(pts, neckBX - 2*S, neckBY, neckBZ, neckTX - 2*S, neckTY, neckTZ, CNC4);
-  drawWall(pts, neckBX + 2*S, neckBY, neckBZ, neckTX + 2*S, neckTY, neckTZ, CNC4);
-  drawWall(pts, neckBX, neckBY + 2*S, neckBZ, neckTX, neckTY + 2*S, neckTZ, CNC4);
-  drawWall(pts, neckBX, neckBY - 2*S, neckBZ, neckTX, neckTY - 2*S, neckTZ, CNC4);
-
-  // ── HEAD — CNC8 box (6m tall capsular head) ───────────────────────────────
-  const headCZ = neckTZ - 6 * S;   // centre of head along Z
-  const headBY = neckTY - 5 * S;   // head base Y (slightly below neck tip)
-  const HW = 5 * S;                 // head half-width (X)
-  const HD = 6 * S;                 // head half-depth (Z)
-  drawRect(pts, 0, headBY,           headCZ, HW, HD, CNC8);
-  drawRect(pts, 0, headBY + 3 * S,   headCZ, HW, HD, CNC8);
-  
-  // Solid upper and lower decks for the head encapsulation
-  for(let z = headCZ - HD + PD/2; z <= headCZ + HD - PD/2; z += PD) {
-      for(let x = -HW + PW/2; x <= HW - PW/2; x += PW) {
-          pts.push({x, y: headBY, z, yaw: 0, pitch: -90, name: MILCNC});
-          pts.push({x, y: headBY + 6 * S, z, yaw: 0, pitch: -90, name: MILCNC});
+  // Ceiling — IND10 at bodyTop (same object type as body walls → proven flush)
+  {
+    const IW_C = 9.012, IH_C = 9.758;
+    const nCX = Math.max(1, Math.round(BW * 2 / IW_C));
+    const nCZ = Math.max(1, Math.round(BD * 2 / IH_C));
+    const scC = +((BW * 2) / (nCX * IW_C)).toFixed(3);
+    for (let zi = 0; zi < nCZ; zi++) {
+      const z = -BD + (zi + 0.5) * (BD * 2 / nCZ);
+      for (let xi = 0; xi < nCX; xi++) {
+        const x = -BW + (xi + 0.5) * (BW * 2 / nCX);
+        // y offset compensates renderer's h/2 addition: flush = bodyTop - (h-d)/2
+        pts.push({ x, y: bodyTop - 4.376, z, yaw: 0, pitch: -90, scale: scC, name: IND10 });
       }
+    }
   }
 
-  // ── CHIN CANNONS — two forward barrels with barrel_red muzzles ───────────
-  // Mounted on the lower chin (front-bottom of head).
-  const cannonY  = headBY + 1 * S;          // chin height
-  const cannonZ1 = headCZ - HD;             // cannon root (front face of head)
-  const cannonZ2 = cannonZ1 - 10 * S;       // muzzle tip
+  // ── 2. NECK — 4-wall armored tunnel, body front-top → head rear ──────────
+  const NW     = 2.5 * S;
+  const neckBZ = -BD;
+  const neckBY = bodyBot + IH;       // attaches at first/second row junction
+  const neckTZ = -BD - 9 * S;
+  const neckTY = bodyBot + IH * 0.4; // slopes downward toward head
 
+  drawWall(pts, -NW, neckBY, neckBZ, -NW, neckTY, neckTZ, CNC4);
+  drawWall(pts,  NW, neckBY, neckBZ,  NW, neckTY, neckTZ, CNC4);
+  drawWall(pts,   0, neckBY + NW, neckBZ,   0, neckTY + NW, neckTZ, CNC4);
+  drawWall(pts,   0, neckBY - NW, neckBZ,   0, neckTY - NW, neckTZ, CNC4);
+
+  // ── 3. HEAD — 3 CNC8 rows, visor eyes on front face ──────────────────────
+  const HW    =  5 * S;
+  const HD    =  6 * S;
+  const HH    = 3 * C8H;  // 6.9m fixed
+  const headBY = neckTY - C8H;
+  const headCZ = neckTZ - HD;
+  const frontZ = headCZ - HD;
+
+  for (let row = 0; row < 3; row++) {
+    drawRect(pts, 0, headBY + row * C8H, headCZ, HW, HD, CNC8);
+  }
+
+  const nHX = Math.max(1, Math.round(HW * 2 / MF));
+  const nHZ = Math.max(1, Math.round(HD * 2 / MF));
+  const scH  = +((HW * 2) / (nHX * MF)).toFixed(3);
+  for (let xi = 0; xi < nHX; xi++) {
+    for (let zi = 0; zi < nHZ; zi++) {
+      const x = -HW + (xi + 0.5) * (HW * 2 / nHX);
+      const z = headCZ - HD + (zi + 0.5) * (HD * 2 / nHZ);
+      pts.push({ x, y: headBY,            z, yaw: 0, pitch: -90, scale: scH, name: MILCNC });
+      // MILCNC: (h-d)/2 = (4.744-1.096)/2 = 1.824 — compensate renderer h/2 offset
+      pts.push({ x, y: headBY + HH - 1.824, z, yaw: 0, pitch: -90, scale: scH, name: MILCNC });
+    }
+  }
+
+  // Visor slit — barrel_red eyes centred on front face at mid-height
+  const visorY = headBY + C8H * 1.2;
+  for (const vx of [-2.2 * S, 2.2 * S]) {
+    pts.push({ x: vx, y: visorY,         z: frontZ, yaw: 180, name: "barrel_red" });
+    pts.push({ x: vx, y: visorY + 0.8*S, z: frontZ, yaw: 180, name: "barrel_red" });
+  }
+
+  // ── 4. CHIN CANNONS ────────────────────────────────────────────────────────
+  const canY  = headBY + 0.5 * S;
+  const canZ2 = frontZ - 10 * S;
   for (const cx of [-3 * S, 3 * S]) {
-    drawWall(pts, cx, cannonY, cannonZ1, cx, cannonY, cannonZ2, CNC4);
-    // barrel_red cluster at the muzzle — the original working look
-    pts.push({ x: cx,            y: cannonY + 1.5 * S, z: cannonZ2, yaw: 0, name: "barrel_red" });
-    pts.push({ x: cx,            y: cannonY,            z: cannonZ2, yaw: 0, name: "barrel_red" });
-    pts.push({ x: cx + 0.4 * S, y: cannonY + 0.8 * S, z: cannonZ2, yaw: 0, name: "barrel_red" });
-    pts.push({ x: cx - 0.4 * S, y: cannonY + 0.8 * S, z: cannonZ2, yaw: 0, name: "barrel_red" });
+    drawWall(pts, cx, canY, frontZ, cx, canY, canZ2, CNC4);
+    pts.push({ x: cx,           y: canY + 1.5*S, z: canZ2, name: "barrel_red" });
+    pts.push({ x: cx,           y: canY,          z: canZ2, name: "barrel_red" });
+    pts.push({ x: cx + 0.35*S, y: canY + 0.7*S, z: canZ2, name: "barrel_red" });
+    pts.push({ x: cx - 0.35*S, y: canY + 0.7*S, z: canZ2, name: "barrel_red" });
   }
 
-  // ── 4 LEGS — Fully articulated 3D armored segments ───────────────────────
-  const legPositions = [
-    { lx:  BW, lz: -BD },   // front-right
-    { lx: -BW, lz: -BD },   // front-left
-    { lx:  BW, lz:  BD },   // rear-right
-    { lx: -BW, lz:  BD },   // rear-left
-  ];
+  // ── 5. LEGS — 4 articulated box struts: hip ring → knee ring → ankle → foot
+  const SW = 1.8 * S;  // strut half-width
 
-  for (const leg of legPositions) {
-    const kneeX = leg.lx * 1.35;
-    const kneeY = LH * 0.52;
-    const kneeZ = leg.lz;
-
-    const ankleX = leg.lx * 1.15;
+  for (const { hipX, hipZ, front } of [
+    { hipX:  BW, hipZ: -BD * 0.6, front: true  },
+    { hipX: -BW, hipZ: -BD * 0.6, front: true  },
+    { hipX:  BW, hipZ:  BD * 0.6, front: false },
+    { hipX: -BW, hipZ:  BD * 0.6, front: false },
+  ]) {
+    const kneeX  = hipX * 1.35;
+    const kneeY  = LH   * 0.50;
+    const kneeZ  = hipZ + (front ? -1.5 * S : 1.5 * S);
+    const ankleX = hipX * 1.15;
     const ankleY = 2 * S;
+    const ankleZ = kneeZ;
 
-    // Upper leg — 4-sided box strut: front/back offset Z only, inner/outer offset X only
-    drawWall(pts, leg.lx,       LH,    leg.lz - 2*S, kneeX,       kneeY, kneeZ - 2*S, CNC4); // front face
-    drawWall(pts, leg.lx,       LH,    leg.lz + 2*S, kneeX,       kneeY, kneeZ + 2*S, CNC4); // back face
-    drawWall(pts, leg.lx - 2*S, LH,    leg.lz,       kneeX - 2*S, kneeY, kneeZ,       CNC4); // inner face
-    drawWall(pts, leg.lx + 2*S, LH,    leg.lz,       kneeX + 2*S, kneeY, kneeZ,       CNC4); // outer face
+    // Hip disc where leg meets body bottom
+    drawRing(pts, hipX, bodyBot, hipZ, SW + 0.8 * S, CNC4);
 
-    // Knee Joint
-    drawRing(pts, kneeX, kneeY, kneeZ, 3*S, STONE);
+    // Upper leg box strut (hip → knee)
+    drawWall(pts, hipX - SW, bodyBot, hipZ,  kneeX - SW, kneeY, kneeZ, CNC4);
+    drawWall(pts, hipX + SW, bodyBot, hipZ,  kneeX + SW, kneeY, kneeZ, CNC4);
+    drawWall(pts, hipX, bodyBot, hipZ - SW,  kneeX, kneeY, kneeZ - SW, CNC4);
+    drawWall(pts, hipX, bodyBot, hipZ + SW,  kneeX, kneeY, kneeZ + SW, CNC4);
 
-    // Lower leg — same box-strut pattern, narrower (1.5S offset)
-    drawWall(pts, kneeX,        kneeY, kneeZ - 1.5*S, ankleX,        ankleY, kneeZ - 1.5*S, CNC4); // front
-    drawWall(pts, kneeX,        kneeY, kneeZ + 1.5*S, ankleX,        ankleY, kneeZ + 1.5*S, CNC4); // back
-    drawWall(pts, kneeX - 1.5*S, kneeY, kneeZ,        ankleX - 1.5*S, ankleY, kneeZ,        CNC4); // inner
-    drawWall(pts, kneeX + 1.5*S, kneeY, kneeZ,        ankleX + 1.5*S, ankleY, kneeZ,        CNC4); // outer
+    // Knee joint ring
+    drawRing(pts, kneeX, kneeY, kneeZ, SW * 2.0, STONE);
 
-    // Foot pad (Large rounded disc)
-    drawDisk(pts, ankleX, 0.5 * S, kneeZ, 4.5 * S, CNC4);
-    // Toe flap
-    drawWall(pts, ankleX - 3*S, 1.5*S, kneeZ - 5*S, ankleX + 3*S, 1*S, kneeZ - 6*S, CNC4);
+    // Lower leg box strut (knee → ankle, slightly narrower)
+    const LW = SW * 0.8;
+    drawWall(pts, kneeX - LW, kneeY, kneeZ,  ankleX - LW, ankleY, ankleZ, CNC4);
+    drawWall(pts, kneeX + LW, kneeY, kneeZ,  ankleX + LW, ankleY, ankleZ, CNC4);
+    drawWall(pts, kneeX, kneeY, kneeZ - LW,  ankleX, ankleY, ankleZ - LW, CNC4);
+    drawWall(pts, kneeX, kneeY, kneeZ + LW,  ankleX, ankleY, ankleZ + LW, CNC4);
+
+    // Ankle joint ring
+    drawRing(pts, ankleX, ankleY, ankleZ, SW * 1.5, CNC4);
+
+    // Foot — flat disk pad + forward toe plate
+    drawDisk(pts, ankleX, 0.4 * S, ankleZ, 4.5 * S, CNC4);
+    drawWall(pts, ankleX - 3*S, S, ankleZ - 4.5*S,  ankleX + 3*S, 0.5*S, ankleZ - 5.5*S, CNC4);
   }
 
-  return pts;
+  return applyLimit(pts, 1100);
 }
 
 /**
@@ -548,103 +548,120 @@ export function gen_millennium_falcon(p: GenParams): Point3D[] {
  */
 export function gen_star_destroyer(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const S      = Math.max(0.5, p.scale ?? 1);
+  const S      = Math.max(0.5, Math.min(1.5, p.scale ?? 0.75));
   const L      = 160 * S;
-  const HW     = 45  * S;   // half-width at stern
+  const HW     = 45  * S;
   const bowZ   = -L / 2;
   const sternZ =  L / 2;
-  const PW     = 9.012 * S; // IND10 face width (X)
-  const PD     = 9.758 * S; // IND10 face height → hull wall height
-  const deckY  = PD;        // dorsal deck sits on top of one row of hull walls
 
-  // ── 1. HULL SIDE WALLS — two diagonal edges + flat stern ─────────────────
-  drawWall(pts, -HW, 0, sternZ,  0,  0, bowZ,   IND10); // port edge
-  drawWall(pts,  HW, 0, sternZ,  0,  0, bowZ,   IND10); // starboard edge
-  drawWall(pts, -HW, 0, sternZ, HW,  0, sternZ, IND10); // stern flat wall
+  // Panel physical constants — NEVER multiply by S
+  const IW  = 9.012;  // IND10 face width
+  const IH  = 9.758;  // IND10 face height = hull wall height
+  const C8H = 2.300;  // CNC8 row height
+  const C4H = 2.324;  // CNC4 row height
+  const MH  = 4.052;  // MILCNC tile footprint
 
-  // ── 2. DORSAL DECK — IND10 panels filling the triangular upper surface ───
-  // Each row at z sweeps -(halfW) to +(halfW) with panels matched to fit.
-  for (let z = bowZ + PD * 0.5; z <= sternZ - PD * 0.5; z += PD) {
+  const deckY = IH;   // deck sits flush on top of single IND10 hull row
+
+  // ── 1. HULL SIDE WALLS ──────────────────────────────────────────────────────
+  drawWall(pts, -HW, 0, sternZ,  0,  0, bowZ,   IND10);
+  drawWall(pts,  HW, 0, sternZ,  0,  0, bowZ,   IND10);
+  drawWall(pts, -HW, 0, sternZ, HW,  0, sternZ, IND10);
+
+  // ── 2. HULL FLOOR — flat IND10 tiles at keel ────────────────────────────────
+  for (let z = bowZ + IH * 0.5; z <= sternZ - IH * 0.5; z += IH) {
     const frac  = (z - bowZ) / L;
     const halfW = HW * frac;
-    if (halfW < PW * 0.5) continue;
-
-    const nP    = Math.max(1, Math.floor(halfW * 2 / PW));
-    const slot  = (halfW * 2) / nP;
-    const scale = slot / PW;
-
+    if (halfW < IW * 0.5) continue;
+    const nP  = Math.max(1, Math.floor(halfW * 2 / IW));
+    const slot = (halfW * 2) / nP;
+    const sc   = +(slot / IW).toFixed(3);
     for (let i = 0; i < nP; i++) {
-      const x = -halfW + (i + 0.5) * slot;
-      pts.push({ x, y: deckY, z, yaw: 0, pitch: -90, scale: +scale.toFixed(3), name: IND10 });
+      pts.push({ x: -halfW + (i + 0.5) * slot, y: 0, z, yaw: 0, pitch: -90, scale: sc, name: IND10 });
     }
   }
 
-  // ── 3. SUPERSTRUCTURE — 3-tier command island at stern ───────────────────
-  const ssZ = sternZ - 28 * S; // superstructure centre Z
+  // ── 3. DORSAL DECK — flat IND10 flush on top of hull walls ─────────────────
+  for (let z = bowZ + IH * 0.5; z <= sternZ - IH * 0.5; z += IH) {
+    const frac  = (z - bowZ) / L;
+    const halfW = HW * frac;
+    if (halfW < IW * 0.5) continue;
+    const nP  = Math.max(1, Math.floor(halfW * 2 / IW));
+    const slot = (halfW * 2) / nP;
+    const sc   = +(slot / IW).toFixed(3);
+    for (let i = 0; i < nP; i++) {
+      pts.push({ x: -halfW + (i + 0.5) * slot, y: deckY, z, yaw: 0, pitch: -90, scale: sc, name: IND10 });
+    }
+  }
 
-  // Tier 1 — wide armour base (2 IND10 rows tall)
+  // ── 4. SUPERSTRUCTURE ───────────────────────────────────────────────────────
+  const ssZ = sternZ - 28 * S;
+
+  // Tier 1 — 2 IND10 rows (each IH tall)
   drawRect(pts, 0, deckY,        ssZ, 18*S, 22*S, IND10);
-  drawRect(pts, 0, deckY + PD,   ssZ, 18*S, 22*S, IND10);
-  // Tier 1 flat roof deck
-  for (let z = ssZ - 20*S; z <= ssZ + 20*S; z += 4.052*S) {
-    for (let x = -16*S; x <= 16*S; x += 4.052*S) {
-      pts.push({ x, y: deckY + PD * 2, z, yaw: 0, pitch: -90, name: MILCNC });
+  drawRect(pts, 0, deckY + IH,   ssZ, 18*S, 22*S, IND10);
+
+  // Tier 1 roof — MILCNC tiles (fixed MH step, not scaled)
+  const t1Top = deckY + 2 * IH;
+  for (let z = ssZ - 20*S; z <= ssZ + 20*S; z += MH) {
+    for (let x = -16*S; x <= 16*S; x += MH) {
+      pts.push({ x, y: t1Top, z, yaw: 0, pitch: -90, name: MILCNC });
     }
   }
 
-  // Tier 2 — narrower CNC8 midsection
-  const t2Y = deckY + PD * 2;
-  drawRect(pts, 0, t2Y,           ssZ + 3*S, 12*S, 15*S, CNC8);
-  drawRect(pts, 0, t2Y + 2.3*S,  ssZ + 3*S, 12*S, 15*S, CNC8);
+  // Tier 2 — 2 CNC8 rows
+  const t2Y = t1Top;
+  drawRect(pts, 0, t2Y,         ssZ + 3*S, 12*S, 15*S, CNC8);
+  drawRect(pts, 0, t2Y + C8H,   ssZ + 3*S, 12*S, 15*S, CNC8);
 
-  // Tier 3 — narrow CNC4 upper level (recessed front)
-  const t3Y = t2Y + 4.6*S;
-  drawRect(pts, 0, t3Y,           ssZ + 5*S,  8*S, 10*S, CNC4);
+  // Tier 3 — 1 CNC4 row
+  const t3Y = t2Y + 2 * C8H;
+  drawRect(pts, 0, t3Y,         ssZ + 5*S,  8*S, 10*S, CNC4);
 
-  // Bridge neck + head
-  const neckY   = t3Y + 2.3*S;
-  const bridgeY = neckY + PD;
-  drawRect(pts, 0, neckY, ssZ + 5*S, 4*S, 4*S, IND10); // neck stalk
+  // Neck stalk (IND10) + command bridge wing
+  const neckY   = t3Y + C4H;
+  const bridgeY = neckY + IH;
+  drawRect(pts, 0, neckY, ssZ + 5*S, 4*S, 4*S, IND10);
 
-  // Command bridge — horizontal wing
-  drawWall(pts, -13*S, bridgeY,       ssZ + 5*S, 13*S, bridgeY,       ssZ + 5*S, IND10);
-  drawWall(pts, -13*S, bridgeY + PD,  ssZ + 5*S, 13*S, bridgeY + PD,  ssZ + 5*S, IND10);
-  drawWall(pts, -13*S, bridgeY,       ssZ + 5*S, -13*S, bridgeY + PD, ssZ + 5*S, IND10);
-  drawWall(pts,  13*S, bridgeY,       ssZ + 5*S,  13*S, bridgeY + PD, ssZ + 5*S, IND10);
-  // Viewport strip (CNC4 forward-angled glass band)
-  drawWall(pts, -11*S, bridgeY + 1*S, ssZ + 3.5*S, 11*S, bridgeY + 1*S, ssZ + 3.5*S, CNC4);
+  drawWall(pts, -13*S, bridgeY,        ssZ + 5*S,  13*S, bridgeY,        ssZ + 5*S, IND10);
+  drawWall(pts, -13*S, bridgeY + IH,   ssZ + 5*S,  13*S, bridgeY + IH,   ssZ + 5*S, IND10);
+  drawWall(pts, -13*S, bridgeY,        ssZ + 5*S, -13*S, bridgeY + IH,   ssZ + 5*S, IND10);
+  drawWall(pts,  13*S, bridgeY,        ssZ + 5*S,  13*S, bridgeY + IH,   ssZ + 5*S, IND10);
+  drawWall(pts, -11*S, bridgeY + 1*S,  ssZ + 3.5*S, 11*S, bridgeY + 1*S, ssZ + 3.5*S, CNC4);
 
-  // Shield generator globes — the iconic spheres on bridge wings
+  // Shield generator globes
   for (const sx of [-10, 10] as const) {
     for (let gh = 0; gh <= 3; gh++) {
       const gr = Math.max(0.5, (3.5 - gh * 0.7)) * S;
-      drawRing(pts, sx*S, bridgeY + PD + gh*S, ssZ + 5*S, gr, CNC4);
+      drawRing(pts, sx*S, bridgeY + IH + gh * S, ssZ + 5*S, gr, CNC4);
     }
-    pts.push({ x: sx*S, y: bridgeY + PD + 4.5*S, z: ssZ + 5*S, yaw: 0, pitch: -90, name: CNC4 });
+    pts.push({ x: sx*S, y: bridgeY + IH + 4.5*S, z: ssZ + 5*S, yaw: 0, pitch: -90, name: CNC4 });
   }
 
-  // ── 4. TURBOLASER BATTERIES — 4 twin-barrelled towers on dorsal deck ─────
+  // ── 5. TURBOLASER BATTERIES ─────────────────────────────────────────────────
   for (const [tx, tz] of [
     [20*S, ssZ - 20*S], [-20*S, ssZ - 20*S],
     [20*S, ssZ - 38*S], [-20*S, ssZ - 38*S],
   ] as const) {
-    drawRing(pts, tx, deckY + 1*S, tz, 3*S, CNC8);  // rotating base ring
+    drawRing(pts, tx, deckY + S, tz, 3*S, CNC8);
     pts.push({ x: tx - 1.5*S, y: deckY + 4*S, z: tz - 4*S, yaw: 0, name: "barrel_red" });
     pts.push({ x: tx + 1.5*S, y: deckY + 4*S, z: tz - 4*S, yaw: 0, name: "barrel_red" });
   }
 
-  // ── 5. REAR ENGINE NOZZLES — 3 primary (stacked rings) + 2 aux ───────────
+  // ── 6. REAR ENGINE NOZZLES — doubled barrel rings for glow depth ────────────
   for (const ex of [-18, 0, 18] as const) {
-    drawRing(pts, ex*S, PD * 0.5, sternZ,       6*S, IND10);       // outer collar
-    drawRing(pts, ex*S, PD * 0.5, sternZ + 1*S, 4*S, CNC8);        // mid ring
-    drawRing(pts, ex*S, PD * 0.5, sternZ + 2*S, 2.5*S, "barrel_blue"); // ion glow
+    drawRing(pts, ex*S, IH * 0.5, sternZ,           6*S, IND10);
+    drawRing(pts, ex*S, IH * 0.5, sternZ + S,        4*S, CNC8);
+    drawRing(pts, ex*S, IH * 0.5, sternZ + 1.5*S,   2.5*S, "barrel_blue");
+    drawRing(pts, ex*S, IH * 0.5, sternZ + 2.5*S,   2.5*S, "barrel_blue");
   }
   for (const ex of [-32, 32] as const) {
-    drawRing(pts, ex*S, PD * 0.3, sternZ,       3.5*S, CNC8);
-    drawRing(pts, ex*S, PD * 0.3, sternZ + 1*S, 2*S,   "barrel_blue");
+    drawRing(pts, ex*S, IH * 0.3, sternZ,           3.5*S, CNC8);
+    drawRing(pts, ex*S, IH * 0.3, sternZ + S,        2*S,   "barrel_blue");
+    drawRing(pts, ex*S, IH * 0.3, sternZ + 2*S,      2*S,   "barrel_blue");
   }
 
-  return pts;
+  return applyLimit(pts, 1100);
 }
 
 /**
@@ -836,71 +853,107 @@ export function gen_stark_tower(p: GenParams): Point3D[] {
  */
 export function gen_cyberpunk(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const S = Math.max(0.5, p.scale ?? 1);
-  const h = 80 * S;
-  const panelH = 9.758 * S;
+  const S   = Math.max(0.5, p.scale ?? 1);
+  const PH  = 9.758;   // IND10 row height — fixed, never scale
+  const MPH = 4.744;   // MILCNC height
+  const CPH = 2.300;   // CNC8 height
 
-  // Ziggurat setback profile — tower width decreases at 30%, 60%, 85% height
-  function towerHalfWidth(y: number): number {
-    const t = y / h;
-    if (t < 0.30) return 18 * S;
-    if (t < 0.60) return 13 * S;
+  const totalH = 90 * S;
+
+  function coreHW(y: number): number {
+    const t = y / totalH;
+    if (t < 0.30) return 20 * S;
+    if (t < 0.60) return 14 * S;
     if (t < 0.85) return  9 * S;
-    return 6 * S;
+    return 5 * S;
   }
 
-  // Core shaft with setback walls
-  for (let y = 0; y < h; y += panelH) {
-    const w = towerHalfWidth(y);
-    const mat = (Math.floor(y / panelH) % 3 === 0) ? IND10 : CNC8;
+  // ── 1. CENTRAL MEGA-TOWER — IND10/CNC8 ziggurat setbacks ──────────────────
+  for (let y = 0; y < totalH; y += PH) {
+    const w     = coreHW(y);
+    const nextW = coreHW(y + PH);
+    const mat   = (Math.floor(y / PH) % 2 === 0) ? IND10 : CNC8;
     drawRect(pts, 0, y, 0, w, w, mat);
 
-    // Flat deck at each setback transition
-    const nextW = towerHalfWidth(y + panelH);
-    if (nextW < w - 1) {
-      for (let dx = -w + 4.5*S; dx <= w - 4.5*S; dx += 9*S) {
-        pts.push({ x: dx, y: y + panelH, z:  w - 4.5*S, yaw: 0, pitch: -90, name: MILCNC });
-        pts.push({ x: dx, y: y + panelH, z: -w + 4.5*S, yaw: 0, pitch: -90, name: MILCNC });
+    // Diagonal corner caps
+    const cs = Math.min(0.75, w / (9.012 * 1.6));
+    pts.push({ x: -w, y, z: -w, yaw: 225, scale: cs, name: IND10 });
+    pts.push({ x:  w, y, z: -w, yaw: 135, scale: cs, name: IND10 });
+    pts.push({ x:  w, y, z:  w, yaw:  45, scale: cs, name: IND10 });
+    pts.push({ x: -w, y, z:  w, yaw: 315, scale: cs, name: IND10 });
+
+    // At each setback transition: flat deck + 8 neon barrel spots
+    if (nextW < w - 0.5) {
+      const deckY = y + PH;
+      for (let dx = -w + 2; dx <= w - 2; dx += 4.052) {
+        pts.push({ x: dx, y: deckY, z:  w - 2, pitch: -90, name: MILCNC });
+        pts.push({ x: dx, y: deckY, z: -w + 2, pitch: -90, name: MILCNC });
+      }
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * 2 * Math.PI;
+        pts.push({ x: (w + 1.5*S) * Math.cos(a), y: deckY - 1, z: (w + 1.5*S) * Math.sin(a), name: "barrel_blue" });
       }
     }
   }
 
-  // Neon conduit rings — barrel_blue every 3 floors, barrel_red accent every 7
-  for (let y = panelH * 2; y < h; y += panelH * 3) {
-    const w = towerHalfWidth(y);
-    const isRed = Math.floor(y / (panelH * 3)) % 7 === 0;
-    drawRing(pts, 0, y + panelH * 0.1, 0, w + 2 * S, isRed ? "barrel_red" : "barrel_blue");
+  // ── 2. FOUR FLANKING TOWERS — cardinal axes, CNC8 shafts ──────────────────
+  const fOff = 32 * S;
+  const fH   = 40 * S;
+  const fHW  = 4.004;   // exactly 1 CNC8 panel per side (wall=8.008m)
+  for (const [tx, tz] of [[-fOff, 0], [fOff, 0], [0, -fOff], [0, fOff]] as [number, number][]) {
+    for (let y = 0; y < fH; y += CPH) {
+      drawRect(pts, tx, y, tz, fHW, fHW, CNC8);
+    }
+    // 8 barrel_blue neon spots at tower crown
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * 2 * Math.PI;
+      pts.push({ x: tx + (fHW + 1) * Math.cos(a), y: fH, z: tz + (fHW + 1) * Math.sin(a), name: "barrel_blue" });
+    }
+    // MILCNC spire
+    for (let y = fH; y < fH + 10 * S; y += MPH) {
+      pts.push({ x: tx, y, z: tz, yaw:  0, name: MILCNC });
+      pts.push({ x: tx, y, z: tz, yaw: 90, name: MILCNC });
+    }
+    pts.push({ x: tx, y: fH + 10 * S, z: tz, name: "barrel_red" });
   }
 
-  // Skybridge arms at 40% and 70% height — CNC4 beams extending outward
-  for (const frac of [0.40, 0.70]) {
-    const bridgeY = h * frac;
-    const bw = towerHalfWidth(bridgeY);
+  // ── 3. SKYBRIDGES — 2 levels, connect central tower to flanking towers ─────
+  for (const frac of [0.35, 0.65]) {
+    const bY     = totalH * frac;
+    const bw     = coreHW(bY);
+    const armEnd = fOff - fHW - 1;
     for (const side of [-1, 1] as const) {
-      // Horizontal arm extending 20m past the tower face
-      drawWall(pts, side * bw, bridgeY, -8*S, side * (bw + 20*S), bridgeY, -8*S, CNC4);
-      drawWall(pts, side * bw, bridgeY,  8*S, side * (bw + 20*S), bridgeY,  8*S, CNC4);
-      // Arm cap wall
-      drawWall(pts, side * (bw + 20*S), bridgeY, -8*S, side * (bw + 20*S), bridgeY, 8*S, CNC4);
-      // Neon underside glow
-      pts.push({ x: side * (bw + 10*S), y: bridgeY - 1*S, z: 0, yaw: 0, pitch: -90, name: "barrel_blue" });
+      // X-axis bridges (to ±X towers)
+      drawWall(pts, side * bw, bY, -3 * S, side * armEnd, bY, -3 * S, CNC4);
+      drawWall(pts, side * bw, bY,  3 * S, side * armEnd, bY,  3 * S, CNC4);
+      // Z-axis bridges (to ±Z towers)
+      drawWall(pts, -3 * S, bY, side * bw, -3 * S, bY, side * armEnd, CNC4);
+      drawWall(pts,  3 * S, bY, side * bw,  3 * S, bY, side * armEnd, CNC4);
+      // Neon glow strip at bridge midpoint
+      const mid = side * (bw + (armEnd - bw) * 0.5);
+      pts.push({ x: mid, y: bY - 1, z:    0, pitch: -90, name: "barrel_blue" });
+      pts.push({ x:   0, y: bY - 1, z: mid,  pitch: -90, name: "barrel_blue" });
     }
   }
 
-  // Rooftop antenna cluster — 4 perimeter spires + central beacon
-  const roofY = h;
-  const roofW = towerHalfWidth(h) - 2*S;
-  for (const [ox, oz] of [[roofW, 0], [-roofW, 0], [0, roofW], [0, -roofW]] as const) {
-    for (let ay = roofY; ay < roofY + 20*S; ay += 9.012*S) {
-      pts.push({ x: ox, y: ay, z: oz, yaw: 0,  pitch: 0, name: MILCNC });
-      pts.push({ x: ox, y: ay, z: oz, yaw: 90, pitch: 0, name: MILCNC });
+  // ── 4. ROOFTOP CLUSTER — 4 perimeter spires + central beacon ──────────────
+  const roofY  = totalH;
+  const roofHW = coreHW(totalH) * 0.75;
+  for (const [ox, oz] of [[roofHW, 0], [-roofHW, 0], [0, roofHW], [0, -roofHW]] as const) {
+    for (let y = roofY; y < roofY + 18 * S; y += MPH) {
+      pts.push({ x: ox, y, z: oz, yaw:  0, name: MILCNC });
+      pts.push({ x: ox, y, z: oz, yaw: 90, name: MILCNC });
     }
+    pts.push({ x: ox, y: roofY + 18 * S, z: oz, name: "barrel_red" });
   }
-  // Central beacon
-  pts.push({ x: 0, y: roofY + 24*S, z: 0, yaw: 0, name: "barrel_red" });
-  pts.push({ x: 0, y: roofY + 26*S, z: 0, yaw: 0, name: "barrel_blue" });
+  for (let y = roofY; y < roofY + 26 * S; y += MPH) {
+    pts.push({ x: 0, y, z: 0, yaw:  0, name: MILCNC });
+    pts.push({ x: 0, y, z: 0, yaw: 90, name: MILCNC });
+  }
+  pts.push({ x: 0, y: roofY + 26 * S, z: 0, name: "barrel_blue" });
+  pts.push({ x: 0, y: roofY + 28 * S, z: 0, name: "barrel_red" });
 
-  return pts;
+  return applyLimit(pts, 1100);
 }
 
 /**
@@ -916,11 +969,12 @@ export function gen_cyberpunk(p: GenParams): Point3D[] {
  */
 export function gen_saturn(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const R = Math.min(p.r ?? 60, 100); // planet radius
-  const cx = 0, cy = R, cz = 0;       // planet centre elevated so it rests on ground
+  const R = Math.min(p.r ?? 35, 45); // planet radius — capped at 45 to stay under 1100 panels
+  // cy = 2.1*R keeps the A-ring bottom (at -2.028*R below centre) just above ground
+  const cx = 0, cy = 2.1 * R, cz = 0;
 
-  // Planet body
-  drawSphere(pts, cx, cy, cz, R, IND10);
+  // Planet body — auto-pick largest panel class that fits the sphere budget
+  drawSphereBudgeted(pts, cx, cy, cz, R, 550);
 
   // Ring system: panels placed on an ellipse tilted 26.7° around Z axis
   // Each ring panel sits at angle θ around the ring axis.
@@ -996,101 +1050,130 @@ export function gen_saturn(p: GenParams): Point3D[] {
  */
 export function gen_xwing(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const S = Math.max(0.5, p.scale ?? 1);
+  const S = Math.max(0.5, Math.min(2, p.scale ?? 1));
 
-  // ── Dimensions ────────────────────────────────────────────────────────────
-  const fY    = 3 * S;    // fuselage floor Y (sits off ground)
-  const noseZ = -18 * S;  // nose tip Z
-  const tailZ =  10 * S;  // tail end Z
+  const CH4 = 2.324;   // CNC4 height — fixed, never scale
+  const CW4 = 4.017;   // CNC4 width
 
-  // ── FUSELAGE — CNC4 cross-sections, tapered at nose ──────────────────────
-  // Each section: drawRect creates a 4-wall rectangular tube
-  const fuseSections: Array<{ z: number; hw: number; hd: number }> = [
-    { z: noseZ + 3*S,  hw: 0.5*S, hd: 0.4*S },  // narrow nose section
-    { z: noseZ + 7*S,  hw: 1.2*S, hd: 1.0*S },  // taper widens
-    { z: noseZ + 11*S, hw: 1.8*S, hd: 1.5*S },  // transitioning to body
-    { z: -4 * S,       hw: 2.2*S, hd: 1.8*S },  // pre-cockpit body
-    { z:  0 * S,       hw: 2.2*S, hd: 1.8*S },  // wing root body
-    { z:  4 * S,       hw: 2.0*S, hd: 1.7*S },  // rear body
-    { z: tailZ - 1*S,  hw: 1.6*S, hd: 1.4*S },  // tail
-  ];
-  for (const sec of fuseSections) {
-    drawRect(pts, 0, fY, sec.z, sec.hw, sec.hd, CNC4);
-  }
-  // Nose point cap
-  pts.push({ x: 0, y: fY, z: noseZ + 0.5*S, yaw: 0, name: CNC4 });
+  const fY    =  4 * S;
+  const noseZ = -18 * S;
+  const bodyZ =  -8 * S;  // nose taper ends, body begins
+  const tailZ =  12 * S;
 
-  // ── COCKPIT CANOPY — raised above fuselage, mid-ship ─────────────────────
-  // Sits from z=-10 to z=-4, elevated 2.5m above fuselage floor
-  for (const z of [-9*S, -6*S, -3.5*S]) {
-    drawRect(pts, 0, fY + 2.5*S, z, 1.3*S, 1.1*S, CNC4);
-  }
-  // Canopy top ridge
-  pts.push({ x: 0, y: fY + 4.2*S, z: -7*S, yaw: 0, name: CNC4 });
-
-  // R2-D2 astromech dome behind cockpit
-  pts.push({ x: 0, y: fY + 3.8*S, z: -1.5*S, yaw: 0, name: "barrel_blue" });
-
-  // ── VERTICAL TAIL FIN ─────────────────────────────────────────────────────
-  for (let y = 0; y <= 4*S; y += 2.5*S) {
-    pts.push({ x: 0, y: fY + 1.5*S + y, z: tailZ - 2*S, yaw: 90, name: CNC4 });
-    pts.push({ x: 0, y: fY + 1.5*S + y, z: tailZ - 5*S, yaw: 90, name: CNC4 });
+  // Fuselage half-width at Z (tapers from narrow nose to body)
+  function fuseHW(z: number): number {
+    if (z <= noseZ) return 0.2 * S;
+    if (z >= bodyZ) return 2.2 * S;
+    return (0.2 + 2.0 * Math.pow((z - noseZ) / (bodyZ - noseZ), 0.65)) * S;
   }
 
-  // ── WINGS — S-foils in attack position (X formation) ─────────────────────
-  // pitch=-90 → CNC8 panel lays flat (8m E-W × 3m N-S, 0.4m thick)
-  // Y increases toward tip on upper wings, decreases on lower wings → X shape
-  //
-  // Wing chord spans z=-6 to z=+6 (covered by 4 panels × 3m each)
-  const chordZs  = [-4.5*S, -1.5*S, 1.5*S, 4.5*S];
-  // Span sections: inner (x=±4), outer (x=±12), tip approach (x=±18)
-  const spanDefs = [
-    { t: 0.0,  xMag: 4  },   // inner span  (x ± 0–8)
-    { t: 0.55, xMag: 12 },   // outer span  (x ± 8–16)
-    { t: 0.9,  xMag: 18 },   // tip section (x ± 14–22)
-  ];
+  // Tight barrel cluster: n barrels at ~0.7m spacing
+  function cluster(cx: number, cy: number, cz: number, cls: string, n = 5) {
+    const off: [number, number][] = [[0,0],[0.7,0],[0,0.7],[-0.7,0],[0,-0.7],[0.7,0.7]];
+    for (let i = 0; i < Math.min(n, off.length); i++)
+      pts.push({ x: cx + off[i][0], y: cy, z: cz + off[i][1], name: cls });
+  }
+
+  // ── 1. FUSELAGE SIDES — longitudinal rows, no gaps ────────────────────────
+  // drawWall runs continuously along Z per height row — eliminates all Z gaps.
+  const nRows = Math.ceil(3.5 * S / CH4);
+  for (let row = 0; row < nRows; row++) {
+    const y = fY + row * CH4;
+    // Nose taper: wall runs diagonally from narrow nose to wide body
+    drawWall(pts, -0.2*S, y, noseZ, -2.2*S, y, bodyZ, CNC4);
+    drawWall(pts,  0.2*S, y, noseZ,  2.2*S, y, bodyZ, CNC4);
+    // Body: straight walls nose→tail
+    drawWall(pts, -2.2*S, y, bodyZ, -2.2*S, y, tailZ, CNC4);
+    drawWall(pts,  2.2*S, y, bodyZ,  2.2*S, y, tailZ, CNC4);
+  }
+
+  // ── 2. FUSELAGE FLOOR — flat CNC4 panels along Z ─────────────────────────
+  // Body section: 1–2 panels wide depending on fuselage width
+  for (let z = bodyZ; z < tailZ; z += CH4) {
+    const w  = fuseHW(z + CH4 / 2);
+    const nP = Math.max(1, Math.round(w * 2 / CW4));
+    const sc = +(w * 2 / (nP * CW4)).toFixed(3);
+    for (let i = 0; i < nP; i++) {
+      const x = -w + (i + 0.5) * (w * 2 / nP);
+      pts.push({ x, y: fY, z: z + CH4 / 2, yaw: 0, pitch: -90, scale: sc, name: CNC4 });
+    }
+  }
+  // Nose floor: single centerline panel every other step
+  for (let z = noseZ; z < bodyZ; z += CH4 * 2) {
+    const w = fuseHW(z + CH4);
+    if (w > 0.5) pts.push({ x: 0, y: fY, z: z + CH4, yaw: 0, pitch: -90, name: CNC4 });
+  }
+
+  // ── 3. COCKPIT CANOPY — raised above fuselage ─────────────────────────────
+  const ckZ0 = -11*S, ckZ1 = -2.5*S, ckHW = 1.4*S;
+  for (let row = 0; row < 2; row++) {
+    const y = fY + 2.5*S + row * CH4;
+    drawWall(pts, -ckHW, y, ckZ0, -ckHW, y, ckZ1, CNC4);
+    drawWall(pts,  ckHW, y, ckZ0,  ckHW, y, ckZ1, CNC4);
+  }
+  // Front / back caps
+  for (const z of [ckZ0, ckZ1]) {
+    pts.push({ x: 0, y: fY + 2.5*S, z, yaw: 0, name: CNC4 });
+    pts.push({ x: 0, y: fY + 2.5*S, z, yaw: 90, name: CNC4 });
+  }
+  // Canopy ridge
+  pts.push({ x: 0, y: fY + 5*S, z: -7*S, yaw:  0, name: CNC4 });
+  pts.push({ x: 0, y: fY + 5*S, z: -7*S, yaw: 90, name: CNC4 });
+  // R2-D2 — 4-barrel blue cluster
+  cluster(0, fY + 3.5*S, -1.5*S, "barrel_blue", 4);
+
+  // ── 4. VERTICAL TAIL FIN ──────────────────────────────────────────────────
+  for (let y = fY + CH4; y <= fY + 3.5*S + CH4; y += CH4) {
+    pts.push({ x: 0, y, z: tailZ - 2*S, yaw: 90, name: CNC4 });
+    pts.push({ x: 0, y, z: tailZ - 5*S, yaw: 90, name: CNC4 });
+  }
+
+  // ── 5. WINGS — S-foils in X attack formation ──────────────────────────────
+  // 3 span columns × 5 chord rows of flat CNC8 per wing quarter.
+  // CNC8 flat: 8m span (X) × 2.324m chord (Z).
+  // 5 chord rows at step=12*S/5 with scale=step/2.324 → gapless chord.
+  const chordLen = 12 * S;
+  const nChord   = 5;
+  const chordSc  = +(chordLen / (nChord * 2.324)).toFixed(3);  // ~1.03 at S=1
+  const chordZ0  = -6 * S;
+  const spanXs   = [4*S, 12*S, 20*S];  // inner / mid / outer span columns
 
   for (const side of [-1, 1] as const) {
     for (const upper of [1, -1] as const) {
-      // upper=1: wing rises 5m at tip. upper=-1: wing drops 3m at tip.
-      const tipYSpread = upper === 1 ? 5 * S : -3 * S;
+      const tipRise = upper === 1 ? 5*S : -3*S;
 
-      for (const span of spanDefs) {
-        const wx = side * span.xMag * S;
-        const wy = fY + 0.5*S + span.t * tipYSpread;
+      for (let si = 0; si < spanXs.length; si++) {
+        const wx = side * spanXs[si];
+        const wy = fY + 0.3*S + (si / (spanXs.length - 1)) * tipRise;
 
-        // Flat wing surface — all chord panels at this span section
-        for (const cz of chordZs) {
-          pts.push({ x: wx, y: wy, z: cz, yaw: 0, pitch: -90, name: CNC8 });
+        // 5 flat chord panels — gapless with chordSc
+        for (let ci = 0; ci < nChord; ci++) {
+          const cz = chordZ0 + (ci + 0.5) * (chordLen / nChord);
+          pts.push({ x: wx, y: wy, z: cz, yaw: 0, pitch: -90, scale: chordSc, name: CNC8 });
         }
-
-        // Red stripe — one barrel_red per span section along wing midline
-        pts.push({ x: wx, y: wy + 0.3, z: 0, yaw: 0, pitch: -90, name: "barrel_red" });
+        // Red wing stripe — 4-barrel cluster at mid-span mid-chord
+        if (si === 1) cluster(wx, wy + 0.4, 0, "barrel_red", 4);
       }
 
-      // ── ENGINE NACELLE — at outer wing root (x=±12) ───────────────────
-      // 3 rings form the cylindrical engine body; military concrete for contrast
-      const engX = side * 12 * S;
-      const engY = fY + 0.5*S + 0.45 * tipYSpread;
-      for (let z = 3*S; z <= 9*S; z += 3*S) {
-        drawRing(pts, engX, engY, z, 2.2*S, CNC4);
-      }
-      drawRing(pts, engX, engY, 9*S, 2.5*S, MILCNC);  // exhaust ring
-      pts.push({ x: engX, y: engY, z: 9*S, yaw: 0, pitch: -90, name: "barrel_blue" }); // engine glow
+      // ── Engine nacelle at mid-span ───────────────────────────────────────
+      const engX = side * 12*S;
+      const engY = fY + 0.3*S + 0.5 * tipRise;
+      for (let nz = 2*S; nz <= 9*S; nz += 2.3*S)
+        drawRing(pts, engX, engY, nz, 2.4*S, CNC4);
+      drawRing(pts, engX, engY, 9*S, 2.8*S, MILCNC);
+      // Engine exhaust — 6-barrel blue cluster
+      cluster(engX, engY, 9*S, "barrel_blue", 6);
 
-      // ── LASER CANNON — from wingtip, extending forward past nose ──────
-      const tipX = side * 21 * S;
-      const tipY = fY + 0.5*S + tipYSpread;
-      drawWall(pts, tipX, tipY, -7*S, tipX, tipY, noseZ - 1*S, CNC4);
-      // barrel_red muzzle cluster at cannon tip
-      pts.push({ x: tipX,            y: tipY + 1.5*S, z: noseZ - 1*S, yaw: 0, name: "barrel_red" });
-      pts.push({ x: tipX,            y: tipY,          z: noseZ - 1*S, yaw: 0, name: "barrel_red" });
-      pts.push({ x: tipX + 0.5*S,   y: tipY + 0.8*S,  z: noseZ - 1*S, yaw: 0, name: "barrel_red" });
-      pts.push({ x: tipX - 0.5*S,   y: tipY + 0.8*S,  z: noseZ - 1*S, yaw: 0, name: "barrel_red" });
+      // ── Laser cannon from wingtip forward ───────────────────────────────
+      const tipX = side * 21*S;
+      const canY = fY + 0.3*S + tipRise;
+      drawWall(pts, tipX, canY, -5*S, tipX, canY, noseZ - 2*S, CNC4);
+      // Muzzle — 5 tight red barrels
+      cluster(tipX, canY + 0.4, noseZ - 2*S, "barrel_red", 5);
     }
   }
 
-  return pts;
+  return applyLimit(pts, 1100);
 }
 
 
@@ -1299,78 +1382,71 @@ export function gen_halo_ring(p: GenParams): Point3D[] {
  */
 export function gen_eiffel_tower(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const S = Math.max(0.5, p.scale ?? 1);
-  const IRON = CNC4;       // We use CNC4 for the dark structural iron look
-  const IRON_H = 4.744 * S;
-  const METAL = IND10;     
+  const S    = Math.max(0.25, Math.min(1, p.scale ?? 0.5));
+  const IRON  = CNC4;
+  const IH    = 2.324;  // CNC4 row height — fixed, never scale
+  const METAL = IND10;
 
+  const hL1  = 57  * S;
+  const hL2  = 115 * S;
+  const topH = 276 * S;
+  const wBase = 45 * S;
+  const wL1   = 25 * S;
+  const wL2   = 10 * S;
+  const wTop  =  2 * S;
 
-  // ── Key architectural heights & dimensions ───────────────────────────────
-  const hL1 = 57 * S;      // First platform
-  const hL2 = 115 * S;     // Second platform
-  const topH = 276 * S;    // Tower top before spire
-
-  const wBase = 45 * S;    // Spread of legs at ground
-  const wL1 = 25 * S;
-  const wL2 = 10 * S;
-  const wTop = 2 * S;
-
-  // 1. ANCHOR LEGS (Ground to L1)
-  // Four massive structural pillars sweeping upward to merge at the first deck
-  for (let y = 0; y < hL1; y += IRON_H) {
-    const t = y / hL1;
-    // Dramatic exponential curve inward
-    const curveT = Math.pow(t, 0.75); 
-    const cx = wBase - (wBase - wL1) * curveT;
-    const cz = cx;
-    
-    // The pillar itself is a square column that tapers in thickness
-    const legW = 8 * S * (1 - t * 0.4); 
-
-    // Draw the 4 discrete structural boxes
-    drawRect(pts,  cx, y,  cz, legW, legW, IRON);
-    drawRect(pts, -cx, y,  cz, legW, legW, IRON);
-    drawRect(pts,  cx, y, -cz, legW, legW, IRON);
-    drawRect(pts, -cx, y, -cz, legW, legW, IRON);
-    
-    // Draw the monumental connecting arches filling the space under L1
-    if (y > hL1 * 0.4) {
-       drawRect(pts, 0, y, 0, cx, cx, IRON);
-    }
+  // ── 1. ANCHOR LEGS — swept diagonal walls (8 segments, 4 legs) ────────────
+  // Draws each leg as a series of slanted drawWall segments along the inward
+  // curve, rather than a drawRect per horizontal level. Far fewer panels.
+  const nSegs = 8;
+  for (let i = 0; i < nSegs; i++) {
+    const t0 = i / nSegs,       t1 = (i + 1) / nSegs;
+    const c0 = Math.pow(t0, 0.75), c1 = Math.pow(t1, 0.75);
+    const x0 = wBase - (wBase - wL1) * c0, y0 = hL1 * t0;
+    const x1 = wBase - (wBase - wL1) * c1, y1 = hL1 * t1;
+    drawWall(pts,  x0, y0,  x0,  x1, y1,  x1, IRON);
+    drawWall(pts, -x0, y0,  x0, -x1, y1,  x1, IRON);
+    drawWall(pts,  x0, y0, -x0,  x1, y1, -x1, IRON);
+    drawWall(pts, -x0, y0, -x0, -x1, y1, -x1, IRON);
   }
 
-  // 2. FIRST PLATFORM DECK
-  const deck1W = wL1 + 8 * S;
-  drawRect(pts, 0, hL1, 0, deck1W, deck1W, METAL);
-  drawRect(pts, 0, hL1 + 2*S, 0, deck1W, deck1W, METAL);
+  // ── 2. BASE ARCH — two cross-bracing rings at 30% and 60% of leg height ───
+  const archW = wL1 * 1.1;
+  drawRect(pts, 0, hL1 * 0.30, 0, archW, archW, IRON);
+  drawRect(pts, 0, hL1 * 0.60, 0, wL1,   wL1,   IRON);
 
-  // 3. MIDDLE TOWER (L1 to L2)
-  // The 4 legs structurally merge into a sweeping central shaft
-  for (let y = hL1 + IRON_H; y < hL2; y += IRON_H) {
+  // ── 3. FIRST PLATFORM DECK ────────────────────────────────────────────────
+  const deck1W = wL1 + 6 * S;
+  drawRect(pts, 0, hL1,      0, deck1W,     deck1W,     METAL);
+  drawRect(pts, 0, hL1 + IH, 0, deck1W - 2, deck1W - 2, METAL);
+
+  // ── 4. MIDDLE TOWER (L1 → L2) — one drawRect per IH step ─────────────────
+  for (let y = hL1 + IH * 2; y < hL2; y += IH) {
     const t = (y - hL1) / (hL2 - hL1);
-    const curveT = Math.pow(t, 0.85); // Gentle taper
-    const w = wL1 - (wL1 - wL2) * curveT;
-    drawRect(pts, 0, y, 0, w + 4*S, w + 4*S, IRON);
+    const w = wL1 - (wL1 - wL2) * Math.pow(t, 0.85);
+    drawRect(pts, 0, y, 0, w + 3 * S, w + 3 * S, IRON);
   }
 
-  // 4. SECOND PLATFORM DECK
-  const deck2W = wL2 + 5 * S;
+  // ── 5. SECOND PLATFORM DECK ───────────────────────────────────────────────
+  const deck2W = wL2 + 4 * S;
   drawRect(pts, 0, hL2, 0, deck2W, deck2W, METAL);
-  
-  // 5. UPPER TOWER (L2 to Top)
-  for (let y = hL2 + IRON_H; y < topH; y += IRON_H) {
+
+  // ── 6. UPPER TOWER (L2 → topH) — tapering drawRect per IH step ───────────
+  for (let y = hL2 + IH; y < topH; y += IH) {
     const t = (y - hL2) / (topH - hL2);
-    const curveT = Math.pow(t, 1.2); // Tapers aggressively near the very tip
-    const w = wL2 - (wL2 - wTop) * curveT;
-    drawRect(pts, 0, y, 0, w + 2*S, w + 2*S, IRON);
+    const w = wL2 - (wL2 - wTop) * Math.pow(t, 1.2);
+    drawRect(pts, 0, y, 0, w + 1.5 * S, w + 1.5 * S, IRON);
   }
 
-  // 6. CUPOLA & SPIRE
-  drawDome(pts, 0, topH, 0, wTop + 4*S, IRON);
-  drawWall(pts, 0, topH, 0, 0, topH + 24*S, 0, METAL); // Needle antenna
-  pts.push({ x: 0, y: topH + 24*S, z: 0, yaw: 0, name: "barrel_red" }); // Aviation safety light
+  // ── 7. CUPOLA & SPIRE ─────────────────────────────────────────────────────
+  drawDome(pts, 0, topH, 0, wTop + 3 * S, IRON);
+  for (let sy = topH; sy < topH + 24 * S; sy += 4.744) {
+    pts.push({ x: 0, y: sy, z: 0, yaw:  0, name: MILCNC });
+    pts.push({ x: 0, y: sy, z: 0, yaw: 90, name: MILCNC });
+  }
+  pts.push({ x: 0, y: topH + 24 * S, z: 0, name: "barrel_red" });
 
-  return pts;
+  return applyLimit(pts, 1100);
 }
 
 export function gen_taj_mahal(p: GenParams): Point3D[] {
@@ -1522,225 +1598,404 @@ export function gen_taj_mahal(p: GenParams): Point3D[] {
  */
 export function gen_pyramid(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const base = p.base   ?? 120;
-  const h    = p.height ?? 80;
-  const S    = base / 120;
-  const step = 4 * S;
+  const base = Math.min(p.base   ?? 80, 140);
+  const h    = Math.min(p.height ?? 60, 100);
 
-  for (let y = 0; y <= h; y += step) {
+  const PW = 9.408;  // STONE2 face width (metres, fixed)
+  const PH = 1.572;  // STONE2 panel height (metres, fixed)
+
+  for (let y = 0; y < h; y += PH) {
     const t  = y / h;
-    const hw = (base/2) * (1 - t);
-    if (hw < 2) break;
-    drawRect(pts, 0, y, 0, hw, hw, STONE2);
+    const hw = (base / 2) * (1 - t);
+    if (hw < PW * 0.3) break;
+
+    // Four faces — drawWall scale-fills each side perfectly
+    drawWall(pts, -hw, y, -hw,  hw, y, -hw, STONE2);  // S
+    drawWall(pts,  hw, y, -hw,  hw, y,  hw, STONE2);  // E
+    drawWall(pts,  hw, y,  hw, -hw, y,  hw, STONE2);  // N
+    drawWall(pts, -hw, y,  hw, -hw, y, -hw, STONE2);  // W
+
+    // Corner cap panels at 45° — fill the diagonal notch at each corner
+    if (hw >= PW * 0.5) {
+      const cs = +(Math.min(0.7, hw / (PW * 1.2))).toFixed(3);
+      pts.push({ x: -hw, y, z: -hw, yaw: 225, scale: cs, name: STONE2 });
+      pts.push({ x:  hw, y, z: -hw, yaw: 135, scale: cs, name: STONE2 });
+      pts.push({ x:  hw, y, z:  hw, yaw:  45, scale: cs, name: STONE2 });
+      pts.push({ x: -hw, y, z:  hw, yaw: 315, scale: cs, name: STONE2 });
+    }
   }
-  pts.push({ x:0, y:h+2, z:0, name: STONE2 });
-  return pts;
+
+  pts.push({ x: 0, y: h, z: 0, name: STONE2 });
+  return applyLimit(pts, 1100);
 }
 
 /**
- * 🪨 STONEHENGE
+ * 🪨 STONEHENGE — Container megalith edition
+ *
+ * Research:
+ *  • Outer Sarsen Circle: 30 upright stones (~4m tall, ~2m wide) with 30 lintels
+ *  • Inner Sarsen Horseshoe: 5 trilithons (pairs + lintel), open to NE
+ *  • Altar stone at centre; Heel Stone outside entrance axis
+ *
+ * Approach: land_container_1mo (10m × 2.7m × 2.78m)
+ *   pitch=-90 → stands 10m tall as a monolith
+ *   flat (no pitch) → lintel spanning between pairs
+ *
+ * ~77 objects — minimal and clean
  */
 export function gen_stonehenge(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const r  = p.r ?? 25;
-  const n  = 30;
-  for (let i = 0; i < n; i++) {
-    const a   = (i / n) * Math.PI * 2;
-    const x   = r * Math.cos(a), z = r * Math.sin(a);
+  const r = Math.max(20, Math.min(p.r ?? 30, 60));
+
+  const MONO   = "land_container_1mo";  // 10m tall when standing (pitch=-90)
+  const ALTAR  = "land_container_1a";   // 6.7m × 2.66m flat — altar stone
+  const TAU    = 2 * Math.PI;
+  const nOuter = 30;
+  const lintelY = 10;  // lintels rest on top of 10m uprights
+
+  // ── OUTER SARSEN CIRCLE — 30 upright monoliths ───────────────────────────
+  for (let i = 0; i < nOuter; i++) {
+    const a   = (i / nOuter) * TAU;
     const yaw = -a * 180 / Math.PI + 90;
-    // standing stone (2 stack for height)
-    pts.push({ x, y:0, z, yaw, name: STONE2 });
-    pts.push({ x, y:3.5, z, yaw, name: STONE2 });
-    // lintel every 2 stones
-    if (i % 2 === 0) {
-      const a2 = ((i+1) / n) * Math.PI * 2;
-      const mx = (r*Math.cos(a) + r*Math.cos(a2)) / 2;
-      const mz = (r*Math.sin(a) + r*Math.sin(a2)) / 2;
-      pts.push({ x:mx, y:7, z:mz, yaw, name: STONE });
-    }
+    pts.push({ x: r * Math.cos(a), y: 0, z: r * Math.sin(a), yaw, pitch: -90, name: MONO });
   }
-  // Horseshoe inner ring
-  const r2 = r * 0.55;
-  for (let i = 0; i < 10; i++) {
-    const a   = (i/10)*Math.PI * 2;
+
+  // ── OUTER LINTELS — one per pair, tangentially placed ────────────────────
+  for (let i = 0; i < nOuter; i++) {
+    const aMid = ((i + 0.5) / nOuter) * TAU;
+    const yaw  = -aMid * 180 / Math.PI;  // long axis tangential to ring
+    pts.push({ x: r * Math.cos(aMid), y: lintelY, z: r * Math.sin(aMid), yaw, name: MONO });
+  }
+
+  // ── INNER HORSESHOE — 5 trilithons, open toward +Z (NE entrance) ─────────
+  const rIn = r * 0.45;
+  // Angles covering ~240° arc, leaving ~120° open toward +Z
+  const trilithAngles = [
+    Math.PI * 1.0,   // W
+    Math.PI * 0.75,  // SW
+    Math.PI * 0.5,   // S
+    Math.PI * 1.25,  // NW
+    Math.PI * 1.5,   // N
+  ];
+
+  for (const a of trilithAngles) {
+    const cx  = rIn * Math.cos(a);
+    const cz  = rIn * Math.sin(a);
     const yaw = -a * 180 / Math.PI + 90;
-    pts.push({ x:r2*Math.cos(a), y:0, z:r2*Math.sin(a), yaw, name: STONE });
-    pts.push({ x:r2*Math.cos(a), y:3.5, z:r2*Math.sin(a), yaw, name: STONE });
+    // Tangent offset to separate the pair side-by-side
+    const tx  = -Math.sin(a) * 3.5;
+    const tz  =  Math.cos(a) * 3.5;
+    // Two uprights
+    pts.push({ x: cx + tx, y: 0, z: cz + tz, yaw, pitch: -90, name: MONO });
+    pts.push({ x: cx - tx, y: 0, z: cz - tz, yaw, pitch: -90, name: MONO });
+    // Lintel across the pair
+    pts.push({ x: cx, y: lintelY, z: cz, yaw: -a * 180 / Math.PI, name: MONO });
   }
+
+  // ── ALTAR STONE — flat container at centre ───────────────────────────────
+  pts.push({ x: 0, y: 0, z: 0, yaw: 0, name: ALTAR });
+
+  // ── HEEL STONE — single upright outside the NE entrance, slightly tilted ─
+  pts.push({ x: 0, y: 0, z: r * 1.35, yaw: 0, pitch: -82, name: MONO });
+
   return pts;
 }
 
 /**
- * 🕰️ BIG BEN — Elizabeth Tower
+ * 🕰️ BIG BEN — Elizabeth Tower (V2 rebuild)
+ *
+ * Research:
+ *  • Square limestone shaft ~15m wide, 55m to clock stage base
+ *  • Clock stage: slightly wider (~18m), 12m tall — 4 clock faces each ~7m diameter
+ *    → left as a SQUARE HOLE on all 4 sides for user to fill with oversized clock object
+ *  • Belfry: 64–76m, pointed Gothic arch openings on all 4 faces
+ *  • 4 corner pinnacles (Gothic turrets): rise from 52m to 88m
+ *  • Gothic spire: tapers from 76m to 96m apex
+ *
+ * All rows step by PH=1.572 (STONE2 height) — zero vertical gaps.
+ * All drawRect calls supplemented with 45° corner cap panels — zero corner notches.
  */
 export function gen_big_ben(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
   const S  = Math.max(0.5, p.scale ?? 1);
-  const hw = 7.6 * S;
+  const PH = 1.572;   // STONE2 panel height (fixed metres)
+  const PW = 9.408;   // STONE2 panel width  (fixed metres)
+  const hw = 7.6 * S; // main shaft half-width
 
-  const rect = (y: number, half: number) => drawRect(pts, 0, y, 0, half, half, STONE2);
-
-  // 1. Plinth (3 steps)
-  rect(0,      hw + 2.8*S);
-  rect(2*S,    hw + 1.6*S);
-  rect(4*S,    hw + 0.6*S);
-
-  // 2. Main shaft 6–52m
-  for (let y = 6*S; y <= 52*S; y += 8*S) rect(y, hw);
-
-  // 3. Clock stage 52–64m
-  for (let y = 52*S; y <= 64*S; y += 4*S) rect(y, hw + 1.4*S);
-
-  // 4. Clock faces (rings on 4 sides)
-  const cY = 56*S, cR = 3.5*S, cOff = hw + 1.6*S;
-  drawRing(pts, 0,    cY, -cOff, cR, STONE2);
-  drawRing(pts, 0,    cY,  cOff, cR, STONE2);
-  drawRing(pts, -cOff,cY, 0,    cR, STONE2);
-  drawRing(pts,  cOff,cY, 0,    cR, STONE2);
-
-  // 5. Belfry 64–74m with arch openings
-  const bw = hw + 1.2*S, ag = 3.2*S;
-  for (let y = 64*S; y <= 74*S; y += 3*S) {
-    drawWall(pts, -bw, y, -bw,  -ag, y, -bw, STONE2);
-    drawWall(pts,  ag, y, -bw,   bw, y, -bw, STONE2);
-    drawWall(pts, -bw, y,  bw,  -ag, y,  bw, STONE2);
-    drawWall(pts,  ag, y,  bw,   bw, y,  bw, STONE2);
-    drawWall(pts, -bw, y, -bw,  -bw, y, -ag, STONE2);
-    drawWall(pts, -bw, y,  ag,  -bw, y,  bw, STONE2);
-    drawWall(pts,  bw, y, -bw,   bw, y, -ag, STONE2);
-    drawWall(pts,  bw, y,  ag,   bw, y,  bw, STONE2);
+  // Rect + diagonal corner caps to eliminate the 90° notch at every corner
+  function rectCC(y: number, hwx: number, hwz: number = hwx) {
+    drawWall(pts, -hwx, y, -hwz,  hwx, y, -hwz, STONE2);
+    drawWall(pts,  hwx, y, -hwz,  hwx, y,  hwz, STONE2);
+    drawWall(pts,  hwx, y,  hwz, -hwx, y,  hwz, STONE2);
+    drawWall(pts, -hwx, y,  hwz, -hwx, y, -hwz, STONE2);
+    const cs = +Math.min(0.7, Math.min(hwx, hwz) / (PW * 1.2)).toFixed(3);
+    if (cs > 0.08) {
+      pts.push({ x: -hwx, y, z: -hwz, yaw: 225, scale: cs, name: STONE2 });
+      pts.push({ x:  hwx, y, z: -hwz, yaw: 135, scale: cs, name: STONE2 });
+      pts.push({ x:  hwx, y, z:  hwz, yaw:  45, scale: cs, name: STONE2 });
+      pts.push({ x: -hwx, y, z:  hwz, yaw: 315, scale: cs, name: STONE2 });
+    }
   }
 
-  // 6. Corner pinnacles
+  // ── 1. PLINTH — 3 receding steps ─────────────────────────────────────────
+  for (let y = 0;     y < 3   * S; y += PH) rectCC(y, hw + 2.8*S);
+  for (let y = 3*S;   y < 5   * S; y += PH) rectCC(y, hw + 1.6*S);
+  for (let y = 5*S;   y < 6.5 * S; y += PH) rectCC(y, hw + 0.6*S);
+
+  // ── 2. MAIN SHAFT 6.5m–52m — tight rows, no gaps ─────────────────────────
+  for (let y = 6.5*S; y < 52*S; y += PH) rectCC(y, hw);
+
+  // ── 3. CLOCK STAGE 52m–64m — SQUARE HOLE on all 4 faces ─────────────────
+  //    User fills the opening with an oversized clock object in-game.
+  const cHW = hw + 1.4*S;  // clock stage is wider than shaft
+  const ho  = 3.8 * S;     // clock hole half-width  (~7.6m opening per face)
+  const hY1 = 54  * S;     // hole opens at 54m
+  const hY2 = 62  * S;     // hole closes at 62m
+  const cs  = +Math.min(0.7, cHW / (PW * 1.2)).toFixed(3);
+
+  for (let y = 52*S; y < 64*S; y += PH) {
+    const inHole = y >= hY1 && y < hY2;
+    if (!inHole) {
+      rectCC(y, cHW);
+    } else {
+      // Each face split into left + right segments around the opening
+      drawWall(pts, -cHW, y, -cHW, -ho, y, -cHW, STONE2);   // S-face left
+      drawWall(pts,  +ho, y, -cHW, +cHW, y, -cHW, STONE2);  // S-face right
+      drawWall(pts, +cHW, y, +cHW, +ho, y, +cHW, STONE2);   // N-face left
+      drawWall(pts,  -ho, y, +cHW, -cHW, y, +cHW, STONE2);  // N-face right
+      drawWall(pts, +cHW, y, -cHW, +cHW, y, -ho, STONE2);   // E-face left
+      drawWall(pts, +cHW, y,  +ho, +cHW, y, +cHW, STONE2);  // E-face right
+      drawWall(pts, -cHW, y, +cHW, -cHW, y, +ho, STONE2);   // W-face left
+      drawWall(pts, -cHW, y,  -ho, -cHW, y, -cHW, STONE2);  // W-face right
+      // Corners are always intact
+      pts.push({ x: -cHW, y, z: -cHW, yaw: 225, scale: cs, name: STONE2 });
+      pts.push({ x:  cHW, y, z: -cHW, yaw: 135, scale: cs, name: STONE2 });
+      pts.push({ x:  cHW, y, z:  cHW, yaw:  45, scale: cs, name: STONE2 });
+      pts.push({ x: -cHW, y, z:  cHW, yaw: 315, scale: cs, name: STONE2 });
+    }
+  }
+
+  // ── 4. BELFRY 64m–76m — Gothic arch openings on all 4 faces ──────────────
+  const bw = hw + 1.2*S;
+  const ag = 3.5 * S;   // arch gap half-width
+  for (let y = 64*S; y < 76*S; y += PH) {
+    drawWall(pts, -bw, y, -bw, -ag, y, -bw, STONE2);
+    drawWall(pts,  ag, y, -bw,  bw, y, -bw, STONE2);
+    drawWall(pts, -bw, y,  bw, -ag, y,  bw, STONE2);
+    drawWall(pts,  ag, y,  bw,  bw, y,  bw, STONE2);
+    drawWall(pts, -bw, y, -bw, -bw, y, -ag, STONE2);
+    drawWall(pts, -bw, y,  ag, -bw, y,  bw, STONE2);
+    drawWall(pts,  bw, y, -bw,  bw, y, -ag, STONE2);
+    drawWall(pts,  bw, y,  ag,  bw, y,  bw, STONE2);
+  }
+
+  // ── 5. CORNER PINNACLES — 4 Gothic turrets from 52m to 95m ───────────────
+  const MILCNC_H = 4.744;
   const po = hw + 3*S;
-  for (const [cx,cz] of [[-po,-po],[po,-po],[-po,po],[po,po]]) {
-    for (let y = 52*S; y <= 85*S; y += 4*S) drawRing(pts, cx, y, cz, 2*S, STONE2);
+  for (const [cx, cz] of [[-po,-po],[po,-po],[-po,po],[po,po]]) {
+    for (let y = 52*S; y < 84*S; y += MILCNC_H) {
+      pts.push({ x: cx, y, z: cz, yaw:  0, name: MILCNC });
+      pts.push({ x: cx, y, z: cz, yaw: 90, name: MILCNC });
+    }
+    for (let y = 84*S; y < 95*S; y += MILCNC_H) {
+      const sc = +(1 - ((y - 84*S) / (11*S)) * 0.65).toFixed(3);
+      pts.push({ x: cx, y, z: cz, yaw:  0, scale: sc, name: MILCNC });
+      pts.push({ x: cx, y, z: cz, yaw: 90, scale: sc, name: MILCNC });
+    }
+    pts.push({ x: cx, y: 95*S, z: cz, name: STONE2 });
   }
 
-  // 7. Gothic spire 74–95m
-  for (let y = 74*S; y <= 94*S; y += 3*S) {
-    const t = (y-74*S)/(22*S);
-    const sr = hw*(1-t)*0.9;
-    if (sr < 0.5) break;
-    rect(y, sr);
+  // ── 6. GOTHIC SPIRE 76m–96m — tightly tapering ───────────────────────────
+  for (let y = 76*S; y < 96*S; y += PH) {
+    const t  = (y - 76*S) / (22*S);
+    const sr = hw * (1 - t) * 0.85;
+    if (sr < PH * 0.25) break;
+    rectCC(y, sr);
   }
-  pts.push({ x:0, y:95*S, z:0, name: STONE2 });
-  return pts;
-}
+  pts.push({ x: 0, y: 96*S, z: 0, name: STONE2 });
 
-/**
- * 🗽 STATUE OF LIBERTY
- */
-export function gen_statue_liberty(p: GenParams): Point3D[] {
-  const pts: Point3D[] = [];
-  const S = Math.max(0.5, p.scale ?? 1);
-
-  // Fort Wood star base
-  const oR = 22*S, iR = 14*S;
-  for (let i = 0; i < 12; i++) {
-    const a1 = (i/12)*Math.PI*2, a2 = ((i+1)/12)*Math.PI*2;
-    const r1 = i%2===0?oR:iR, r2 = i%2===0?iR:oR;
-    for (let y = 0; y <= 6*S; y += 3*S)
-      drawWall(pts, Math.cos(a1)*r1, y, Math.sin(a1)*r1, Math.cos(a2)*r2, y, Math.sin(a2)*r2, STONE2);
-  }
-
-  // Pedestal 6–47m
-  const stages = [{y0:6,y1:15,hw:10},{y0:15,y1:30,hw:9},{y0:30,y1:47,hw:8}];
-  for (const {y0,y1,hw} of stages)
-    for (let y = y0*S; y <= y1*S; y += 4*S) drawRect(pts, 0, y, 0, hw*S, hw*S, STONE2);
-
-  // Statue body 47–82m
-  for (let y = 47*S; y <= 82*S; y += 4*S) {
-    const t = (y-47*S)/(35*S);
-    drawRing(pts, 0, y, 0, (5-t*2.5)*S, STONE2);
-  }
-
-  // Right arm (torch)
-  for (let i = 0; i <= 10; i++) {
-    const t = i/10;
-    pts.push({ x:(4+t*4)*S, y:(72+t*21)*S, z:0, yaw:90, name: STONE2 });
-  }
-  drawRing(pts, 8*S, 93*S, 0, 1.5*S, IND10);
-  pts.push({ x:8*S, y:96*S, z:0, yaw:90, name: IND10 });
-
-  // Left arm (tablet)
-  for (let i = 0; i <= 6; i++) {
-    const t = i/6;
-    pts.push({ x:(-3-t*2)*S, y:(72-t*7)*S, z:0, yaw:270, name: STONE2 });
-  }
-
-  // Crown spikes
-  for (let i = 0; i < 7; i++) {
-    const a = (i/7)*Math.PI*2;
-    drawWall(pts, Math.cos(a)*1.5*S, 86*S, Math.sin(a)*1.5*S, Math.cos(a)*4*S, 93*S, Math.sin(a)*4*S, STONE2);
-  }
-  return pts;
+  return applyLimit(pts, 1100);
 }
 
 /**
  * ✝️ CHRIST THE REDEEMER
  */
-export function gen_christ_redeemer(p: GenParams): Point3D[] {
+/**
+ * 🛕 ANGKOR WAT — Khmer Temple Complex
+ *
+ * Research:
+ *  • 3 concentric rectangular galleries rising like a stepped pyramid
+ *  • 5 lotus towers (prasats) in quincunx: 1 central + 4 at inner gallery corners
+ *  • Central tower (Bakan): tallest, rises ~65m in reality → 40S here
+ *  • Outer enclosure wall + causeway approach from +Z (west entrance)
+ *  • Stone material throughout — light sandstone STONE2
+ *
+ * ~650 panels at scale=1
+ */
+export function gen_angkor_wat(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const S = Math.max(0.5, p.scale ?? 1);
-  const pw = 8*S;
+  const S  = Math.max(0.5, p.scale ?? 1);
+  const PH = 1.572;  // STONE2 height (fixed)
+  const PW = 9.408;  // STONE2 width  (fixed)
 
-  // Pedestal
-  for (let y = 0; y <= 9.5*S; y += 3*S) drawRect(pts, 0, y, 0, pw, pw, STONE2);
-
-  // Body
-  for (let y = 9.5*S; y <= 30*S; y += 3.5*S) {
-    const t = (y-9.5*S)/(20.5*S);
-    drawRing(pts, 0, y, 0, (2.2-t*1.2)*S, STONE2);
+  // Rectangular gallery ring with corner caps
+  function gallery(y: number, hwx: number, hwz: number) {
+    drawWall(pts, -hwx, y, -hwz,  hwx, y, -hwz, STONE2);
+    drawWall(pts,  hwx, y, -hwz,  hwx, y,  hwz, STONE2);
+    drawWall(pts,  hwx, y,  hwz, -hwx, y,  hwz, STONE2);
+    drawWall(pts, -hwx, y,  hwz, -hwx, y, -hwz, STONE2);
+    const cs = +Math.min(0.65, Math.min(hwx, hwz) / (PW * 1.4)).toFixed(3);
+    if (cs > 0.08) {
+      pts.push({ x: -hwx, y, z: -hwz, yaw: 225, scale: cs, name: STONE2 });
+      pts.push({ x:  hwx, y, z: -hwz, yaw: 135, scale: cs, name: STONE2 });
+      pts.push({ x:  hwx, y, z:  hwz, yaw:  45, scale: cs, name: STONE2 });
+      pts.push({ x: -hwx, y, z:  hwz, yaw: 315, scale: cs, name: STONE2 });
+    }
   }
 
-  // Arms
-  const armY = 26*S;
-  for (const dz of [-1.5*S, 0, 1.5*S]) {
-    drawWall(pts, 0, armY, dz, 14*S, armY-S, dz, STONE2);
-    drawWall(pts, 0, armY, dz, -14*S, armY-S, dz, STONE2);
+  // Lotus tower at (cx, cz) — rings taper upward then swell into a lotus crown
+  function lotusTower(cx: number, cz: number, baseY: number, shaftH: number, baseR: number) {
+    // Shaft — gradually tapering rings
+    for (let y = baseY; y < baseY + shaftH; y += PH) {
+      const t = (y - baseY) / shaftH;
+      const r = baseR * (1 - t * 0.55);
+      if (r > 0.3) drawRing(pts, cx, y, cz, r, STONE2);
+    }
+    // Lotus crown — 4 swelling bulge rings then taper to point
+    const crownBase = baseY + shaftH;
+    const steps = [0.95, 1.15, 1.05, 0.80, 0.55, 0.30, 0.12];
+    for (let i = 0; i < steps.length; i++) {
+      const r = baseR * 0.45 * steps[i];
+      if (r > 0.3) drawRing(pts, cx, crownBase + i * PH * 1.8, cz, r, STONE2);
+    }
+    pts.push({ x: cx, y: crownBase + steps.length * PH * 1.8, z: cz, name: STONE2 });
   }
 
-  // Head
-  drawRing(pts, 0, 32*S, 0, 1.8*S, STONE2);
-  drawRing(pts, 0, 34*S, 0, 1.4*S, STONE2);
-  pts.push({ x:0, y:37.5*S, z:0, name: STONE2 });
-  return pts;
+  // ── 1. OUTER ENCLOSURE WALL — 2 rows ─────────────────────────────────────
+  for (let y = 0; y < PH * 2; y += PH) gallery(y, 55*S, 45*S);
+
+  // ── 2. CAUSEWAY — triple-lane approach from +Z entrance ──────────────────
+  for (const xOff of [-3*S, 0, 3*S]) {
+    drawWall(pts, xOff, 0, 45*S, xOff, 0, 70*S, STONE2);
+  }
+
+  // ── 3. GALLERY 1 — first colonnaded enclosure (8m terrace step) ───────────
+  const g1Y = 4*S, g1W = 44*S, g1D = 36*S;
+  for (let y = g1Y; y < g1Y + PH * 4; y += PH) gallery(y, g1W, g1D);
+  // Colonnade suggestion — small ring markers at gallery corners + midpoints
+  for (const [cx, cz] of [
+    [-g1W, -g1D], [g1W, -g1D], [g1W, g1D], [-g1W, g1D],
+    [0, -g1D], [0, g1D], [-g1W, 0], [g1W, 0],
+  ]) {
+    drawRing(pts, cx, g1Y, cz, 2.5*S, STONE2);
+    drawRing(pts, cx, g1Y + 4*S, cz, 2.5*S, STONE2);
+  }
+
+  // ── 4. GALLERY 2 — second rising enclosure (16m terrace step) ────────────
+  const g2Y = 10*S, g2W = 28*S, g2D = 22*S;
+  for (let y = g2Y; y < g2Y + PH * 5; y += PH) gallery(y, g2W, g2D);
+
+  // ── 5. INNER SANCTUARY TERRACE (24m step) ────────────────────────────────
+  const g3Y = 18*S, g3W = 16*S;
+  for (let y = g3Y; y < g3Y + PH * 5; y += PH) gallery(y, g3W, g3W);
+
+  // ── 6. FIVE LOTUS TOWERS — 1 central + 4 corner ──────────────────────────
+  // Central tower (tallest — rises from sanctuary top)
+  lotusTower(0, 0, g3Y + PH * 5, 26*S, 5.5*S);
+
+  // 4 corner towers (rise from inner gallery floor)
+  const tOff = 13*S;
+  for (const [tx, tz] of [[-tOff,-tOff],[tOff,-tOff],[-tOff,tOff],[tOff,tOff]]) {
+    lotusTower(tx, tz, g2Y + PH * 5, 16*S, 3.8*S);
+  }
+
+  return applyLimit(pts, 1100);
 }
 
 /**
  * 🏛️ THE PARTHENON
+ *
+ * Research:
+ *  • Doric temple, Athens — 69.5m × 30.9m footprint, 10.4m columns
+ *  • 8 columns per short face (east/west), 17 per long face (north/south)
+ *  • 3-step marble stylobate, triglyphed entablature, triangular pediments
+ *  • Inner cella chamber (naos) enclosed by continuous stone walls
+ *
+ * Object choices (P3D-verified):
+ *  • Columns: staticobj_pier_tube_small (0.833m × 13m vertical) — per-column
+ *    scale set so height = colH * S giving true cylindrical Doric columns
+ *  • Walls/platform/entablature: STONE2 (9.408m × 1.572m light stone)
  */
 export function gen_parthenon(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const S = Math.max(0.5, p.scale ?? 1);
-  const L = 35*S, W = 16*S, colH = 10*S, colR = 1.2*S, sp = 4.5*S;
+  const S = Math.max(0.5, Math.min(2, p.scale ?? 1));
 
-  // Stepped platform
+  // Physical constants — NEVER multiply by S
+  const STONE2_H  = 1.572;
+  const PIER_TUBE = "staticobj_pier_tube_small";
+  const PIER_H    = 13.000;  // natural height of pier_tube_small
+
+  // Column scale: at S=1 columns are ~14m tall (~1.0m diameter) — grand temple
+  const colSc = +(1.1 * S).toFixed(4);
+  const colH  = PIER_H * colSc;
+
+  // Footprint — ~2.15:1 ratio (historical 69.5×30.9m = 2.25:1)
+  const halfX = 13 * S;   // half-width
+  const halfZ = 28 * S;   // half-length
+
+  const nFront = 8;                              // columns on each short face
+  const nSide  = 17;                             // columns on each long face (incl. corners)
+  const spX = (2 * halfX) / (nFront - 1);       // ≈ 3.7m at S=1
+  const spZ = (2 * halfZ) / (nSide  - 1);       // ≈ 3.5m at S=1
+
+  // ── 1. STYLOBATE — 3-step marble platform ────────────────────────────────────
   for (let step = 0; step < 3; step++) {
-    const extra = (3-step)*1.5*S;
-    drawRect(pts, 0, step*0.8*S, 0, L+extra, W+extra, STONE2);
+    const extra = (2 - step) * spX * 0.4;
+    drawRect(pts, 0, step * STONE2_H, 0, halfX + extra, halfZ + extra, STONE2);
+  }
+  const platY = 3 * STONE2_H;  // column base Y
+
+  // ── 2. COLONNADE — pier_tube_small per-column scaled to colH ─────────────────
+  // Front (z = +halfZ) and Back (z = -halfZ) — 8 each
+  for (let i = 0; i < nFront; i++) {
+    const x = -halfX + i * spX;
+    pts.push({ x, y: platY, z:  halfZ, scale: colSc, name: PIER_TUBE });
+    pts.push({ x, y: platY, z: -halfZ, scale: colSc, name: PIER_TUBE });
+  }
+  // North (x = -halfX) and South (x = +halfX) flanks — skip corners (already placed above)
+  for (let i = 1; i < nSide - 1; i++) {
+    const z = -halfZ + i * spZ;
+    pts.push({ x: -halfX, y: platY, z, scale: colSc, name: PIER_TUBE });
+    pts.push({ x:  halfX, y: platY, z, scale: colSc, name: PIER_TUBE });
   }
 
-  // Columns (east + west facade + sides)
-  for (let x = -L; x <= L; x += sp)
-    for (const z of [-W, W]) {
-      for (let y = 2.4*S; y <= 2.4*S+colH; y += 2.5*S) drawRing(pts, x, y, z, colR, STONE2);
-    }
-  for (let z = -W; z <= W; z += sp)
-    for (const x of [-L, L]) {
-      for (let y = 2.4*S; y <= 2.4*S+colH; y += 2.5*S) drawRing(pts, x, y, z, colR, STONE2);
-    }
+  const colTop = platY + colH;
 
-  // Entablature
-  drawRect(pts, 0, 2.4*S+colH, 0, L, W, STONE2);
-
-  // Pediment (triangular gable on E and W)
-  for (let x = -L; x <= L; x += sp) {
-    const peakH = (1 - Math.abs(x)/L) * 4*S;
-    if (peakH > 0.5) pts.push({ x, y: 2.4*S+colH+0.5*S+peakH, z:-W, yaw:0, name: STONE2 });
+  // ── 3. ENTABLATURE — 2 rows of STONE2 capping the colonnade ──────────────────
+  for (let row = 0; row < 2; row++) {
+    drawRect(pts, 0, colTop + row * STONE2_H, 0, halfX + S, halfZ + S, STONE2);
   }
-  return pts;
+  const entabY = colTop + 2 * STONE2_H;
+
+  // ── 4. PEDIMENTS — raking cornices on the two short faces ────────────────────
+  const pedH = 4 * S;
+  for (const fz of [-halfZ, halfZ]) {
+    drawWall(pts, -halfX, entabY, fz,  halfX, entabY,        fz, STONE2);
+    drawWall(pts, -halfX, entabY, fz,  0,     entabY + pedH, fz, STONE2);
+    drawWall(pts,  halfX, entabY, fz,  0,     entabY + pedH, fz, STONE2);
+  }
+
+  // ── 5. CELLA — inner chamber walls running floor to entablature ──────────────
+  const cellX = halfX - spX * 0.5;
+  const cellZ = halfZ - spZ * 0.5;
+  for (let y = platY; y < colTop - STONE2_H * 0.5; y += STONE2_H) {
+    drawWall(pts, -cellX, y, -cellZ,  cellX, y, -cellZ, STONE2);
+    drawWall(pts, -cellX, y,  cellZ,  cellX, y,  cellZ, STONE2);
+    drawWall(pts, -cellX, y, -cellZ, -cellX, y,  cellZ, STONE2);
+    drawWall(pts,  cellX, y, -cellZ,  cellX, y,  cellZ, STONE2);
+  }
+
+  return applyLimit(pts, 1100);
 }
 
 /**
@@ -2042,6 +2297,418 @@ export function gen_fortress_solitude(p: GenParams): Point3D[] {
   return pts;
 }
 
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  IRON THRONE — Game of Thrones
+// ═══════════════════════════════════════════════════════════════════════════════
+/**
+ * 🗡️ IRON THRONE
+ *
+ * Towering, jagged seat of power. Silhouette: wide tiered base → deep seat
+ * cavity with forward armrests → narrow backrest → radiating fan of vertical
+ * sword-spines (pier_tube_small + pier_tube_big) at the crown.
+ *
+ * Faces South (-Z). Fan radiates behind (+Z) and upward.
+ *
+ * Materials (P3D-verified):
+ *  STONE  = staticobj_wall_stone       10.060 × 2.034 × 1.950
+ *  STONE2 = staticobj_wall_stone2       9.408 × 1.572 × 1.452
+ *  CNC4   = staticobj_wall_cncsmall_4   4.017 × 2.324 × 0.538
+ *  TUBE_S = staticobj_pier_tube_small   0.833 × 13.000 × 0.850 (vertical)
+ *  TUBE_B = staticobj_pier_tube_big     1.077 × 19.950 × 1.077 (vertical)
+ */
+export function gen_iron_throne(p: GenParams): Point3D[] {
+  const pts: Point3D[] = [];
+  const S = Math.max(0.5, Math.min(2, p.scale ?? 1));
+
+  // Fixed physical heights (NEVER scale)
+  const STH  = 2.034;  // STONE row height
+  const S2H  = 1.572;  // STONE2 row height
+  const C4H  = 2.324;  // CNC4 row height
+
+  const TUBE_S = "staticobj_pier_tube_small"; // 13m tall vertical spike
+  const TUBE_B = "staticobj_pier_tube_big";   // 20m tall vertical spike
+
+  // ── Module 1: Tiered Base — 3 STONE steps ─────────────────────────────────
+  const BHX = 9 * S;    // base half-width  (front face is widest)
+  const BHZ = 7 * S;    // base half-depth
+  for (let t = 0; t < 3; t++) {
+    const shrink = t * 1.2 * S;
+    drawRect(pts, 0, t * STH, 0, BHX - shrink, BHZ - shrink, STONE);
+  }
+  const seatY = 3 * STH;  // 6.1m — platform top
+
+  // ── Module 2: Seat Cavity — STONE2 armrests + back wall ───────────────────
+  const armHX = 4.5 * S;   // armrest inner edge X
+  const seatFZ = -BHZ;     // seat front Z edge (facing viewer)
+  const seatBZ =  BHZ - 1.2 * S;  // seat rear Z
+
+  // Armrests: 2 STONE2 rows each side, extending forward past the base
+  const armFZ = seatFZ - 4 * S;
+  for (let r = 0; r < 2; r++) {
+    const y = seatY + r * S2H;
+    for (const side of [-1, 1] as const) {
+      drawWall(pts, side * armHX, y, seatBZ, side * armHX, y, armFZ, STONE2);
+    }
+  }
+
+  // Seat back wall (the base of the backrest, closing rear of the seat)
+  drawWall(pts, -armHX, seatY, seatBZ, armHX, seatY, seatBZ, STONE2);
+
+  // ── Module 3: Backrest Core — 5 CNC4 rows stacked vertically ─────────────
+  const backHX = 3.5 * S;
+  const backBotY = seatY + S2H;  // backrest starts one STONE2 row above seat
+  const nBack = 5;
+  for (let r = 0; r < nBack; r++) {
+    const y = backBotY + r * C4H;
+    // front face of backrest (facing viewer)
+    drawWall(pts, -backHX, y, seatBZ, backHX, y, seatBZ, CNC4);
+    // side walls
+    drawWall(pts, -backHX, y, seatBZ, -backHX, y, BHZ, CNC4);
+    drawWall(pts,  backHX, y, seatBZ,  backHX, y, BHZ, CNC4);
+  }
+  const backTopY = backBotY + nBack * C4H;  // ~18.3m
+
+  // ── Module 4: Fan of Sword Spines ─────────────────────────────────────────
+  // pier_tube_small and pier_tube_big are vertical (base at y, top at y + 13/20m).
+  // Renderer adds h/2 so store y = desired_base.
+  // Fan radiates upward behind the backrest.  The central spine is tallest.
+  const fanBaseY = backTopY - 4 * S;  // spines start overlapping the backrest top
+  const fanZ = BHZ + 0.5 * S;
+
+  // Central primary: pier_tube_big (20m) — the dominant spine
+  pts.push({ x: 0, y: fanBaseY, z: fanZ, yaw: 0, scale: S, name: TUBE_B });
+
+  // Primary secondaries (TUBE_B slightly shorter via lower base, flanking center)
+  for (const [xOff, zOff] of [[-2.5*S, 0.5*S], [2.5*S, 0.5*S]] as [number,number][]) {
+    pts.push({ x: xOff, y: fanBaseY - 1.5, z: fanZ + zOff, yaw: 0, scale: S * 0.9, name: TUBE_B });
+  }
+
+  // Secondary spines (TUBE_S, 13m) — intermediate positions
+  const secondarySpines: Array<{ x: number; z: number; yaw: number; sc: number }> = [
+    { x: -5*S,  z: 1*S,   yaw: -8,  sc: 1.0 * S },
+    { x:  5*S,  z: 1*S,   yaw:  8,  sc: 1.0 * S },
+    { x: -7*S,  z: 2*S,   yaw: -18, sc: 0.95 * S },
+    { x:  7*S,  z: 2*S,   yaw:  18, sc: 0.95 * S },
+  ];
+  for (const { x, z, yaw, sc } of secondarySpines) {
+    pts.push({ x, y: fanBaseY - 1, z: fanZ + z, yaw, scale: sc, name: TUBE_S });
+  }
+
+  // Tertiary shards (TUBE_S at irregular heights and angles — chaotic silhouette)
+  const shards: Array<{ x: number; z: number; yaw: number; sc: number }> = [
+    { x: -3.5*S, z: 0,     yaw:  5, sc: 0.88 * S },
+    { x:  3.5*S, z: 0,     yaw: -5, sc: 0.88 * S },
+    { x: -9*S,   z: 3*S,   yaw: -28, sc: 0.80 * S },
+    { x:  9*S,   z: 3*S,   yaw:  28, sc: 0.80 * S },
+    { x: -11*S,  z: 4*S,   yaw: -38, sc: 0.70 * S },
+    { x:  11*S,  z: 4*S,   yaw:  38, sc: 0.70 * S },
+    { x: -1.5*S, z: 1.5*S, yaw:  3, sc: 0.82 * S },
+    { x:  1.5*S, z: 1.5*S, yaw: -3, sc: 0.82 * S },
+  ];
+  for (const { x, z, yaw, sc } of shards) {
+    pts.push({ x, y: fanBaseY - 3, z: fanZ + z, yaw, scale: sc, name: TUBE_S });
+  }
+
+  // Micro-shard layer — fill gaps with flagpoles for ragged silhouette
+  const POLE = "staticobj_misc_flagpole";  // 0.448 × 7.186 × 0.442 vertical
+  const microShards = [
+    [-4*S, 0.5*S, 10], [4*S, 0.5*S, -10],
+    [-6*S, 1.5*S, 22], [6*S, 1.5*S, -22],
+    [-8*S, 2.5*S, 32], [8*S, 2.5*S, -32],
+    [0, 2*S, 0], [-2*S, 3*S, 12], [2*S, 3*S, -12],
+  ];
+  for (const [mxR, mzR, myaw] of microShards) {
+    pts.push({ x: mxR, y: backTopY - 2, z: fanZ + mzR, yaw: myaw, scale: S * 1.2, name: POLE });
+  }
+
+  return applyLimit(pts, 1100);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  CONTAINER BUILDS — native shipping-container architecture
+//  Dims (P3D verified): w=2.702 h=2.782 d=10.000 — long axis Z at yaw=0
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const _CD  = 10.000;   // container depth (long axis)
+const _CH  = 2.782;    // container height
+const _C_PALETTE = [
+  "land_container_1bo","land_container_1mo","land_container_1moh",
+  "land_container_1a","land_container_1b","land_container_1c",
+  "land_containerlocked",
+] as const;
+const _cpick = (i: number) => _C_PALETTE[Math.abs(i) % _C_PALETTE.length];
+
+// ── Sky Fort ──────────────────────────────────────────────────────────────────
+export function gen_sky_fort(p: GenParams): Point3D[] {
+  const S       = p.scale ?? 1;
+  const elev    = p.elevation ?? 20;
+  const pts: Point3D[] = [];
+
+  const nSide   = Math.max(2, Math.round(S * 3)); // containers per wall side
+  const SIZE    = nSide * _CD;
+  const nStacks = Math.ceil(elev / _CH);
+  const floorY  = nStacks * _CH;
+
+  // Stilt columns at corners and mid-edges
+  const stiltPos: [number,number,number][] = [
+    [0,          0,          0 ],
+    [SIZE,        0,          90],
+    [0,          SIZE,        90],
+    [SIZE,        SIZE,        0 ],
+    [SIZE/2,     0,          90],
+    [SIZE/2,     SIZE,        90],
+    [0,          SIZE/2,      0 ],
+    [SIZE,        SIZE/2,      0 ],
+  ];
+  for (let si = 0; si < stiltPos.length; si++) {
+    const [bx, bz, yaw] = stiltPos[si];
+    const cx = yaw === 0 ? bx - _CD/2 : bx;
+    const cz = yaw === 0 ? bz         : bz - _CD/2;
+    for (let st = 0; st < nStacks; st++)
+      pts.push({ x: cx, y: st * _CH, z: cz, yaw, scale: 1, name: _cpick(si + st) });
+  }
+
+  // Platform perimeter (N/S yaw=90, E/W yaw=0)
+  for (let i = 0; i < nSide; i++) {
+    const x = i * _CD + _CD/2;
+    pts.push({ x, y: floorY, z: -_CD/2,        yaw: 90, scale:1, name: _cpick(i)   });
+    pts.push({ x, y: floorY, z: SIZE + _CD/2,   yaw: 90, scale:1, name: _cpick(i+1) });
+  }
+  for (let i = 0; i < nSide; i++) {
+    const z = i * _CD + _CD/2;
+    pts.push({ x: -_CD/2,       y: floorY, z, yaw: 0, scale:1, name: _cpick(i+2) });
+    pts.push({ x: SIZE + _CD/2, y: floorY, z, yaw: 0, scale:1, name: _cpick(i+3) });
+  }
+  // Cross-brace mid-span
+  for (let i = 0; i < nSide; i++)
+    pts.push({ x: i*_CD+_CD/2, y: floorY, z: SIZE/2-_CD/2, yaw: 90, scale:1, name: _cpick(i+4) });
+
+  // Walls — 2 rows above platform
+  for (let row = 0; row < 2; row++) {
+    const wy = floorY + _CH + row * _CH;
+    for (let i = 0; i < nSide; i++) {
+      const x = i * _CD + _CD/2;
+      pts.push({ x, y: wy, z: -_CD/2,        yaw: 90, scale:1, name: _cpick(i+row)   });
+      pts.push({ x, y: wy, z: SIZE + _CD/2,   yaw: 90, scale:1, name: _cpick(i+row+1) });
+    }
+    for (let i = 0; i < nSide; i++) {
+      const z = i * _CD + _CD/2;
+      pts.push({ x: -_CD/2,       y: wy, z, yaw: 0, scale:1, name: _cpick(i+row+2) });
+      pts.push({ x: SIZE + _CD/2, y: wy, z, yaw: 0, scale:1, name: _cpick(i+row+3) });
+    }
+  }
+
+  // Corner towers — L-shaped, 3 extra rows
+  for (let ci = 0; ci < 4; ci++) {
+    const [cx, cz] = [[0,0],[SIZE,0],[0,SIZE],[SIZE,SIZE]][ci];
+    for (let row = 0; row < 3; row++) {
+      const wy = floorY + _CH * 3 + row * _CH;
+      pts.push({ x: cx - _CD/2, y: wy, z: cz,          yaw: 0,  scale:1, name: "land_container_1a" });
+      pts.push({ x: cx,         y: wy, z: cz - _CD/2,  yaw: 90, scale:1, name: "land_container_1b" });
+    }
+  }
+
+  // Barrel accents
+  const roofY = floorY + _CH * 5;
+  for (let i = 0; i < nSide; i++) {
+    const x = i * _CD + _CD/2;
+    pts.push({ x, y: roofY, z: SIZE/4,   name: "barrel_blue", yaw:0, scale:1 });
+    pts.push({ x, y: roofY, z: SIZE*3/4, name: "barrel_red",  yaw:0, scale:1 });
+  }
+
+  return applyLimit(pts, 1100);
+}
+
+// ── Container Pyramid (Ziggurat Monument) ─────────────────────────────────────
+export function gen_container_pyramid(p: GenParams): Point3D[] {
+  const S     = p.scale ?? 1;
+  const tiers = Math.round(p.tiers ?? 5);
+  const pts: Point3D[] = [];
+
+  const baseN = Math.max(3, Math.round(S * 4)); // containers per base edge
+  const TIER_COLORS = [
+    "land_container_1bo","land_container_1mo","land_container_1moh",
+    "land_container_1a","land_container_1b","land_container_1c",
+  ];
+
+  for (let t = 0; t < tiers; t++) {
+    const y    = t * _CH;
+    const n    = Math.max(1, baseN - t);
+    const span = n * _CD;
+    const ox   = -span / 2;
+    const oz   = -span / 2;
+    const cname = TIER_COLORS[t % TIER_COLORS.length];
+
+    // N/S walls (yaw=90, running X)
+    for (let i = 0; i < n; i++) {
+      pts.push({ x: ox + i*_CD + _CD/2, y, z: oz,       yaw: 90, scale:1, name: cname });
+      pts.push({ x: ox + i*_CD + _CD/2, y, z: oz + span, yaw: 90, scale:1, name: cname });
+    }
+    // E/W walls inner (yaw=0, running Z) — skip corners
+    for (let i = 1; i < n - 1; i++) {
+      pts.push({ x: ox,       y, z: oz + i*_CD + _CD/2, yaw: 0, scale:1, name: cname });
+      pts.push({ x: ox + span, y, z: oz + i*_CD + _CD/2, yaw: 0, scale:1, name: cname });
+    }
+    // Diagonal corner fills (45°)
+    pts.push({ x: ox,        y, z: oz,        yaw:  45, scale:1, name: cname });
+    pts.push({ x: ox + span, y, z: oz,        yaw: -45, scale:1, name: cname });
+    pts.push({ x: ox,        y, z: oz + span, yaw: -45, scale:1, name: cname });
+    pts.push({ x: ox + span, y, z: oz + span, yaw:  45, scale:1, name: cname });
+  }
+
+  return applyLimit(pts, 1100);
+}
+
+// ── Container Drum Tower (Circular Monument) ──────────────────────────────────
+export function gen_container_drum(p: GenParams): Point3D[] {
+  const S     = p.scale ?? 1;
+  const tiers = Math.round(p.tiers ?? 6);
+  const pts: Point3D[] = [];
+
+  const R         = S * 15;
+  const nPerRing  = Math.max(6, Math.floor(2 * Math.PI * R / _CD));
+  const Ri        = R * 0.5;
+  const nInner    = Math.max(4, Math.floor(2 * Math.PI * Ri / _CD));
+
+  // Outer ring — full height
+  for (let tier = 0; tier < tiers; tier++) {
+    const y = tier * _CH;
+    for (let i = 0; i < nPerRing; i++) {
+      const angle = (i / nPerRing) * 2 * Math.PI;
+      pts.push({
+        x: R * Math.sin(angle), y,
+        z: R * Math.cos(angle),
+        yaw: (angle * 180 / Math.PI) + 90, scale:1, name: _cpick(tier * 2 + i),
+      });
+    }
+  }
+  // Crenellations — every other gap at top
+  for (let i = 0; i < nPerRing; i += 2) {
+    const angle = (i / nPerRing) * 2 * Math.PI;
+    pts.push({
+      x: R * Math.sin(angle), y: tiers * _CH,
+      z: R * Math.cos(angle),
+      yaw: (angle * 180 / Math.PI) + 90, scale:1, name: "land_container_1a",
+    });
+  }
+  // Inner ring — 2 tiers (offset by half step so gaps don't align)
+  for (let tier = 0; tier < 2; tier++) {
+    for (let i = 0; i < nInner; i++) {
+      const angle = ((i + 0.5) / nInner) * 2 * Math.PI;
+      pts.push({
+        x: Ri * Math.sin(angle), y: tier * _CH,
+        z: Ri * Math.cos(angle),
+        yaw: (angle * 180 / Math.PI) + 90, scale:1, name: _cpick(tier + i + 10),
+      });
+    }
+  }
+  // Barrel accents at cardinal points inside
+  for (let i = 0; i < 4; i++) {
+    const angle = (i / 4) * 2 * Math.PI;
+    pts.push({
+      x: Ri * 0.6 * Math.sin(angle), y: tiers * _CH,
+      z: Ri * 0.6 * Math.cos(angle),
+      name: i % 2 === 0 ? "barrel_red" : "barrel_blue", yaw:0, scale:1,
+    });
+  }
+
+  return applyLimit(pts, 1100);
+}
+
+// ── Container Helix Tower (Double Spiral) ─────────────────────────────────────
+export function gen_container_helix(p: GenParams): Point3D[] {
+  const S     = p.scale ?? 1;
+  const turns = p.turns ?? 4;
+  const pts: Point3D[] = [];
+
+  const R           = S * 12;
+  const nPerTurn    = Math.max(6, Math.round(2 * Math.PI * R / _CD));
+  const risePerTurn = _CH * 2;
+  const total       = Math.round(nPerTurn * turns);
+
+  // Outer helix (clockwise)
+  for (let i = 0; i < total; i++) {
+    const angle = (i / nPerTurn) * 2 * Math.PI;
+    pts.push({
+      x: R * Math.sin(angle),
+      y: (i / nPerTurn) * risePerTurn,
+      z: R * Math.cos(angle),
+      yaw: (angle * 180 / Math.PI) + 90, scale:1, name: _cpick(i),
+    });
+  }
+
+  // Inner counter-helix (half radius, opposite spin)
+  const Ri     = R * 0.55;
+  const nInner = Math.max(4, Math.round(2 * Math.PI * Ri / _CD));
+  const totI   = Math.round(nInner * turns);
+  for (let i = 0; i < totI; i++) {
+    const angle = -(i / nInner) * 2 * Math.PI;
+    pts.push({
+      x: Ri * Math.sin(angle),
+      y: (i / nInner) * risePerTurn + _CH,
+      z: Ri * Math.cos(angle),
+      yaw: (angle * 180 / Math.PI) + 90, scale:1, name: _cpick(i + 3),
+    });
+  }
+
+  return applyLimit(pts, 1100);
+}
+
+// ── Container Space Station (Sci-Fi Outpost) ───────────────────────────────────
+export function gen_container_station(p: GenParams): Point3D[] {
+  const S      = p.scale ?? 1;
+  const armLen = Math.max(2, Math.round(S * 3));
+  const pts: Point3D[] = [];
+
+  // Core — + shaped cross, 2 layers
+  for (let i = -1; i <= 1; i++) {
+    for (let layer = 0; layer < 2; layer++) {
+      const y = layer * _CH;
+      pts.push({ x: i * _CD, y, z: 0,      yaw: 0,  scale:1, name: _cpick(i + layer)     });
+      pts.push({ x: 0,       y, z: i * _CD, yaw: 90, scale:1, name: _cpick(i + layer + 2) });
+    }
+  }
+
+  // 4 arms (+X, -X, +Z, -Z)
+  const ARMS = [
+    { dx:  1, dz: 0, yaw: 90 },
+    { dx: -1, dz: 0, yaw: 90 },
+    { dx:  0, dz:  1, yaw: 0  },
+    { dx:  0, dz: -1, yaw: 0  },
+  ];
+  const coreHalf = 1.5 * _CD;
+  for (let ai = 0; ai < 4; ai++) {
+    const { dx, dz, yaw } = ARMS[ai];
+    for (let i = 0; i < armLen; i++) {
+      const dist = coreHalf + i * _CD + _CD/2;
+      for (let layer = 0; layer < 2; layer++)
+        pts.push({ x: dx * dist, y: layer * _CH, z: dz * dist, yaw, scale:1, name: _cpick(ai + i + layer) });
+    }
+  }
+
+  // Outer ring connecting arm tips
+  const ringR  = coreHalf + armLen * _CD;
+  const nRing  = Math.max(8, Math.round(2 * Math.PI * ringR / _CD));
+  for (let i = 0; i < nRing; i++) {
+    const angle = (i / nRing) * 2 * Math.PI;
+    pts.push({
+      x: ringR * Math.sin(angle), y: _CH * 1.5,
+      z: ringR * Math.cos(angle),
+      yaw: (angle * 180 / Math.PI) + 90, scale:1, name: _cpick(i),
+    });
+  }
+
+  // Barrel accents at arm tips and midpoints
+  const tipD = ringR + _CD/2;
+  for (let ai = 0; ai < 4; ai++) {
+    const { dx, dz } = ARMS[ai];
+    pts.push({ x: dx * tipD, y: _CH * 3, z: dz * tipD, name: "barrel_red",  yaw:0, scale:1 });
+    pts.push({ x: dx * tipD * 0.6, y: _CH * 2, z: dz * tipD * 0.6, name: "barrel_blue", yaw:0, scale:1 });
+  }
+
+  return applyLimit(pts, 1100);
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  STRUCTURES / MILITARY
@@ -2605,6 +3272,191 @@ export function gen_colosseum(p: GenParams): Point3D[] {
   // Hard safety cap — never exceed 800 objects to keep WebGL stable
   // Hard safety cap — stay under Nitrado 1,200 limit but max out fidelity
   return applyLimit(pts, 1150);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * 🚀 USS ENTERPRISE NCC-1701 (Star Trek: The Original Series)
+ *
+ * Research:
+ *  • Saucer section: 127m diameter disc, ~8m thick, forward-mounted
+ *  • Secondary hull: tear-drop cylinder below/behind saucer, deflector dish faces forward
+ *  • Neck: angled strut connecting saucer bottom to engineering hull top
+ *  • Twin warp nacelles: horizontal cylinders on swept-back pylons, above engineering hull
+ *  • Bussard collectors: glowing red forward caps on nacelles
+ *  • Plasma vents: blue glow at nacelle rear
+ *  • Ship faces +Z (nose at +Z, stern at -Z)
+ *
+ * Target: ~620–680 panels at scale=1
+ */
+export function gen_enterprise(p: GenParams): Point3D[] {
+  const pts: Point3D[] = [];
+  const S  = Math.max(0.5, p.scale ?? 1);
+
+  // Panel widths (P3D-verified)
+  const CW4 = 4.017 * S;   // CNC4
+  const CW8 = 8.008 * S;   // CNC8
+
+  // ── LAYOUT ────────────────────────────────────────────────────────────────
+  // Saucer
+  const sR   = 36 * S;
+  const sY   = 20 * S;   // saucer vertical center
+  const sHf  =  5 * S;   // saucer half-thickness
+  const sCz  = 24 * S;   // saucer center Z (forward)
+
+  // Engineering hull (secondary hull)
+  const engR   =  9 * S;
+  const engCz  = -8 * S;
+  const engBot =  4 * S;
+  const engTop = 20 * S;
+
+  // Nacelles
+  const nacX   = 22 * S;
+  const nacR   =  3.5 * S;
+  const naMidY = 24 * S;
+  const naFZ   = 14 * S;
+  const naBZ   =-28 * S;
+  const naLen  = naFZ - naBZ;
+
+  // ── 1. SAUCER RIM — 3 rows of IND10 ──────────────────────────────────────
+  for (let row = 0; row < 3; row++) {
+    const y = (sY - sHf) + row * sHf;
+    drawRing(pts, 0, y, sCz, sR, IND10);
+  }
+
+  // ── 2. SAUCER TOP SURFACE — 5 concentric rings (CNC4, pitch=-90 face-up) ─
+  for (let ri = 1; ri <= 5; ri++) {
+    const r  = sR * (ri / 5.5);
+    const nP = Math.ceil(2 * Math.PI * r / CW4);
+    for (let i = 0; i < nP; i++) {
+      const a = (i / nP) * 2 * Math.PI;
+      pts.push({
+        x: r * Math.sin(a),
+        y: sY + sHf,
+        z: sCz + r * Math.cos(a),
+        yaw: a * 180 / Math.PI,
+        pitch: -90,
+        name: CNC4,
+      });
+    }
+  }
+
+  // ── 3. SAUCER BOTTOM SURFACE — 4 concentric rings (pitch=+90 face-down) ──
+  for (let ri = 1; ri <= 4; ri++) {
+    const r  = sR * (ri / 4.5);
+    const nP = Math.ceil(2 * Math.PI * r / CW4);
+    for (let i = 0; i < nP; i++) {
+      const a = (i / nP) * 2 * Math.PI;
+      pts.push({
+        x: r * Math.sin(a),
+        y: sY - sHf,
+        z: sCz + r * Math.cos(a),
+        yaw: a * 180 / Math.PI,
+        pitch: 90,
+        name: CNC4,
+      });
+    }
+  }
+
+  // ── 4. BRIDGE DOME ────────────────────────────────────────────────────────
+  drawDome(pts, 0, sY + sHf, sCz + 5 * S, 5 * S, MILCNC);
+
+  // ── 5. PHOTON TORPEDO LAUNCHER (saucer nose) ──────────────────────────────
+  drawRing(pts, 0, sY, sCz + sR - 3 * S, 4 * S, MILCNC);
+  pts.push({ x: 0, y: sY, z: sCz + sR - S, yaw: 0, pitch: 0, name: "barrel_red" });
+
+  // ── 6. NECK — 6 CNC8 rings interpolating saucer base → eng hull top ───────
+  for (let step = 0; step <= 6; step++) {
+    const t  = step / 6;
+    const ny = (sY - sHf) * (1 - t) + engTop * t;
+    const nz = sCz        * (1 - t) + engCz  * t;
+    drawRing(pts, 0, ny, nz, 5 * S, CNC8);
+  }
+
+  // ── 7. ENGINEERING HULL — stacked CNC8 rings ─────────────────────────────
+  const engSteps = Math.ceil((engTop - engBot) / CW8 * 1.4);
+  for (let s = 0; s <= engSteps; s++) {
+    const y = engBot + (s / engSteps) * (engTop - engBot);
+    drawRing(pts, 0, y, engCz, engR, CNC8);
+  }
+
+  // ── 8. DEFLECTOR DISH (forward-lower face of engineering hull) ────────────
+  const dishZ = engCz + engR + S;
+  const dishY = engBot + 5 * S;
+  drawRing(pts, 0, dishY, dishZ, 5 * S, MILCNC);
+  drawRing(pts, 0, dishY, dishZ, 3 * S, CNC4);
+  pts.push({ x: 0, y: dishY, z: dishZ, yaw: 0, pitch: -90, name: "barrel_blue" });
+
+  // ── 9. WARP PYLONS ────────────────────────────────────────────────────────
+  const pymZ = (naFZ + naBZ) / 2;
+  for (const sx of [-1, 1]) {
+    const nx = sx * nacX;
+    drawWall(pts, 0, engTop,       engCz,     nx * 0.55, naMidY - S, pymZ, CNC4);
+    drawWall(pts, 0, engTop + S,   engCz + S, nx * 0.55, naMidY - S, pymZ, CNC4);
+    drawWall(pts, nx * 0.55, naMidY - S, pymZ, nx, naMidY, pymZ + 2 * S, CNC4);
+  }
+
+  // ── 10. WARP NACELLES — hull plates + end caps ────────────────────────────
+  const naPan = Math.ceil(naLen / CW4);
+  for (const sx of [-1, 1]) {
+    const nx = sx * nacX;
+
+    for (let i = 0; i < naPan; i++) {
+      const z = naBZ + (i + 0.5) * (naLen / naPan);
+      // Top plate (face up)
+      pts.push({ x: nx, y: naMidY + nacR, z, yaw: 0,       pitch: -90, name: CNC4  });
+      // Bottom plate (face down)
+      pts.push({ x: nx, y: naMidY - nacR, z, yaw: 0,       pitch:  90, name: CNC4  });
+      // Inner side (faces toward centreline)
+      pts.push({ x: nx - sx * nacR, y: naMidY, z, yaw: -sx * 90, pitch: 0, name: IND10 });
+      // Outer side (faces away from centreline)
+      pts.push({ x: nx + sx * nacR, y: naMidY, z, yaw:  sx * 90, pitch: 0, name: IND10 });
+    }
+
+    // Bussard collector — forward glowing red cap
+    drawRing(pts, nx, naMidY, naFZ, nacR + S, CNC4);
+    pts.push({ x: nx, y: naMidY, z: naFZ + S, yaw: 0, pitch: -90, name: "barrel_red" });
+
+    // Plasma vent — rear blue engine glow
+    drawRing(pts, nx, naMidY, naBZ, nacR + S, MILCNC);
+    pts.push({ x: nx, y: naMidY, z: naBZ - S,  yaw: 0, pitch: 90, name: "barrel_blue" });
+    pts.push({ x: nx, y: naMidY, z: naBZ - 2*S, yaw: 0, pitch: 90, name: "barrel_blue" });
+  }
+
+  // ── 11. PHASER STRIPS — 6 emitters around saucer equator ─────────────────
+  for (let i = 0; i < 6; i++) {
+    const a  = (i / 6) * 2 * Math.PI;
+    const px = sR * 0.72 * Math.sin(a);
+    const pz = sCz + sR * 0.72 * Math.cos(a);
+    pts.push({ x: px, y: sY, z: pz, yaw: a * 180 / Math.PI, pitch: 0, name: MILCNC });
+  }
+
+  // ── 12. ENGINEERING HULL FLOOR — close the hollow bottom ─────────────────
+  for (let ri = 1; ri <= 3; ri++) {
+    const fr = engR * (ri / 3.5);
+    const nP = Math.ceil(2 * Math.PI * fr / CW4);
+    for (let i = 0; i < nP; i++) {
+      const a = (i / nP) * 2 * Math.PI;
+      pts.push({ x: fr * Math.sin(a), y: engBot, z: engCz + fr * Math.cos(a),
+                 yaw: a * 180 / Math.PI, pitch: 90, name: CNC4 });
+    }
+  }
+  pts.push({ x: 0, y: engBot, z: engCz, yaw: 0, pitch: 90, name: CNC4 });
+
+  // ── 13. SAUCER BOTTOM CENTRE — fill the hole left by ring ri=1 ────────────
+  for (let ri = 1; ri <= 2; ri++) {
+    const r  = sR * (ri / 9);
+    const nP = Math.max(4, Math.ceil(2 * Math.PI * r / CW4));
+    for (let i = 0; i < nP; i++) {
+      const a = (i / nP) * 2 * Math.PI;
+      pts.push({ x: r * Math.sin(a), y: sY - sHf, z: sCz + r * Math.cos(a),
+                 yaw: a * 180 / Math.PI, pitch: 90, name: CNC4 });
+    }
+  }
+  pts.push({ x: 0, y: sY - sHf, z: sCz, yaw: 0, pitch: 90, name: CNC4 });
+
+  return applyLimit(pts, 1100);
 }
 
 

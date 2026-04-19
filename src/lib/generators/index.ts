@@ -1,15 +1,86 @@
 import type { Point3D, DrawnWall, DrawnObject, PanelState } from "../types";
 import { applyLimit, drawWall } from "../draw";
+import { getMimic } from "../mimic";
 import * as G from "./shapes";
 
-export { exportDrawnWalls, exportDrawnObjects } from "../exporter";
+export { exportCombinedDraw } from "../exporter";
 
 export type GenParams = Record<string, number>;
 
 export function generate(shape: string, params: GenParams): Point3D[] {
   const fn = REGISTRY[shape.toLowerCase()];
   if (!fn) return [];
-  return applyLimit(fn(params));
+  const raw = applyLimit(fn(params));
+  if ((params.container_mode ?? 0) > 0.5) return containerify(raw);
+  return raw;
+}
+
+// ── Container Mode post-processor ─────────────────────────────────────────────
+// Replaces wall panels with stacked land_container_1bo objects that precisely
+// match each panel's face width and approximate its height.
+//
+// Container dimensions (P3D-verified): w=2.702 × h=2.782 × d=10.000m
+// Long axis (depth, 10m) = Z direction at yaw=0.
+// To align the long axis along a wall running perpendicular to yaw, rotate +90°.
+const CONT_CLASS = "land_container_1bo";
+const CONT_H = 2.782;  // container height
+const CONT_D = 10.000; // container long-axis length
+
+// Classnames that should NOT be converted (already containers, barrels, organic shapes)
+const KEEP_AS_IS = new Set([
+  "land_container_1bo", "land_container_1mo", "land_container_1moh",
+  "land_container_1aoh", "land_container_1a", "land_container_1b",
+  "land_container_1c", "land_container_2a", "land_container_2b",
+  "land_containerlocked",
+  "barrel_blue", "barrel_red", "barrel_yellow", "barrel_green",
+  "staticobj_pier_tube_big", "staticobj_pier_tube_small",
+]);
+
+function containerify(pts: Point3D[]): Point3D[] {
+  const out: Point3D[] = [];
+
+  for (const pt of pts) {
+    const name = pt.name ?? "staticobj_castle_wall3";
+
+    // Pass through objects that shouldn't be containerised
+    if (KEEP_AS_IS.has(name) || name.includes("container") || name.includes("barrel")) {
+      out.push(pt);
+      continue;
+    }
+
+    const m = getMimic(name);
+    const sc = pt.scale ?? 1;
+    const pitch = pt.pitch ?? 0;
+    const isPitched = Math.abs(Math.abs(pitch) - 90) < 10;
+
+    // Scale the container so its long axis (10m) matches the panel's face width
+    const faceW = m.w * sc;
+    const scC = +(faceW / CONT_D).toFixed(4);
+
+    if (isPitched) {
+      // Flat panel (floor/roof) — use one container lying flat, same orientation
+      out.push({ ...pt, name: CONT_CLASS, scale: scC });
+    } else {
+      // Vertical or near-vertical panel — stack containers to match panel height
+      const rowH = CONT_H * scC;
+      const rows = Math.max(1, Math.ceil(m.h / rowH));
+      const contYaw = (pt.yaw ?? 0) + 90; // rotate so long axis runs along the wall
+      for (let r = 0; r < rows; r++) {
+        out.push({
+          x: pt.x,
+          y: pt.y + r * rowH,
+          z: pt.z,
+          yaw: contYaw,
+          pitch: 0,
+          roll: pt.roll,
+          scale: scC,
+          name: CONT_CLASS,
+        });
+      }
+    }
+  }
+
+  return applyLimit(out, 1150);
 }
 
 const REGISTRY: Record<string, (p: GenParams) => Point3D[]> = {
@@ -27,6 +98,7 @@ const REGISTRY: Record<string, (p: GenParams) => Point3D[]> = {
   saturn:                  G.gen_saturn,
   borg_cube:               G.gen_borg_cube,
   halo_installation:       G.gen_halo_ring,
+  uss_enterprise:          G.gen_enterprise,
 
   // ── Monuments ───────────────────────────────────────────────────────────
   eiffel_tower:            G.gen_eiffel_tower,
@@ -35,8 +107,7 @@ const REGISTRY: Record<string, (p: GenParams) => Point3D[]> = {
   pyramid_giza:            G.gen_pyramid,
   stonehenge:              G.gen_stonehenge,
   big_ben:                 G.gen_big_ben,
-  statue_liberty:          G.gen_statue_liberty,
-  christ_redeemer:         G.gen_christ_redeemer,
+  angkor_wat:              G.gen_angkor_wat,
   parthenon:               G.gen_parthenon,
   arc_triomphe:            G.gen_arc_triomphe,
   sydney_opera:            G.gen_sydney_opera,
@@ -52,6 +123,14 @@ const REGISTRY: Record<string, (p: GenParams) => Point3D[]> = {
   azkaban_prison:          G.gen_azkaban,
   eye_of_sauron:           G.gen_eye_of_sauron,
   fortress_of_solitude:    G.gen_fortress_solitude,
+  iron_throne:             G.gen_iron_throne,
+
+  // ── Container Builds ────────────────────────────────────────────────────
+  sky_fort:                G.gen_sky_fort,
+  container_pyramid:       G.gen_container_pyramid,
+  container_drum:          G.gen_container_drum,
+  container_helix:         G.gen_container_helix,
+  container_station:       G.gen_container_station,
 
   // ── Structures / Military ───────────────────────────────────────────────
   bunker_complex:          G.gen_bunker,
