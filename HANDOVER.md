@@ -124,7 +124,8 @@ const IND10  = "staticobj_wall_indcnc_10";    // 9.012m × 9.758m industrial
 | **AT-AT ceiling flush** | Body roof IND10 panels stored at `bodyTop - 4.376` (renderer y-offset fix: `wall_top - (h-d)/2`). Head ceiling MILCNC at `headBY + HH - 1.824`. Eliminates floating gap |
 | **Death Star adaptive density** | `ringDensity = min(1.6, 0.75 + max(0, R-35)*0.028)` prevents object overflow at R=60 |
 | **Death Star dish rewrite** | Concave bowl (panels face radially outward from sphere center), 10 rings, 8 spoke channels, colour graded CNC4→MILCNC→hull material, central `barrel_red` focal lens |
-| **Death Star trench** | Trench walls rebuilt with `_drawSphereRings` for gapless hull-to-trench junction |
+| **Death Star trench** | Removed `_drawSphereRings` trench wall fill — open black band looks sharper than flat surface panels |
+| **Container builds full rewrite** | All 5 generators rebuilt with correct math: stilt positions inward CD/2, helix risePerStep=CH*0.5 (was CH*2/turn causing solid block), drum R=S*20 (12 containers — round), pyramid removes 45° diagonal corners, station uses hollow square core + correct arm direction yaw |
 
 ### Container Mode — implementation notes
 - `containerify()` in `generators/index.ts` post-processes any `Point3D[]`

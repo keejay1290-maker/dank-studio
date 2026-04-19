@@ -63,13 +63,13 @@ export function gen_death_star(p: GenParams): Point3D[] {
 
   // ── Equatorial trench ─────────────────────────────────────────────────────
   const trenchPhi   = Math.PI / 2;
-  const trenchHalf  = 0.13;          // ±7.5° — wider gap for visibility
-  const trenchDepth = 10.0;         // 10m deep — strong visual recession
+  const trenchHalf  = 0.22;          // ±12.6° → 15.4m wide at R=35 — clear dark band
+  const trenchDepth = 15.0;         // 15m deep recession
 
   // ── Superlaser dish ───────────────────────────────────────────────────────
   const dishPhi   = Math.PI * 0.39;
   const dishTheta = Math.PI * 0.55;
-  const dishCone  = 0.35;           // ~20° half-angle — correct scale (~24m dia on 70m sphere)
+  const dishCone  = 0.48;           // ~27.5° → 30m diameter dish on 70m sphere
 
   const dcx = Math.sin(dishPhi) * Math.cos(dishTheta);
   const dcy = Math.cos(dishPhi);
@@ -124,15 +124,6 @@ export function gen_death_star(p: GenParams): Point3D[] {
     const mat = nearTrench ? MAT_RIM : (bandIdx % 2 === 0 ? MAT_MAIN : MAT_BAND);
 
     pts.push({ ...panel, name: mat });
-  }
-
-  // ── Trench walls — sphere-surface rings fill the trench band gaplessly ─────
-  // Using _drawSphereRings ensures seamless hull-to-trench transition.
-  {
-    const nWall = Math.max(4, Math.round((trenchHalf * 2 * R) / (panelH * 0.55)));
-    _drawSphereRings(pts, 0, R, 0, R,
-      trenchPhi - trenchHalf, trenchPhi + trenchHalf,
-      nWall, panelW, panelH / 2, MAT_RIM);
   }
 
   // ── Superlaser Dish — concave bowl with 8 spoke tributary channels ────────
@@ -2440,90 +2431,81 @@ const _C_PALETTE = [
 const _cpick = (i: number) => _C_PALETTE[Math.abs(i) % _C_PALETTE.length];
 
 // ── Sky Fort ──────────────────────────────────────────────────────────────────
+// Elevated platform on container stilts with perimeter walls and corner towers.
 export function gen_sky_fort(p: GenParams): Point3D[] {
-  const S       = p.scale ?? 1;
-  const elev    = p.elevation ?? 20;
+  const S    = p.scale ?? 1;
+  const elevM = p.elevation ?? 14;
+  const elev = Math.max(2, Math.round(elevM / _CH));  // convert metres → stacks
   const pts: Point3D[] = [];
 
-  const nSide   = Math.max(2, Math.round(S * 3)); // containers per wall side
-  const SIZE    = nSide * _CD;
-  const nStacks = Math.ceil(elev / _CH);
-  const floorY  = nStacks * _CH;
+  const nSide  = Math.max(2, Math.round(S * 3));  // containers per wall side
+  const SIZE   = nSide * _CD;                       // platform footprint (m)
+  const floorY = elev * _CH;                        // Y of platform base
 
-  // Stilt columns at corners and mid-edges
-  const stiltPos: [number,number,number][] = [
-    [0,          0,          0 ],
-    [SIZE,        0,          90],
-    [0,          SIZE,        90],
-    [SIZE,        SIZE,        0 ],
-    [SIZE/2,     0,          90],
-    [SIZE/2,     SIZE,        90],
-    [0,          SIZE/2,      0 ],
-    [SIZE,        SIZE/2,      0 ],
+  // 8 stilt columns: 4 corners inward by CD/2, 4 mid-edge inward by CD/2
+  const stilts: [number, number, number][] = [
+    [_CD/2,       _CD/2,      0 ],   // NW
+    [SIZE-_CD/2,  _CD/2,      0 ],   // NE
+    [_CD/2,       SIZE-_CD/2, 0 ],   // SW
+    [SIZE-_CD/2,  SIZE-_CD/2, 0 ],   // SE
+    [SIZE/2,      _CD/2,      90],   // N mid
+    [SIZE/2,      SIZE-_CD/2, 90],   // S mid
+    [_CD/2,       SIZE/2,     0 ],   // W mid
+    [SIZE-_CD/2,  SIZE/2,     0 ],   // E mid
   ];
-  for (let si = 0; si < stiltPos.length; si++) {
-    const [bx, bz, yaw] = stiltPos[si];
-    const cx = yaw === 0 ? bx - _CD/2 : bx;
-    const cz = yaw === 0 ? bz         : bz - _CD/2;
-    for (let st = 0; st < nStacks; st++)
-      pts.push({ x: cx, y: st * _CH, z: cz, yaw, scale: 1, name: _cpick(si + st) });
+  for (let si = 0; si < stilts.length; si++) {
+    const [sx, sz, syaw] = stilts[si];
+    for (let st = 0; st < elev; st++)
+      pts.push({ x: sx, y: st * _CH, z: sz, yaw: syaw, scale: 1, name: _cpick(si + st) });
   }
 
-  // Platform perimeter (N/S yaw=90, E/W yaw=0)
-  for (let i = 0; i < nSide; i++) {
-    const x = i * _CD + _CD/2;
-    pts.push({ x, y: floorY, z: -_CD/2,        yaw: 90, scale:1, name: _cpick(i)   });
-    pts.push({ x, y: floorY, z: SIZE + _CD/2,   yaw: 90, scale:1, name: _cpick(i+1) });
-  }
-  for (let i = 0; i < nSide; i++) {
-    const z = i * _CD + _CD/2;
-    pts.push({ x: -_CD/2,       y: floorY, z, yaw: 0, scale:1, name: _cpick(i+2) });
-    pts.push({ x: SIZE + _CD/2, y: floorY, z, yaw: 0, scale:1, name: _cpick(i+3) });
-  }
-  // Cross-brace mid-span
-  for (let i = 0; i < nSide; i++)
-    pts.push({ x: i*_CD+_CD/2, y: floorY, z: SIZE/2-_CD/2, yaw: 90, scale:1, name: _cpick(i+4) });
-
-  // Walls — 2 rows above platform
+  // Perimeter walls: 2 rows of containers standing upright around the platform edge
   for (let row = 0; row < 2; row++) {
-    const wy = floorY + _CH + row * _CH;
+    const wy = floorY + row * _CH;
     for (let i = 0; i < nSide; i++) {
-      const x = i * _CD + _CD/2;
-      pts.push({ x, y: wy, z: -_CD/2,        yaw: 90, scale:1, name: _cpick(i+row)   });
-      pts.push({ x, y: wy, z: SIZE + _CD/2,   yaw: 90, scale:1, name: _cpick(i+row+1) });
+      // N wall (z=0, running X)
+      pts.push({ x: i*_CD+_CD/2, y: wy, z: 0,    yaw: 90, scale:1, name: _cpick(i+row)   });
+      // S wall (z=SIZE, running X)
+      pts.push({ x: i*_CD+_CD/2, y: wy, z: SIZE,  yaw: 90, scale:1, name: _cpick(i+row+1) });
     }
     for (let i = 0; i < nSide; i++) {
-      const z = i * _CD + _CD/2;
-      pts.push({ x: -_CD/2,       y: wy, z, yaw: 0, scale:1, name: _cpick(i+row+2) });
-      pts.push({ x: SIZE + _CD/2, y: wy, z, yaw: 0, scale:1, name: _cpick(i+row+3) });
+      // W wall (x=0, running Z)
+      pts.push({ x: 0,    y: wy, z: i*_CD+_CD/2, yaw: 0, scale:1, name: _cpick(i+row+2) });
+      // E wall (x=SIZE, running Z)
+      pts.push({ x: SIZE, y: wy, z: i*_CD+_CD/2, yaw: 0, scale:1, name: _cpick(i+row+3) });
     }
   }
 
-  // Corner towers — L-shaped, 3 extra rows
+  // Corner towers: 3 extra rows at each corner (L-shaped pair per row)
+  const wallTop = floorY + 2 * _CH;
+  const corners: [number, number][] = [[0,0],[SIZE,0],[0,SIZE],[SIZE,SIZE]];
   for (let ci = 0; ci < 4; ci++) {
-    const [cx, cz] = [[0,0],[SIZE,0],[0,SIZE],[SIZE,SIZE]][ci];
+    const [cx, cz] = corners[ci];
+    const ox = cx === 0 ? _CD/2 : -_CD/2;   // inward X offset
+    const oz = cz === 0 ? _CD/2 : -_CD/2;   // inward Z offset
     for (let row = 0; row < 3; row++) {
-      const wy = floorY + _CH * 3 + row * _CH;
-      pts.push({ x: cx - _CD/2, y: wy, z: cz,          yaw: 0,  scale:1, name: "land_container_1a" });
-      pts.push({ x: cx,         y: wy, z: cz - _CD/2,  yaw: 90, scale:1, name: "land_container_1b" });
+      const wy = wallTop + row * _CH;
+      pts.push({ x: cx + ox, y: wy, z: cz,      yaw: 0,  scale:1, name: "land_container_1a" });
+      pts.push({ x: cx,      y: wy, z: cz + oz, yaw: 90, scale:1, name: "land_container_1b" });
     }
   }
 
-  // Barrel accents
-  const roofY = floorY + _CH * 5;
-  for (let i = 0; i < nSide; i++) {
-    const x = i * _CD + _CD/2;
-    pts.push({ x, y: roofY, z: SIZE/4,   name: "barrel_blue", yaw:0, scale:1 });
-    pts.push({ x, y: roofY, z: SIZE*3/4, name: "barrel_red",  yaw:0, scale:1 });
+  // Barrel accents on corner tower tops
+  const topY = wallTop + 3 * _CH;
+  for (let ci = 0; ci < 4; ci++) {
+    const cx = ci < 2 ? _CD/2 : SIZE - _CD/2;
+    const cz = ci % 2 === 0 ? _CD/2 : SIZE - _CD/2;
+    pts.push({ x: cx, y: topY, z: cz, name: ci % 2 === 0 ? "barrel_red" : "barrel_blue", yaw: 0, scale: 1 });
   }
 
   return applyLimit(pts, 1100);
 }
 
 // ── Container Pyramid (Ziggurat Monument) ─────────────────────────────────────
+// Stepped square pyramid: each tier shrinks by 1 container per side.
 export function gen_container_pyramid(p: GenParams): Point3D[] {
   const S     = p.scale ?? 1;
-  const tiers = Math.round(p.tiers ?? 5);
+  const tiers = Math.max(2, Math.round(p.tiers ?? 5));
   const pts: Point3D[] = [];
 
   const baseN = Math.max(3, Math.round(S * 4)); // containers per base edge
@@ -2540,91 +2522,95 @@ export function gen_container_pyramid(p: GenParams): Point3D[] {
     const oz   = -span / 2;
     const cname = TIER_COLORS[t % TIER_COLORS.length];
 
-    // N/S walls (yaw=90, running X)
+    // N/S walls: full width (yaw=90, running X) — covers corners
     for (let i = 0; i < n; i++) {
-      pts.push({ x: ox + i*_CD + _CD/2, y, z: oz,       yaw: 90, scale:1, name: cname });
+      pts.push({ x: ox + i*_CD + _CD/2, y, z: oz,        yaw: 90, scale:1, name: cname });
       pts.push({ x: ox + i*_CD + _CD/2, y, z: oz + span, yaw: 90, scale:1, name: cname });
     }
-    // E/W walls inner (yaw=0, running Z) — skip corners
+    // E/W walls: inner only (yaw=0, running Z) — N/S walls cap the corners
     for (let i = 1; i < n - 1; i++) {
-      pts.push({ x: ox,       y, z: oz + i*_CD + _CD/2, yaw: 0, scale:1, name: cname });
+      pts.push({ x: ox,        y, z: oz + i*_CD + _CD/2, yaw: 0, scale:1, name: cname });
       pts.push({ x: ox + span, y, z: oz + i*_CD + _CD/2, yaw: 0, scale:1, name: cname });
     }
-    // Diagonal corner fills (45°)
-    pts.push({ x: ox,        y, z: oz,        yaw:  45, scale:1, name: cname });
-    pts.push({ x: ox + span, y, z: oz,        yaw: -45, scale:1, name: cname });
-    pts.push({ x: ox,        y, z: oz + span, yaw: -45, scale:1, name: cname });
-    pts.push({ x: ox + span, y, z: oz + span, yaw:  45, scale:1, name: cname });
   }
 
   return applyLimit(pts, 1100);
 }
 
-// ── Container Drum Tower (Circular Monument) ──────────────────────────────────
+// ── Container Drum Tower (Circular Fort) ──────────────────────────────────────
+// Circular outer wall + inner keep + gate opening at South + crenellations.
 export function gen_container_drum(p: GenParams): Point3D[] {
   const S     = p.scale ?? 1;
-  const tiers = Math.round(p.tiers ?? 6);
+  const tiers = Math.max(2, Math.round(p.tiers ?? 5));
   const pts: Point3D[] = [];
 
-  const R         = S * 15;
-  const nPerRing  = Math.max(6, Math.floor(2 * Math.PI * R / _CD));
-  const Ri        = R * 0.5;
-  const nInner    = Math.max(4, Math.floor(2 * Math.PI * Ri / _CD));
+  const R        = S * 20;  // ~12 containers per ring — visibly round
+  const nPerRing = Math.max(8, Math.floor(2 * Math.PI * R / _CD));
+  const gateIdx  = Math.round(nPerRing / 2);  // gap at South (θ=π)
 
-  // Outer ring — full height
+  // Outer wall — full height, gate opening in bottom 2 tiers
   for (let tier = 0; tier < tiers; tier++) {
     const y = tier * _CH;
     for (let i = 0; i < nPerRing; i++) {
+      if (tier < 2 && i === gateIdx) continue;
       const angle = (i / nPerRing) * 2 * Math.PI;
       pts.push({
         x: R * Math.sin(angle), y,
         z: R * Math.cos(angle),
-        yaw: (angle * 180 / Math.PI) + 90, scale:1, name: _cpick(tier * 2 + i),
+        yaw: (angle * 180 / Math.PI) + 90, scale:1, name: _cpick(tier * 3 + i),
       });
     }
   }
-  // Crenellations — every other gap at top
+
+  // Crenellations at top (alternating gaps)
   for (let i = 0; i < nPerRing; i += 2) {
-    const angle = (i / nPerRing) * 2 * Math.PI;
+    const angle = ((i + 0.5) / nPerRing) * 2 * Math.PI;
     pts.push({
       x: R * Math.sin(angle), y: tiers * _CH,
       z: R * Math.cos(angle),
       yaw: (angle * 180 / Math.PI) + 90, scale:1, name: "land_container_1a",
     });
   }
-  // Inner ring — 2 tiers (offset by half step so gaps don't align)
-  for (let tier = 0; tier < 2; tier++) {
+
+  // Inner keep: 45% radius, 3 tiers, offset half-step
+  const Ri     = R * 0.45;
+  const nInner = Math.max(4, Math.floor(2 * Math.PI * Ri / _CD));
+  for (let tier = 0; tier < 3; tier++) {
+    const y = tier * _CH;
     for (let i = 0; i < nInner; i++) {
       const angle = ((i + 0.5) / nInner) * 2 * Math.PI;
       pts.push({
-        x: Ri * Math.sin(angle), y: tier * _CH,
+        x: Ri * Math.sin(angle), y,
         z: Ri * Math.cos(angle),
-        yaw: (angle * 180 / Math.PI) + 90, scale:1, name: _cpick(tier + i + 10),
+        yaw: (angle * 180 / Math.PI) + 90, scale:1, name: _cpick(i + tier + 10),
       });
     }
   }
-  // Barrel accents at cardinal points inside
+
+  // Barrel accents at cardinal points
   for (let i = 0; i < 4; i++) {
     const angle = (i / 4) * 2 * Math.PI;
     pts.push({
-      x: Ri * 0.6 * Math.sin(angle), y: tiers * _CH,
-      z: Ri * 0.6 * Math.cos(angle),
-      name: i % 2 === 0 ? "barrel_red" : "barrel_blue", yaw:0, scale:1,
+      x: Ri * 0.5 * Math.sin(angle), y: 0,
+      z: Ri * 0.5 * Math.cos(angle),
+      name: i % 2 === 0 ? "barrel_red" : "barrel_blue", yaw: 0, scale: 1,
     });
   }
 
   return applyLimit(pts, 1100);
 }
 
-// ── Container Helix Tower (Double Spiral) ─────────────────────────────────────
+// ── Container Helix Tower (Double Counter-Rotating Spiral) ────────────────────
+// Outer helix (CW) + inner counter-helix (CCW), each step rises CH*0.5 for
+// visible spiral without the 70% overlap solid-block problem.
 export function gen_container_helix(p: GenParams): Point3D[] {
   const S     = p.scale ?? 1;
-  const turns = p.turns ?? 4;
+  const turns = Math.max(1, p.turns ?? 3);
   const pts: Point3D[] = [];
 
-  const R           = S * 12;
-  const nPerTurn    = Math.max(6, Math.round(2 * Math.PI * R / _CD));
-  const risePerTurn = _CH * 2;
+  const R           = S * 15;  // rounder (~9 containers/turn)
+  const nPerTurn    = Math.max(6, Math.floor(2 * Math.PI * R / _CD));
+  const risePerStep = _CH * 0.5;  // 50% overlap — distinct spiral steps visible
   const total       = Math.round(nPerTurn * turns);
 
   // Outer helix (clockwise)
@@ -2632,79 +2618,89 @@ export function gen_container_helix(p: GenParams): Point3D[] {
     const angle = (i / nPerTurn) * 2 * Math.PI;
     pts.push({
       x: R * Math.sin(angle),
-      y: (i / nPerTurn) * risePerTurn,
+      y: i * risePerStep,
       z: R * Math.cos(angle),
       yaw: (angle * 180 / Math.PI) + 90, scale:1, name: _cpick(i),
     });
   }
 
-  // Inner counter-helix (half radius, opposite spin)
-  const Ri     = R * 0.55;
-  const nInner = Math.max(4, Math.round(2 * Math.PI * Ri / _CD));
+  // Inner counter-helix (CCW, 60% radius, half-step offset so it interleaves)
+  const Ri     = R * 0.6;
+  const nInner = Math.max(4, Math.floor(2 * Math.PI * Ri / _CD));
   const totI   = Math.round(nInner * turns);
   for (let i = 0; i < totI; i++) {
     const angle = -(i / nInner) * 2 * Math.PI;
     pts.push({
       x: Ri * Math.sin(angle),
-      y: (i / nInner) * risePerTurn + _CH,
+      y: i * risePerStep + risePerStep * 0.5,
       z: Ri * Math.cos(angle),
-      yaw: (angle * 180 / Math.PI) + 90, scale:1, name: _cpick(i + 3),
+      yaw: (angle * 180 / Math.PI) + 90, scale:1, name: _cpick(i + 4),
     });
   }
 
   return applyLimit(pts, 1100);
 }
 
-// ── Container Space Station (Sci-Fi Outpost) ───────────────────────────────────
+// ── Container Space Station (Sci-Fi Cruciform Outpost) ────────────────────────
+// Hollow square core + 4 arms + connecting ring at arm tips.
 export function gen_container_station(p: GenParams): Point3D[] {
   const S      = p.scale ?? 1;
   const armLen = Math.max(2, Math.round(S * 3));
   const pts: Point3D[] = [];
 
-  // Core — + shaped cross, 2 layers
-  for (let i = -1; i <= 1; i++) {
-    for (let layer = 0; layer < 2; layer++) {
-      const y = layer * _CH;
-      pts.push({ x: i * _CD, y, z: 0,      yaw: 0,  scale:1, name: _cpick(i + layer)     });
-      pts.push({ x: 0,       y, z: i * _CD, yaw: 90, scale:1, name: _cpick(i + layer + 2) });
+  // Hollow square core: 2 containers per side, 2 layers
+  const coreHalf = _CD;  // core extends ±coreHalf in X and Z
+  for (let layer = 0; layer < 2; layer++) {
+    const y = layer * _CH;
+    // N/S faces (running X, yaw=90)
+    for (let i = 0; i < 2; i++) {
+      const x = -coreHalf + i * _CD + _CD/2;
+      pts.push({ x, y, z: -coreHalf, yaw: 90, scale:1, name: _cpick(i + layer)     });
+      pts.push({ x, y, z:  coreHalf, yaw: 90, scale:1, name: _cpick(i + layer + 2) });
+    }
+    // E/W faces (running Z, yaw=0)
+    for (let i = 0; i < 2; i++) {
+      const z = -coreHalf + i * _CD + _CD/2;
+      pts.push({ x: -coreHalf, y, z, yaw: 0, scale:1, name: _cpick(i + layer + 4) });
+      pts.push({ x:  coreHalf, y, z, yaw: 0, scale:1, name: _cpick(i + layer + 6) });
     }
   }
 
-  // 4 arms (+X, -X, +Z, -Z)
-  const ARMS = [
+  // 4 arms: +X / -X (yaw=90, depth runs X) and +Z / -Z (yaw=0, depth runs Z)
+  const ARMS: { dx: number; dz: number; yaw: number }[] = [
     { dx:  1, dz: 0, yaw: 90 },
     { dx: -1, dz: 0, yaw: 90 },
-    { dx:  0, dz:  1, yaw: 0  },
-    { dx:  0, dz: -1, yaw: 0  },
+    { dx:  0, dz:  1, yaw: 0 },
+    { dx:  0, dz: -1, yaw: 0 },
   ];
-  const coreHalf = 1.5 * _CD;
+  const armStart = coreHalf + _CD/2;  // first arm container centre from origin
   for (let ai = 0; ai < 4; ai++) {
     const { dx, dz, yaw } = ARMS[ai];
     for (let i = 0; i < armLen; i++) {
-      const dist = coreHalf + i * _CD + _CD/2;
+      const dist = armStart + i * _CD;
       for (let layer = 0; layer < 2; layer++)
         pts.push({ x: dx * dist, y: layer * _CH, z: dz * dist, yaw, scale:1, name: _cpick(ai + i + layer) });
     }
   }
 
-  // Outer ring connecting arm tips
-  const ringR  = coreHalf + armLen * _CD;
-  const nRing  = Math.max(8, Math.round(2 * Math.PI * ringR / _CD));
+  // Outer ring at arm-tip radius
+  const ringR = armStart + armLen * _CD;
+  const nRing = Math.max(8, Math.round(2 * Math.PI * ringR / _CD));
   for (let i = 0; i < nRing; i++) {
     const angle = (i / nRing) * 2 * Math.PI;
     pts.push({
-      x: ringR * Math.sin(angle), y: _CH * 1.5,
+      x: ringR * Math.sin(angle), y: _CH * 0.5,
       z: ringR * Math.cos(angle),
       yaw: (angle * 180 / Math.PI) + 90, scale:1, name: _cpick(i),
     });
   }
 
-  // Barrel accents at arm tips and midpoints
-  const tipD = ringR + _CD/2;
+  // Barrel accents at arm tips
   for (let ai = 0; ai < 4; ai++) {
     const { dx, dz } = ARMS[ai];
-    pts.push({ x: dx * tipD, y: _CH * 3, z: dz * tipD, name: "barrel_red",  yaw:0, scale:1 });
-    pts.push({ x: dx * tipD * 0.6, y: _CH * 2, z: dz * tipD * 0.6, name: "barrel_blue", yaw:0, scale:1 });
+    const tipDist = ringR + _CD/2;
+    pts.push({ x: dx * tipDist, y: _CH * 1.5, z: dz * tipDist, name: "barrel_red",  yaw: 0, scale: 1 });
+    pts.push({ x: dx * tipDist * 0.6, y: _CH * 2, z: dz * tipDist * 0.6, name: "barrel_blue", yaw: 0, scale: 1 });
   }
 
   return applyLimit(pts, 1100);
