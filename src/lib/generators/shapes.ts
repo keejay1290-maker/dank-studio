@@ -1017,6 +1017,65 @@ export function gen_saturn(p: GenParams): Point3D[] {
 }
 
 /**
+ * 🚀 TIE FIGHTER (TIE/LN) — Imperial starfighter
+ *
+ * Reference: 6.4m wingspan (real scale). At S=1 → ~74m DayZ model.
+ * Anatomy:
+ *  • Twin hexagonal solar wings — 3-column IND10 hex (center=4 tall, sides=2 tall)
+ *  • Spherical cockpit pod — 3 rings of CNC4 at wing vertical centre
+ *  • Two arm pylons — parallel CNC4 drawWall bars connecting pod to wings
+ *
+ * Orientation: ship faces -Z (south). Wings extend ±X. IND10 panels at yaw=0
+ * so their flat face is visible from the front.
+ */
+export function gen_tie_fighter(p: GenParams): Point3D[] {
+  const pts: Point3D[] = [];
+  const S = Math.max(0.5, Math.min(2, p.scale ?? 1));
+
+  const IW = 9.012;  // IND10 face width
+  const IH = 9.758;  // IND10 face height
+
+  // Wing vertical centre = midpoint of a 4-panel-tall column
+  const wingCY = IH * 2;        // 19.516m
+  const ckR    = 6 * S;          // cockpit sphere radius
+  const wingR  = 28 * S;         // X from origin to wing centre column
+
+  // ── COCKPIT POD — 3-ring sphere approximation ───────────────────────────────
+  drawRing(pts, 0, wingCY,        0, ckR,       CNC4);  // equatorial band
+  drawRing(pts, 0, wingCY + 3*S,  0, ckR * 0.7, CNC4);  // upper cap
+  drawRing(pts, 0, wingCY - 3*S,  0, ckR * 0.7, CNC4);  // lower cap
+  // Forward viewport — TIE faces -Z
+  pts.push({ x: 0, y: wingCY, z: -(ckR + 0.5), name: "barrel_blue", yaw: 0, scale: 1 });
+  pts.push({ x: 0, y: wingCY, z: -(ckR + 1.5), name: "barrel_blue", yaw: 0, scale: 1 });
+
+  for (const side of [-1, 1] as const) {
+    const wX        = side * wingR;          // centre column X
+    const innerColX = side * (wingR - IW);   // column closer to origin
+
+    // ── WING PYLONS — two parallel CNC4 bars, top and bottom of arm ───────────
+    drawWall(pts, side * ckR, wingCY + 2*S, 0, innerColX, wingCY + 2*S, 0, CNC4);
+    drawWall(pts, side * ckR, wingCY - 2*S, 0, innerColX, wingCY - 2*S, 0, CNC4);
+
+    // ── SOLAR WINGS — hexagonal IND10 arrangement ─────────────────────────────
+    // Centre column: 4 panels spanning y = 0 → 4*IH
+    for (let r = 0; r < 4; r++) {
+      pts.push({ x: wX, y: r * IH, z: 0, yaw: 0, name: IND10 });
+    }
+    // Inner column (closer to fuselage): 2 panels at rows 1–2 (hex sides)
+    for (let r = 1; r <= 2; r++) {
+      pts.push({ x: innerColX, y: r * IH, z: 0, yaw: 0, name: IND10 });
+    }
+    // Outer column (farther from fuselage): 2 panels at rows 1–2
+    const outerColX = wX + side * IW;
+    for (let r = 1; r <= 2; r++) {
+      pts.push({ x: outerColX, y: r * IH, z: 0, yaw: 0, name: IND10 });
+    }
+  }
+
+  return applyLimit(pts, 1100);
+}
+
+/**
  * ✈️ X-WING STARFIGHTER (T-65B) — Full structural rewrite
  *
  * Reference: Real T-65B — 12.5m long, 11m wingspan (S-foils open).
@@ -1125,7 +1184,7 @@ export function gen_xwing(p: GenParams): Point3D[] {
   // 5 chord rows at step=12*S/5 with scale=step/2.324 → gapless chord.
   const chordLen = 12 * S;
   const nChord   = 5;
-  const chordSc  = +(chordLen / (nChord * 2.324)).toFixed(3);  // ~1.03 at S=1
+  const chordSc  = +(chordLen / (nChord * 2.300)).toFixed(3);  // CNC8 h=2.3m (not 2.324)
   const chordZ0  = -6 * S;
   const spanXs   = [4*S, 12*S, 20*S];  // inner / mid / outer span columns
 

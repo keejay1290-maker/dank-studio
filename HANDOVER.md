@@ -126,6 +126,8 @@ const IND10  = "staticobj_wall_indcnc_10";    // 9.012m × 9.758m industrial
 | **Death Star dish rewrite** | Concave bowl (panels face radially outward from sphere center), 10 rings, 8 spoke channels, colour graded CNC4→MILCNC→hull material, central `barrel_red` focal lens |
 | **Death Star trench** | Removed `_drawSphereRings` trench wall fill — open black band looks sharper than flat surface panels |
 | **Container builds full rewrite** | All 5 generators rebuilt with correct math: stilt positions inward CD/2, helix risePerStep=CH*0.5 (was CH*2/turn causing solid block), drum R=S*20 (12 containers — round), pyramid removes 45° diagonal corners, station uses hollow square core + correct arm direction yaw |
+| **TIE Fighter (new)** | New Sci-Fi build: 3-ring CNC4 cockpit pod at y=19.516m (wing vertical centre), twin hexagonal IND10 solar wings (3 columns: centre=4 tall, sides=2 tall), dual-bar CNC4 pylons — registry key `tie_fighter` |
+| **X-Wing chordSc fix** | Wing chord scale now uses CNC8 h=2.300m (was 2.324 CNC4 height) — gapless chord fill corrected |
 
 ### Container Mode — implementation notes
 - `containerify()` in `generators/index.ts` post-processes any `Point3D[]`

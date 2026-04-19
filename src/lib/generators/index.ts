@@ -87,6 +87,7 @@ const REGISTRY: Record<string, (p: GenParams) => Point3D[]> = {
   // ── Sci-Fi ──────────────────────────────────────────────────────────────
   death_star:              G.gen_death_star,
   atat_walker:             G.gen_atat_walker,
+  tie_fighter:             G.gen_tie_fighter,
   xwing:                   G.gen_xwing,
   millennium_falcon:       G.gen_millennium_falcon,
   star_destroyer:          G.gen_star_destroyer,

@@ -40,6 +40,14 @@ const SCI_FI: BuildEntry[] = [
     ],
   },
   {
+    key: "tie_fighter", label: "TIE Fighter", category: "Sci-Fi",
+    description: "Imperial TIE/LN starfighter — twin hexagonal IND10 solar panels, triple-ring cockpit pod, arm pylons",
+    defaultParams: { scale: 1 },
+    params: [
+      { key: "scale", label: "Scale", min: 0.5, max: 2, step: 0.5, default: 1 },
+    ],
+  },
+  {
     key: "xwing", label: "X-Wing Fighter", category: "Sci-Fi",
     description: "Rebel starfighter with S-foils open",
     defaultParams: { scale: 1 },
