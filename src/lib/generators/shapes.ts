@@ -14,8 +14,7 @@
 //  2. Add an import + case in generators/index.ts
 // ─────────────────────────────────────────────────────────────────────────────
 import type { Point3D } from "../types";
-import { drawWall, drawRing, drawRect, drawDisk, drawSphere, drawDome, drawSphereBudgeted, auditSphereCoverage, _drawSphereRings, applyLimit } from "../draw";
-import { getObjectDef } from "../constants";
+import { drawWall, drawRing, drawRect, drawDisk, drawSphere, drawDome, drawSphereBudgeted, _drawSphereRings, applyLimit } from "../draw";
 
 export type GenParams = Record<string, number>;
 
@@ -52,95 +51,86 @@ const IND10   = "staticobj_wall_indcnc_10";    // 9.012m × 9.758m industrial
  */
 export function gen_death_star(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const R     = Math.min(p.r ?? 35, 60);  // hard-clamped: >60 OOMs WebGL
-  const panelW = 9.012;              // IND10 face width (P3D-verified)
-
-  // ── Materials ─────────────────────────────────────────────────────────────
-  const MAT_MAIN  = IND10;           // main hull plates — 9.012×9.758 industrial
-  const MAT_BAND  = IND10;           // Must be same height to prevent gaps!
-  const MAT_TRENCH= CNC4;            // trench floor panels
-  const MAT_RIM   = STONE;           // trench wall rim — dark grey
+  const R      = Math.min(p.r ?? 35, 60);
+  const panelW = 9.012;   // IND10 face width
+  const panelH = 9.758;   // IND10 face height — ALL sphere panels must use this
+  const halfH  = panelH / 2;  // 4.879m
 
   // ── Equatorial trench ─────────────────────────────────────────────────────
-  const trenchPhi   = Math.PI / 2;
-  const trenchHalf  = 0.22;          // ±12.6° → 15.4m wide at R=35 — clear dark band
-  const trenchDepth = 15.0;         // 15m deep recession
+  const trenchPhi  = Math.PI / 2;
+  const trenchHalf = 0.22;   // ±12.6° → 15.4m wide band at R=35
+  const trenchDepth = 12;    // inner surface radius = R - trenchDepth
 
   // ── Superlaser dish ───────────────────────────────────────────────────────
   const dishPhi   = Math.PI * 0.39;
   const dishTheta = Math.PI * 0.55;
-  const dishCone  = 0.48;           // ~27.5° → 30m diameter dish on 70m sphere
+  const dishCone  = 0.48;
 
   const dcx = Math.sin(dishPhi) * Math.cos(dishTheta);
   const dcy = Math.cos(dishPhi);
   const dcz = Math.sin(dishPhi) * Math.sin(dishTheta);
 
-  // ── Base sphere — Built explicitly bounded by the trench gap ─────────────
-  const panelH = getObjectDef(MAT_MAIN)?.height ?? 9.758;
-  const HULL_HALF_H = panelH / 2;
-
-  // North hemisphere (North Pole down to the top edge of trench)
-  const arcN = trenchPhi - trenchHalf;
-  // Ring density adapts with R so panel count stays under budget at high scale
+  // ── Ring density — scales with R to stay under panel budget ───────────────
   const ringDensity = Math.min(1.6, 0.75 + Math.max(0, R - 35) * 0.028);
-  const nRingsN = Math.max(3, Math.round((arcN * R) / (panelH * ringDensity)));
 
-  // South hemisphere (Bottom edge of trench down to South Pole)
-  const arcS = Math.PI - (trenchPhi + trenchHalf);
-  const nRingsS = Math.max(3, Math.round((arcS * R) / (panelH * ringDensity)));
-
+  // ── North hemisphere (phi 0 → trenchPhi-trenchHalf) ──────────────────────
+  const arcN    = trenchPhi - trenchHalf;
+  const nRingsN = Math.max(4, Math.round((arcN * R) / (panelH * ringDensity)));
   const baseSphere: Point3D[] = [];
-  
-  // North cap
-  baseSphere.push({ x: 0, y: R + R - HULL_HALF_H, z: 0, yaw: 0, pitch: -90, name: MAT_MAIN });
-  _drawSphereRings(baseSphere, 0, R, 0, R, 0, arcN, nRingsN, panelW, HULL_HALF_H, MAT_MAIN);
-  
-  // South half
-  _drawSphereRings(baseSphere, 0, R, 0, R, trenchPhi + trenchHalf, Math.PI, nRingsS, panelW, HULL_HALF_H, MAT_MAIN);
-  // South cap
-  baseSphere.push({ x: 0, y: R - R - HULL_HALF_H, z: 0, yaw: 0, pitch: 90,  name: MAT_MAIN });
+  baseSphere.push({ x: 0, y: R + R - halfH, z: 0, yaw: 0, pitch: -90, name: IND10 }); // N pole cap
+  _drawSphereRings(baseSphere, 0, R, 0, R, 0, arcN, nRingsN, panelW, halfH, IND10);
 
+  // ── South hemisphere (phi trenchPhi+trenchHalf → π) ──────────────────────
+  // _drawSphereRings starts one ring-step PAST phiStart, leaving a missing band
+  // just south of the trench. Plug it with an explicit boundary ring first.
+  const arcS    = Math.PI - (trenchPhi + trenchHalf);
+  const nRingsS = Math.max(4, Math.round((arcS * R) / (panelH * ringDensity)));
+  {
+    const phi  = trenchPhi + trenchHalf + 0.015;   // one thin step south of trench wall
+    const sinP = Math.sin(phi), cosP = Math.cos(phi);
+    const ringR = R * sinP;
+    const circ  = 2 * Math.PI * ringR;
+    const nP    = Math.max(4, Math.ceil(circ / (panelW * 0.98)));
+    const sc    = (circ / nP) / panelW;
+    const pitch = (phi - Math.PI / 2) * 180 / Math.PI;
+    for (let j = 0; j < nP; j++) {
+      const theta = (j + 0.5) * (2 * Math.PI / nP);
+      baseSphere.push({
+        x: ringR * Math.cos(theta), y: R + R * cosP - halfH, z: ringR * Math.sin(theta),
+        yaw:   Math.atan2(ringR * Math.cos(theta), ringR * Math.sin(theta)) * 180 / Math.PI,
+        pitch: +pitch.toFixed(2),
+        scale: Math.abs(sc - 1) > 0.005 ? +sc.toFixed(4) : undefined,
+        name: IND10,
+      });
+    }
+  }
+  _drawSphereRings(baseSphere, 0, R, 0, R, trenchPhi + trenchHalf, Math.PI, nRingsS, panelW, halfH, IND10);
+  baseSphere.push({ x: 0, y: R - R - halfH, z: 0, yaw: 0, pitch: 90, name: IND10 }); // S pole cap
+
+  // ── Carve dish from sphere — all remaining panels use IND10 ───────────────
   for (const panel of baseSphere) {
-    // Reconstruct normal to carve the dish and assign band colors
-    const dx = panel.x;
-    const dy = panel.y - R + HULL_HALF_H; 
-    const dz = panel.z;
-    const len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    const dx  = panel.x, dy = panel.y - R + halfH, dz = panel.z;
+    const len = Math.sqrt(dx*dx + dy*dy + dz*dz);
     if (len < 0.001) { pts.push(panel); continue; }
-    
-    // Latitude (phi from north pole)
-    const ny = dy / len;
-    const phi = Math.acos(Math.max(-1, Math.min(1, ny)));
-
-    // Skip dish region
-    const nx = dx / len, nz = dz / len;
-    const dot = nx * dcx + ny * dcy + nz * dcz;
-    const dishAngle = Math.acos(Math.max(-1, Math.min(1, dot)));
-    if (dishAngle < dishCone) continue;
-
-    // Material banding: darker plates in latitude rings
-    const bandIdx = Math.floor((phi / Math.PI) * 12);
-    const nearTrench = Math.abs(phi - trenchPhi) < trenchHalf + 0.05;
-    const mat = nearTrench ? MAT_RIM : (bandIdx % 2 === 0 ? MAT_MAIN : MAT_BAND);
-
-    pts.push({ ...panel, name: mat });
+    const nx = dx/len, ny = dy/len, nz = dz/len;
+    const dot = nx*dcx + ny*dcy + nz*dcz;
+    if (Math.acos(Math.max(-1, Math.min(1, dot))) < dishCone) continue;
+    pts.push(panel);  // IND10 throughout — no STONE to break height matching
   }
 
-  // ── Superlaser Dish — concave bowl with 8 spoke tributary channels ────────
-  // Each panel faces radially outward from the SPHERE centre (not the dish axis)
-  // giving the true concave bowl silhouette. 8 spoke gaps reveal the channels.
+  // ── Superlaser Dish — concave bowl, 10 rings, 8 spoke gaps ───────────────
+  // CNC4 inner panels sit 3.7m below surface (height mismatch offset creates
+  // genuine concavity). MILCNC mid = 2.5m below. IND10 outer = flush hull.
+  // All use panelH/2 (IND10 halfH) so the depth gradient is intentional.
   {
-    // Orthonormal tangent basis perpendicular to dish axis d̂
     let ux: number, uy: number, uz: number;
     if (Math.abs(dcy) < 0.99) {
-      const len = Math.sqrt(dcz * dcz + dcx * dcx);
-      ux = dcz / len; uy = 0; uz = -dcx / len;
-    } else {
-      ux = 1; uy = 0; uz = 0;
-    }
-    const vx = dcy * uz - dcz * uy;
-    const vy = dcz * ux - dcx * uz;
-    const vz = dcx * uy - dcy * ux;
+      const len = Math.sqrt(dcz*dcz + dcx*dcx);
+      ux = dcz/len; uy = 0; uz = -dcx/len;
+    } else { ux = 1; uy = 0; uz = 0; }
+    const vx = dcy*uz - dcz*uy;
+    const vy = dcz*ux - dcx*uz;
+    const vz = dcx*uy - dcy*ux;
 
     const nDishRings = 10;
     const nSpokes    = 8;
@@ -151,10 +141,9 @@ export function gen_death_star(p: GenParams): Point3D[] {
       const t     = ri / nDishRings;
 
       if (ri === 0) {
-        // Central focus lens
         const phiC = Math.acos(Math.max(-1, Math.min(1, dcy)));
         pts.push({
-          x: R * dcx, y: R + R * dcy - panelH / 2, z: R * dcz,
+          x: R * dcx, y: R + R * dcy - halfH, z: R * dcz,
           yaw:   +(Math.atan2(dcx, dcz) * 180 / Math.PI).toFixed(2),
           pitch: +((phiC - Math.PI / 2) * 180 / Math.PI).toFixed(2),
           name: "barrel_red",
@@ -162,8 +151,8 @@ export function gen_death_star(p: GenParams): Point3D[] {
         continue;
       }
 
-      // Color: dark CNC4 inner → MILCNC mid → hull grey outer → stone rim
-      const mat = t < 0.35 ? CNC4 : t < 0.65 ? MILCNC : t < 0.90 ? MAT_MAIN : MAT_RIM;
+      // Concave gradient: CNC4 inner (deeply recessed) → MILCNC mid → IND10 outer (flush)
+      const mat = t < 0.35 ? CNC4 : t < 0.70 ? MILCNC : IND10;
 
       const sinAl = Math.sin(alpha), cosAl = Math.cos(alpha);
       const ringR = R * sinAl;
@@ -173,25 +162,19 @@ export function gen_death_star(p: GenParams): Point3D[] {
       const step  = (2 * Math.PI) / nP;
 
       for (let j = 0; j < nP; j++) {
-        const az = (j + 0.5) * step;
-
-        // Spoke channel gaps on intermediate rings
+        const az  = (j + 0.5) * step;
         if (ri > 1 && ri < nDishRings) {
-          const azN = ((az % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-          const nearest = Math.round(azN * nSpokes / (2 * Math.PI)) * (2 * Math.PI / nSpokes);
+          const azN     = ((az % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+          const nearest = Math.round(azN * nSpokes / (2*Math.PI)) * (2*Math.PI / nSpokes);
           if (Math.abs(azN - nearest) < spokeHalf) continue;
         }
-
-        // Dish-local direction → world space
         const cosA = Math.cos(az), sinA = Math.sin(az);
-        const nx = cosAl * dcx + sinAl * (cosA * ux + sinA * vx);
-        const ny = cosAl * dcy + sinAl * (cosA * uy + sinA * vy);
-        const nz = cosAl * dcz + sinAl * (cosA * uz + sinA * vz);
-
-        // Panel faces radially outward from sphere centre (concave bowl)
+        const nx   = cosAl*dcx + sinAl*(cosA*ux + sinA*vx);
+        const ny   = cosAl*dcy + sinAl*(cosA*uy + sinA*vy);
+        const nz   = cosAl*dcz + sinAl*(cosA*uz + sinA*vz);
         const phiW = Math.acos(Math.max(-1, Math.min(1, ny)));
         pts.push({
-          x: R * nx, y: R + R * ny - panelH / 2, z: R * nz,
+          x: R*nx, y: R + R*ny - halfH, z: R*nz,
           yaw:   +(Math.atan2(nx, nz) * 180 / Math.PI).toFixed(2),
           pitch: +((phiW - Math.PI / 2) * 180 / Math.PI).toFixed(2),
           scale: Math.abs(sc - 1) > 0.005 ? +sc.toFixed(4) : undefined,
@@ -200,61 +183,38 @@ export function gen_death_star(p: GenParams): Point3D[] {
       }
     }
 
-    // Dish rim ring — raised lip at dishCone boundary
+    // Dish rim — IND10 (flush with hull, no STONE height mismatch)
     {
       const sinC = Math.sin(dishCone), cosC = Math.cos(dishCone);
       const rimCirc = 2 * Math.PI * R * sinC;
-      const nRim = Math.max(8, Math.floor(rimCirc / panelW));
-      const rimSc = (rimCirc / nRim) / panelW;
+      const nRim    = Math.max(8, Math.floor(rimCirc / panelW));
+      const rimSc   = (rimCirc / nRim) / panelW;
       for (let j = 0; j < nRim; j++) {
-        const az = (j + 0.5) * (2 * Math.PI / nRim);
+        const az   = (j + 0.5) * (2 * Math.PI / nRim);
         const cosA = Math.cos(az), sinA = Math.sin(az);
-        const nx = cosC * dcx + sinC * (cosA * ux + sinA * vx);
-        const ny = cosC * dcy + sinC * (cosA * uy + sinA * vy);
-        const nz = cosC * dcz + sinC * (cosA * uz + sinA * vz);
+        const nx   = cosC*dcx + sinC*(cosA*ux + sinA*vx);
+        const ny   = cosC*dcy + sinC*(cosA*uy + sinA*vy);
+        const nz   = cosC*dcz + sinC*(cosA*uz + sinA*vz);
         const phiW = Math.acos(Math.max(-1, Math.min(1, ny)));
         pts.push({
-          x: R * nx, y: R + R * ny - panelH / 2, z: R * nz,
+          x: R*nx, y: R + R*ny - halfH, z: R*nz,
           yaw:   +(Math.atan2(nx, nz) * 180 / Math.PI).toFixed(2),
           pitch: +((phiW - Math.PI / 2) * 180 / Math.PI).toFixed(2),
           scale: Math.abs(rimSc - 1) > 0.005 ? +rimSc.toFixed(4) : undefined,
-          name: MAT_RIM,
+          name: IND10,
         });
       }
     }
   }
 
-  // ── Trench floor — recessed inner ring at trenchDepth below hull ──────────
+  // ── Trench inner surface — IND10 rings at floorR ──────────────────────────
+  // Uses same halfH (IND10) so Y positioning is consistent with sphere panels.
+  // 4 rings spanning the trench phi-band give the recessed canyon walls.
   {
     const floorR = R - trenchDepth;
-    const nFloorRings = 4;
-    for (let ti = 0; ti < nFloorRings; ti++) {
-      const phi  = trenchPhi - trenchHalf + (ti / (nFloorRings - 1)) * trenchHalf * 2;
-      const sinP = Math.sin(phi), cosP = Math.cos(phi);
-      const circ = 2 * Math.PI * floorR * sinP;
-      const nP   = Math.max(6, Math.floor(circ / panelW));
-      const sc   = (circ / nP) / panelW;
-      for (let j = 0; j < nP; j++) {
-        const theta = (j + 0.5) * (2 * Math.PI / nP);
-        const x = floorR * sinP * Math.cos(theta);
-        const z = floorR * sinP * Math.sin(theta);
-        pts.push({
-          x, y: R + floorR * cosP - panelH / 2, z,
-          yaw:   +(Math.atan2(x, z) * 180 / Math.PI).toFixed(2),
-          pitch: +((phi - Math.PI / 2) * 180 / Math.PI).toFixed(2),
-          scale: Math.abs(sc - 1) > 0.005 ? +sc.toFixed(4) : undefined,
-          name: MAT_TRENCH,
-        });
-      }
-    }
-  }
-
-  // Gap audit — only runs when p.debug=1 to avoid blocking the UI on every generate
-  if (p.debug) {
-    const audit = auditSphereCoverage(pts, 0, R, 0, R, 0.08, 2000);
-    const tag = audit.coverage > 0.98 ? "PASS" : audit.coverage > 0.92 ? "WARN" : "FAIL";
-    // eslint-disable-next-line no-console
-    console.log(`[death_star audit] ${tag} — coverage ${(audit.coverage*100).toFixed(1)}% worst=${(audit.maxGapAngle*180/Math.PI).toFixed(1)}° panels=${pts.length}`);
+    _drawSphereRings(pts, 0, R, 0, floorR,
+      trenchPhi - trenchHalf, trenchPhi + trenchHalf,
+      4, panelW, halfH, CNC8);
   }
 
   return applyLimit(pts, 1150);
@@ -1040,13 +1000,19 @@ export function gen_tie_fighter(p: GenParams): Point3D[] {
   const ckR    = 6 * S;          // cockpit sphere radius
   const wingR  = 28 * S;         // X from origin to wing centre column
 
-  // ── COCKPIT POD — 3-ring sphere approximation ───────────────────────────────
-  drawRing(pts, 0, wingCY,        0, ckR,       CNC4);  // equatorial band
-  drawRing(pts, 0, wingCY + 3*S,  0, ckR * 0.7, CNC4);  // upper cap
-  drawRing(pts, 0, wingCY - 3*S,  0, ckR * 0.7, CNC4);  // lower cap
-  // Forward viewport — TIE faces -Z
+  // ── COCKPIT POD — MILCNC sphere (4.052m × 4.744m panels) ───────────────────
+  const ckPW   = 4.052;   // MILCNC face width
+  const ckPH   = 4.744;   // MILCNC face height
+  const ckHalfH = ckPH / 2;
+  const nCkRings = Math.max(4, Math.round((Math.PI * ckR) / (ckPH * 0.75)));
+  // North pole cap
+  pts.push({ x: 0, y: wingCY + ckR - ckHalfH, z: 0, yaw: 0, pitch: -90, name: MILCNC });
+  // South pole cap
+  pts.push({ x: 0, y: wingCY - ckR - ckHalfH, z: 0, yaw: 0, pitch:  90, name: MILCNC });
+  // Latitude rings
+  _drawSphereRings(pts, 0, wingCY, 0, ckR, 0, Math.PI, nCkRings, ckPW, ckHalfH, MILCNC);
+  // Forward viewport barrel accent — TIE faces -Z
   pts.push({ x: 0, y: wingCY, z: -(ckR + 0.5), name: "barrel_blue", yaw: 0, scale: 1 });
-  pts.push({ x: 0, y: wingCY, z: -(ckR + 1.5), name: "barrel_blue", yaw: 0, scale: 1 });
 
   for (const side of [-1, 1] as const) {
     const wX        = side * wingR;          // centre column X
@@ -1667,7 +1633,7 @@ export function gen_pyramid(p: GenParams): Point3D[] {
 
     // Corner cap panels at 45° — fill the diagonal notch at each corner
     if (hw >= PW * 0.5) {
-      const cs = +(Math.min(0.7, hw / (PW * 1.2))).toFixed(3);
+      const cs = +(Math.min(1.0, hw / (PW * 1.2))).toFixed(3);
       pts.push({ x: -hw, y, z: -hw, yaw: 225, scale: cs, name: STONE2 });
       pts.push({ x:  hw, y, z: -hw, yaw: 135, scale: cs, name: STONE2 });
       pts.push({ x:  hw, y, z:  hw, yaw:  45, scale: cs, name: STONE2 });
@@ -1999,9 +1965,16 @@ export function gen_parthenon(p: GenParams): Point3D[] {
   const spZ = (2 * halfZ) / (nSide  - 1);       // ≈ 3.5m at S=1
 
   // ── 1. STYLOBATE — 3-step marble platform ────────────────────────────────────
-  for (let step = 0; step < 3; step++) {
-    const extra = (2 - step) * spX * 0.4;
-    drawRect(pts, 0, step * STONE2_H, 0, halfX + extra, halfZ + extra, STONE2);
+  for (let st = 0; st < 3; st++) {
+    const extra = (2 - st) * spX * 0.4;
+    const cx = halfX + extra;
+    const cz = halfZ + extra;
+    const sy = st * STONE2_H;
+    drawRect(pts, 0, sy, 0, cx, cz, STONE2);
+    pts.push({ x: -cx, y: sy, z: -cz, yaw: 225, name: STONE2 });
+    pts.push({ x:  cx, y: sy, z: -cz, yaw: 135, name: STONE2 });
+    pts.push({ x:  cx, y: sy, z:  cz, yaw:  45, name: STONE2 });
+    pts.push({ x: -cx, y: sy, z:  cz, yaw: 315, name: STONE2 });
   }
   const platY = 3 * STONE2_H;  // column base Y
 
@@ -2023,7 +1996,14 @@ export function gen_parthenon(p: GenParams): Point3D[] {
 
   // ── 3. ENTABLATURE — 2 rows of STONE2 capping the colonnade ──────────────────
   for (let row = 0; row < 2; row++) {
-    drawRect(pts, 0, colTop + row * STONE2_H, 0, halfX + S, halfZ + S, STONE2);
+    const ey = colTop + row * STONE2_H;
+    const ex = halfX + S;
+    const ez = halfZ + S;
+    drawRect(pts, 0, ey, 0, ex, ez, STONE2);
+    pts.push({ x: -ex, y: ey, z: -ez, yaw: 225, name: STONE2 });
+    pts.push({ x:  ex, y: ey, z: -ez, yaw: 135, name: STONE2 });
+    pts.push({ x:  ex, y: ey, z:  ez, yaw:  45, name: STONE2 });
+    pts.push({ x: -ex, y: ey, z:  ez, yaw: 315, name: STONE2 });
   }
   const entabY = colTop + 2 * STONE2_H;
 
@@ -2050,139 +2030,341 @@ export function gen_parthenon(p: GenParams): Point3D[] {
 
 /**
  * 🌉 ARC DE TRIOMPHE
+ * Paris, 1836. 50m tall × 45m wide × 22m deep limestone triumphal arch.
+ * Main arch (N/S faces): 29m tall, 14.6m wide semicircular opening.
+ * Secondary arches (E/W faces): 18.7m tall, 8.5m wide.
+ * Attic with relief panels above arches on all 4 faces.
  */
 export function gen_arc_triomphe(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const S  = Math.max(0.5, p.scale ?? 1);
-  const hw = 13*S, hd = 7*S, h = 50*S, archR = 10*S;
+  const S = Math.max(0.5, p.scale ?? 1);
 
-  // 4 solid piers
-  for (let y = 0; y <= h; y += 4*S) {
-    drawWall(pts, -hw, y, -hd, -hw+6*S, y, -hd, STONE2);
-    drawWall(pts,  hw-6*S, y, -hd,  hw, y, -hd, STONE2);
-    drawWall(pts, -hw, y,  hd, -hw+6*S, y,  hd, STONE2);
-    drawWall(pts,  hw-6*S, y,  hd,  hw, y,  hd, STONE2);
-    drawWall(pts, -hw, y, -hd, -hw, y, -hd+4*S, STONE2);
-    drawWall(pts, -hw, y,  hd-4*S, -hw, y, hd, STONE2);
-    drawWall(pts,  hw, y, -hd,  hw, y, -hd+4*S, STONE2);
-    drawWall(pts,  hw, y,  hd-4*S,  hw, y,  hd, STONE2);
+  // Real dimensions (metres → units at S=1)
+  const hw  = 22.5 * S;   // half-width  (45m total, N/S face width)
+  const hd  = 11   * S;   // half-depth  (22m total, E/W face width)
+  const h   = 50   * S;   // total height
+
+  // Main arch (on N/S faces): radius=7.3m, spring at 22m
+  const mAR     = 7.3  * S;
+  const mSpring = 22   * S;
+  const mHalf   = 7.3  * S;   // half opening width
+
+  // Secondary arch (on E/W faces): radius=4.25m, spring at 14.5m
+  const sAR     = 4.25 * S;
+  const sSpring = 14.5 * S;
+  const sHalf   = 4.25 * S;   // half opening width
+
+  const rowStep = 1.572 * S;  // STONE2 panel height
+
+  for (let y = 0; y < h; y += rowStep) {
+    // ── N face (z = -hd) and S face (z = +hd) ──────────────────────────
+    if (y < mSpring) {
+      // Below main arch spring: two solid piers, open centre
+      drawWall(pts, -hw, y, -hd, -mHalf, y, -hd, STONE2);
+      drawWall(pts,  mHalf, y, -hd,  hw, y, -hd, STONE2);
+      drawWall(pts, -hw, y,  hd, -mHalf, y,  hd, STONE2);
+      drawWall(pts,  mHalf, y,  hd,  hw, y,  hd, STONE2);
+    } else {
+      // In/above arch zone
+      const dy   = y - mSpring;
+      const archX = dy < mAR ? Math.sqrt(mAR * mAR - dy * dy) : 0;
+      if (archX > 0.5) {
+        // Arch sides still cut out
+        drawWall(pts, -hw, y, -hd, -archX, y, -hd, STONE2);
+        drawWall(pts,  archX, y, -hd,  hw, y, -hd, STONE2);
+        drawWall(pts, -hw, y,  hd, -archX, y,  hd, STONE2);
+        drawWall(pts,  archX, y,  hd,  hw, y,  hd, STONE2);
+      } else {
+        // Above arch crown: full attic wall
+        drawWall(pts, -hw, y, -hd, hw, y, -hd, STONE2);
+        drawWall(pts, -hw, y,  hd, hw, y,  hd, STONE2);
+      }
+    }
+
+    // ── E face (x = +hw) and W face (x = -hw) ──────────────────────────
+    if (y < sSpring) {
+      drawWall(pts, -hw, y, -hd, -hw, y, -sHalf, STONE2);
+      drawWall(pts, -hw, y,  sHalf, -hw, y,  hd, STONE2);
+      drawWall(pts,  hw, y, -hd,  hw, y, -sHalf, STONE2);
+      drawWall(pts,  hw, y,  sHalf,  hw, y,  hd, STONE2);
+    } else {
+      const dy   = y - sSpring;
+      const archZ = dy < sAR ? Math.sqrt(sAR * sAR - dy * dy) : 0;
+      if (archZ > 0.5) {
+        drawWall(pts, -hw, y, -hd, -hw, y, -archZ, STONE2);
+        drawWall(pts, -hw, y,  archZ, -hw, y,  hd, STONE2);
+        drawWall(pts,  hw, y, -hd,  hw, y, -archZ, STONE2);
+        drawWall(pts,  hw, y,  archZ,  hw, y,  hd, STONE2);
+      } else {
+        drawWall(pts, -hw, y, -hd, -hw, y, hd, STONE2);
+        drawWall(pts,  hw, y, -hd,  hw, y, hd, STONE2);
+      }
+    }
   }
-  // Main arch (N-S)
-  for (let s = 0; s <= 10; s++) {
-    const a = (s/10)*Math.PI;
-    const ax = Math.cos(a)*archR, ay = h*0.4 + Math.sin(a)*archR;
-    pts.push({ x:ax, y:ay, z:-hd-0.5*S, yaw:0, name: STONE2 });
-    pts.push({ x:ax, y:ay, z: hd+0.5*S, yaw:180, name: STONE2 });
+
+  // ── Arch voussoir crowns (intrados panels facing inward) ──────────────
+  // Main arches — N and S faces
+  const mSteps = 14;
+  for (let s = 0; s <= mSteps; s++) {
+    const a = (s / mSteps) * Math.PI;
+    const ax = Math.cos(a) * mAR;
+    const ay = mSpring + Math.sin(a) * mAR;
+    pts.push({ x: ax, y: ay, z: -hd - 0.5*S, yaw: 180, name: STONE2 });
+    pts.push({ x: ax, y: ay, z:  hd + 0.5*S, yaw: 0,   name: STONE2 });
   }
-  // Attic
-  drawRect(pts, 0, h, 0, hw, hd, STONE2);
-  return pts;
+  // Secondary arches — E and W faces
+  const sSteps = 10;
+  for (let s = 0; s <= sSteps; s++) {
+    const a = (s / sSteps) * Math.PI;
+    const az = Math.cos(a) * sAR;
+    const ay = sSpring + Math.sin(a) * sAR;
+    pts.push({ x: -hw - 0.5*S, y: ay, z: az, yaw: -90, name: STONE2 });
+    pts.push({ x:  hw + 0.5*S, y: ay, z: az, yaw:  90, name: STONE2 });
+  }
+
+  // ── Attic cap ─────────────────────────────────────────────────────────
+  drawRect(pts, 0, h, 0, hw, hd, CNC8);
+
+  return applyLimit(pts, 1100);
 }
 
 /**
  * 🐚 SYDNEY OPERA HOUSE
+ * Sydney, 1973. Architect: Jørn Utzon. Iconic sail-shell roof over Bennelong Point.
+ * Concert Hall (west) peaks at 67m; Opera Theatre (east) at 59m.
+ * Shells are barrel vaults running along Z; each rib panel faces radially outward.
+ * Each vault fans from full size at front (+Z) to nothing at rear (-Z).
  */
 export function gen_sydney_opera(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
   const S = Math.max(0.5, p.scale ?? 1);
 
-  // Podium
-  for (let y = 0; y <= 6*S; y += 3*S) drawRect(pts, 0, y, 0, 50*S, 30*S, CNC8);
+  // 3-tier stepped podium
+  for (let tier = 0; tier < 3; tier++) {
+    drawRect(pts, 0, tier*2.5*S, 0, (45-tier*4)*S, (22-tier*3)*S, CNC8);
+  }
+  const podTop = 7.5*S;
 
-  // Shells — Concert Hall (left, x<0), 3 shells
-  const shells = [
-    { peakY:67,xSpan:25,zStart:-15,zEnd:18,zStep:5,xOff:-20 },
-    { peakY:45,xSpan:18,zStart:-10,zEnd:14,zStep:5,xOff:-15 },
-    { peakY:30,xSpan:12,zStart:-5, zEnd:9, zStep:4,xOff:-10 },
-    // Opera Theatre (right)
-    { peakY:59,xSpan:22,zStart:-12,zEnd:16,zStep:5,xOff:18 },
-    { peakY:40,xSpan:16,zStart:-8, zEnd:11,zStep:4,xOff:14 },
-  ];
-  for (const sh of shells) {
-    for (let z = sh.zStart*S; z <= sh.zEnd*S; z += sh.zStep*S) {
-      for (let s = 0; s <= 12; s++) {
-        const a  = (s/12)*Math.PI;
-        const ax = (sh.xOff + Math.cos(a)*sh.xSpan)*S;
-        const ay = 6*S + Math.sin(a)*sh.peakY*S;
-        pts.push({ x:ax, y:ay, z, yaw:0, name: CNC8 });
+  // Vault helper: one sail shell as barrel-vault ribs running along Z.
+  // Each rib is an arc in the XY plane; panels face radially outward from the arch centre.
+  // xMid: arch centre X  xHalf: half-span at full size  peakH: apex height
+  // zBack: rear (narrow end)  zFront: front (full-size end)
+  function drawVault(xMid: number, xHalf: number, peakH: number, zBack: number, zFront: number) {
+    const range  = zFront - zBack;
+    const nSlice = Math.max(4, Math.round(range / (4.5*S)));
+    for (let i = 0; i <= nSlice; i++) {
+      const t    = i / nSlice;
+      const z    = zBack + t * range;
+      const sc   = Math.sqrt(t);                   // fan taper: 0 at rear → 1 at front
+      const span = xHalf * sc;
+      const apex = peakH * sc;
+      if (span < 2 || apex < 2) continue;
+      const nRib = Math.max(6, Math.round((span + apex) * Math.PI * 0.5 / (8*S)));
+      for (let s = 0; s <= nRib; s++) {
+        const a   = (s / nRib) * Math.PI;          // 0=right base, π/2=apex, π=left base
+        const cx  = Math.cos(a);                   // outward X component
+        const cy  = Math.sin(a);                   // outward Y component (up)
+        // Panel faces radially outward from arch centre in XY plane
+        const yaw   = Math.atan2(cx, 1e-9) * 180 / Math.PI;           // ±90
+        const pitch = -Math.atan2(cy, Math.abs(cx) + 1e-9) * 180 / Math.PI;
+        pts.push({
+          x: xMid + cx * span,
+          y: podTop + cy * apex,
+          z,
+          yaw,
+          pitch: Math.abs(pitch) > 1 ? pitch : undefined,
+          name: CNC8,
+        });
       }
     }
   }
-  return pts;
+
+  // Concert Hall (west, x < 0) — 3 nested vaults, tallest outermost
+  drawVault(-22*S, 20*S, 33*S, -20*S,  20*S);
+  drawVault(-14*S, 13*S, 22*S, -13*S,  13*S);
+  drawVault( -8*S,  7*S, 12*S,  -7*S,   7*S);
+
+  // Opera Theatre (east, x > 0) — 2 nested vaults
+  drawVault( 17*S, 16*S, 28*S, -16*S,  16*S);
+  drawVault( 10*S, 10*S, 17*S, -10*S,  10*S);
+
+  // Bennelong Room restaurant (far west, small low vault)
+  drawVault(-33*S,  7*S,  8*S,  -6*S,   6*S);
+
+  return applyLimit(pts, 1100);
 }
 
 /**
  * 🗼 CN TOWER
+ * Toronto, 1976. 553m — free-standing concrete telecommunications tower.
+ * Y-shaped tripod base (3 massive fins), hexagonal shaft, large observation pod
+ * at 342m with glass-floor lower deck and SkyPod upper disc at 447m, antenna to 553m.
  */
 export function gen_cn_tower(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const S = Math.max(0.5, p.scale ?? 1), h = 180 * S;
+  const S = Math.max(0.5, p.scale ?? 1);
+  // Compress 553m to 185 units: 1 unit ≈ 3m
+  const h      = 185 * S;
+  const podY   = 112 * S;   // main observation pod   (real 342m)
+  const spaceY = 146 * S;   // SkyPod upper disc       (real 447m)
 
-  // Tripod base
+  // ── Y-shaped tripod base — 3 fins as stacked horizontal MILCNC slabs ────────
+  // Each row is a flat drawWall on the outer fin face, stepping inward as it rises.
+  // Outer face yaw formula: the wall runs tangentially so it faces radially outward.
+  // Start = (cos(a)*r + sin(a)*hw, y, sin(a)*r - cos(a)*hw)
+  // End   = (cos(a)*r - sin(a)*hw, y, sin(a)*r + cos(a)*hw) → yaw = 90 - a°
+  const finStep = 4.744 * S;   // MILCNC panel height — flush vertical stacking
   for (let i = 0; i < 3; i++) {
-    const a = (i/3)*Math.PI*2;
-    for (let s = 0; s < 10; s++) {
-      const t0 = s/10, t1 = (s+1)/10;
-      const r0 = (20-t0*15.5)*S, r1 = (20-t1*15.5)*S;
-      drawWall(pts, Math.cos(a)*r0, t0*50*S, Math.sin(a)*r0, Math.cos(a)*r1, t1*50*S, Math.sin(a)*r1, IND10);
+    const a = (i / 3) * Math.PI * 2;
+    const cA = Math.cos(a), sA = Math.sin(a);
+    for (let y = 0; y < 48*S; y += finStep) {
+      const t    = y / (48*S);
+      const rOut = (22 - t * 17.5) * S;
+      const hw   = (1 - t) * 9 * S;
+      if (hw < S) continue;
+      // Outer face slab
+      drawWall(pts,
+        cA*rOut + sA*hw, y, sA*rOut - cA*hw,
+        cA*rOut - sA*hw, y, sA*rOut + cA*hw,
+        MILCNC);
+      // Side face (left edge) — radial line inward, gives fin thickness
+      const rIn = rOut * 0.55;
+      drawWall(pts, cA*rOut + sA*hw, y, sA*rOut - cA*hw, cA*rIn + sA*hw, y, sA*rIn - cA*hw, CNC8);
+      drawWall(pts, cA*rOut - sA*hw, y, sA*rOut + cA*hw, cA*rIn - sA*hw, y, sA*rIn + cA*hw, CNC8);
     }
   }
-  // Shaft
-  for (let y = 50*S; y <= 135*S; y += 10*S) drawRing(pts, 0, y, 0, 4.5*S, IND10);
-  // Saucer
-  for (let dy = 0; dy <= 4; dy++) drawRing(pts, 0, (136+dy)*S, 0, (21-dy*3)*S, CNC8);
-  drawDisk(pts, 0, 138*S, 0, 20*S, MILCNC);
-  // Spire
-  for (let y = 140*S; y <= h-4; y += 5*S) {
-    const r = 3*S*(1-(y-140*S)/(40*S));
-    if (r > 0.5) drawRing(pts, 0, y, 0, r, IND10);
+
+  // ── Main shaft — tapers r=4.5→3.2, rings at 4.5*S (MILCNC effective height ~4.14m → no gaps)
+  for (let y = 48*S; y < podY; y += 4.5*S) {
+    const t = (y - 48*S) / (podY - 48*S);
+    const r = (4.5 - t * 1.3) * S;
+    drawRing(pts, 0, y, 0, r, MILCNC);
   }
-  return pts;
+
+  // ── Main observation pod — broad donut shape (real radius ~17m) ───────────
+  // Flares out from shaft at bottom, wide band in middle, tapers back at top
+  const podSteps = 10;
+  for (let di = 0; di <= podSteps; di++) {
+    const t    = di / podSteps;
+    // Bell-curve profile: narrow→wide→narrow
+    const bell = Math.sin(t * Math.PI);
+    const r    = (3.5 + bell * 17) * S;
+    const y    = podY + di * 1.6 * S;
+    drawRing(pts, 0, y, 0, r, CNC8);
+  }
+  // Floor plate of observation deck
+  drawDisk(pts, 0, podY + 5*S, 0, 18*S, MILCNC);
+  // Glass-floor level ring (slightly below main deck)
+  drawRing(pts, 0, podY + 2*S, 0, 16*S, CNC4);
+
+  // ── Shaft between pods — 4.5*S rings from pod top to SkyPod (no gaps)
+  for (let y = podY + podSteps*1.6*S; y < spaceY; y += 4.5*S) {
+    drawRing(pts, 0, y, 0, 3.2*S, MILCNC);
+  }
+
+  // ── SkyPod (upper disc at 447m) ───────────────────────────────────────────
+  for (let di = 0; di <= 4; di++) {
+    const t    = di / 4;
+    const bell = Math.sin(t * Math.PI);
+    const r    = (2 + bell * 7) * S;
+    drawRing(pts, 0, spaceY + di * 1.5*S, 0, r, CNC8);
+  }
+  drawDisk(pts, 0, spaceY + 2*S, 0, 6*S, MILCNC);
+
+  // ── Antenna/spire ─────────────────────────────────────────────────────────
+  for (let y = spaceY + 8*S; y <= h - 4; y += 4*S) {
+    const t = (y - spaceY) / (h - spaceY);
+    const r = (2.8 - t * 2.5) * S;
+    if (r > 0.25) drawRing(pts, 0, y, 0, r, CNC4);
+  }
+
+  return applyLimit(pts, 1100);
 }
 
 /**
  * 🗼 SPACE NEEDLE
+ * Seattle, 1962. 184m — tripod base, ultra-thin shaft, flying-saucer observation deck.
+ * MILCNC shaft rings at 4.5*S spacing = near-flush coverage (panel height ~4.2m at this radius).
  */
 export function gen_space_needle(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
   const S = Math.max(0.5, p.scale ?? 1), h = 184 * S;
+
+  // Tripod base — stacked CNC4 column panels per leg, each stepping inward as it rises.
+  // yaw = 90 - a° (outward-facing: at a=0 → yaw=90/East, a=π/2 → yaw=0/North, etc.)
   for (let i = 0; i < 3; i++) {
-    const a = (i/3)*Math.PI*2;
-    for (let s = 0; s < 10; s++) {
-      const t0 = s/10, t1 = (s+1)/10;
-      drawWall(pts, Math.cos(a)*(20-t0*15.5)*S, t0*50*S, Math.sin(a)*(20-t0*15.5)*S,
-                    Math.cos(a)*(20-t1*15.5)*S, t1*50*S, Math.sin(a)*(20-t1*15.5)*S, IND10);
+    const a   = (i / 3) * Math.PI * 2;
+    const yaw = 90 - a * 180 / Math.PI;
+    for (let y = 0; y < 50*S; y += 2.324*S) {  // CNC4 panel height = 2.324m
+      const t = y / (50*S);
+      const r = (20 - t * 15.5) * S;
+      pts.push({ x: Math.cos(a)*r, y, z: Math.sin(a)*r, yaw, name: CNC4 });
     }
   }
-  for (let y = 50*S; y <= 135*S; y += 10*S) drawRing(pts, 0, y, 0, 4.5*S, IND10);
-  for (let dy = 0; dy <= 5; dy++) drawRing(pts, 0, (136+dy)*S, 0, (21-dy*2.5)*S, CNC8);
-  drawDisk(pts, 0, 138*S, 0, 20*S, MILCNC);
-  for (let y = 142*S; y < h; y += 6*S) {
-    const r = 3*S*(1-(y-142*S)/(42*S));
-    if (r>0.5) drawRing(pts, 0, y, 0, r, IND10);
+
+  // Shaft — MILCNC rings every 4.5*S (effective panel height ~4.2m → slight overlap, no gaps)
+  for (let y = 50*S; y <= 132*S; y += 4.5*S) {
+    drawRing(pts, 0, y, 0, 4.5*S, MILCNC);
   }
-  return pts;
+
+  // Observation deck — flaring saucer profile
+  for (let di = 0; di <= 6; di++) {
+    const t = di / 6;
+    const r = (4 + Math.sin(t * Math.PI) * 18) * S;
+    drawRing(pts, 0, (133 + di*1.5)*S, 0, r, CNC8);
+  }
+  drawDisk(pts, 0, 136*S, 0, 19*S, MILCNC);
+
+  // Spire — CNC4 rings tapering from r=3 to near zero
+  for (let y = 143*S; y < h; y += 4*S) {
+    const t = (y - 143*S) / (h - 143*S);
+    const r = (3 - t * 2.7) * S;
+    if (r > 0.3) drawRing(pts, 0, y, 0, r, CNC4);
+  }
+
+  return applyLimit(pts, 1100);
 }
 
 /**
  * 🗼 LEANING TOWER OF PISA
+ * Pisa, 1372. 56m white marble campanile — 8 tiers with open colonnaded galleries.
+ * 3.97° lean (4°) toward south. STONE2 rings at 1.572*S (flush, panel-height step).
+ * Gallery columns project at r=9.5*S at each tier floor.
  */
 export function gen_pisa(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const S = Math.max(0.5, p.scale ?? 1), h = 56 * S;
-  const tilt = 4 * Math.PI/180;  // 4° lean, fixed
-  const r = 7;
-  for (let y = 0; y <= h; y += 3*S) {
-    const lean = Math.sin(tilt) * y;
-    drawRing(pts, lean, y, 0, r*S, STONE2);
-    if (y % 6 < 1) {  // Gallery rings
-      drawRing(pts, lean, y, 0, (r+1.5)*S, STONE2);
+  const S  = Math.max(0.5, p.scale ?? 1);
+  const h  = 56 * S;
+  const tilt = Math.sin(3.97 * Math.PI / 180); // lean: Δx per unit Y
+  const rMain = 7.5 * S;   // main cylinder radius
+  const rCol  = 9.5 * S;   // colonnade gallery radius
+  const step  = 1.572 * S; // STONE2 panel height — flush rings
+
+  // Gallery floors: blind base + 6 open gallery tiers + belfry base
+  const galleryYs = [0, 7*S, 14*S, 21*S, 28*S, 35*S, 42*S];
+
+  for (let y = 0; y <= h; y += step) {
+    const lean = tilt * y;
+    // Main cylinder ring
+    drawRing(pts, lean, y, 0, rMain, STONE2);
+    // Colonnade gallery ring at each tier floor (projecting column band)
+    for (const gy of galleryYs) {
+      if (Math.abs(y - gy) < step * 0.6) {
+        drawRing(pts, lean, y, 0, rCol, STONE2);
+        break;
+      }
     }
   }
-  // Bell chamber at top
-  for (let y = h; y <= h+10*S; y += 2.5*S)
-    drawRing(pts, Math.sin(tilt)*h, y, 0, 5*S, STONE2);
-  return pts;
+
+  // Belfry — narrower cylinder, slightly less lean continuation, 7 rings
+  const bBase = h;
+  for (let dy = 0; dy <= 7 * step; dy += step) {
+    const y    = bBase + dy;
+    const lean = tilt * y;
+    drawRing(pts, lean, y, 0, 6*S, STONE2);
+  }
+
+  return applyLimit(pts, 1100);
 }
 
 
@@ -2190,161 +2372,402 @@ export function gen_pisa(p: GenParams): Point3D[] {
 //  FANTASY & FICTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * 🏰 HOGWARTS CASTLE
+ * Scottish Gothic castle complex — main keep, Great Hall south wing, Astronomy Tower
+ * (tallest, NE), 3 corner towers at varied heights, viaduct bridge.
+ * CASTLE panels are 8m × 2m — all walls loop at 2*S step for flush coverage.
+ */
 export function gen_hogwarts(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const S = Math.max(0.5, p.scale ?? 1);
-  const mw = 30*S, md = 20*S;
+  const S    = Math.max(0.5, p.scale ?? 1);
+  const step = 2 * S;   // CASTLE panel height = 2m exact
 
-  // Main block
-  for (let y = 0; y <= 20*S; y += 8*S) drawRect(pts, 0, y, 0, mw, md, CASTLE);
-  // Battlements
-  for (let x = -mw; x <= mw; x += 8*S) {
-    pts.push({ x, y:21*S, z:-md, yaw:0,   name:CASTLE });
-    pts.push({ x, y:21*S, z: md, yaw:180, name:CASTLE });
+  // Helpers ──────────────────────────────────────────────────────────────────
+  function castleWalls(cx: number, cz: number, hw: number, hd: number, wallH: number) {
+    for (let y = 0; y <= wallH; y += step) drawRect(pts, cx, y, cz, hw, hd, CASTLE);
   }
-  for (let z = -md; z <= md; z += 8*S) {
-    pts.push({ x:-mw, y:21*S, z, yaw:270, name:CASTLE });
-    pts.push({ x: mw, y:21*S, z, yaw:90,  name:CASTLE });
-  }
-
-  // Great Hall protrusion
-  const ghW=15*S, ghD=10*S, ghZ=md+ghD;
-  for (let y = 0; y <= 30*S; y += 8*S) {
-    drawWall(pts, -ghW, y, md, ghW, y, md, CASTLE);
-    drawWall(pts,  ghW, y, md, ghW, y, ghZ, CASTLE);
-    drawWall(pts,  ghW, y, ghZ, -ghW, y, ghZ, CASTLE);
-    drawWall(pts, -ghW, y, ghZ, -ghW, y, md, CASTLE);
+  function castleTower(cx: number, cz: number, r: number, towerH: number) {
+    for (let y = 0; y <= towerH; y += step) drawRing(pts, cx, y, cz, r, CASTLE);
+    // Battlement crown: two projecting rings at top
+    drawRing(pts, cx, towerH + step,     cz, r + 1.5*S, CASTLE);
+    drawRing(pts, cx, towerH + step*2,   cz, r + 0.5*S, CASTLE);
   }
 
-  // Astronomy Tower (tallest)
-  for (let y = 0; y <= 70*S; y += 8*S) drawRing(pts, mw, y, -md, 4*S, CASTLE);
-  drawRing(pts, mw, 72*S, -md, 5*S, CASTLE);
-
-  // 3 Corner towers
-  const corners = [{ cx:-mw,cz:-md,h:50*S },{ cx:-mw,cz:md,h:40*S },{ cx:mw,cz:md,h:35*S }];
-  for (const c of corners) {
-    for (let y = 0; y <= c.h; y += 8*S) drawRing(pts, c.cx, y, c.cz, 4*S, CASTLE);
+  // ── Main castle keep — 56 × 36m, 20m walls ────────────────────────────────
+  const mhw = 28*S, mhd = 18*S, mH = 20*S;
+  castleWalls(0, 0, mhw, mhd, mH);
+  // Parapet atop keep walls
+  for (let x = -mhw; x <= mhw; x += 8*S) {
+    pts.push({ x, y: mH+step, z: -mhd, yaw: 0,   name: CASTLE });
+    pts.push({ x, y: mH+step, z:  mhd, yaw: 180, name: CASTLE });
+  }
+  for (let z = -mhd; z <= mhd; z += 8*S) {
+    pts.push({ x: -mhw, y: mH+step, z, yaw: 270, name: CASTLE });
+    pts.push({ x:  mhw, y: mH+step, z, yaw: 90,  name: CASTLE });
   }
 
-  // Viaduct bridge
-  const viaY = 5*S;
-  drawWall(pts, mw, viaY, -2*S, mw+40*S, viaY, -2*S, CASTLE);
-  drawWall(pts, mw, viaY,  2*S, mw+40*S, viaY,  2*S, CASTLE);
-  return pts;
+  // ── Great Hall — south-facing gothic wing, taller than keep ───────────────
+  const ghW = 14*S, ghD = 10*S, ghH = 30*S;
+  const ghZ0 = mhd, ghZ1 = mhd + ghD;
+  for (let y = 0; y <= ghH; y += step) {
+    drawWall(pts, -ghW, y, ghZ0,  ghW, y, ghZ0,  CASTLE);  // back (= keep's S wall, redundant OK)
+    drawWall(pts,  ghW, y, ghZ0,  ghW, y, ghZ1,  CASTLE);  // east side
+    drawWall(pts,  ghW, y, ghZ1, -ghW, y, ghZ1,  CASTLE);  // far end
+    drawWall(pts, -ghW, y, ghZ1, -ghW, y, ghZ0,  CASTLE);  // west side
+  }
+  // Gable arch on far end (gothic pointed look)
+  const nGab = 8;
+  for (let s = 0; s <= nGab; s++) {
+    const a  = (s / nGab) * Math.PI;
+    const gx = Math.cos(a) * ghW;
+    const gy = ghH + Math.sin(a) * ghW * 0.5;
+    pts.push({ x: gx, y: gy, z: ghZ1, yaw: 180, name: CASTLE });
+    pts.push({ x: gx, y: gy, z: ghZ0, yaw: 0,   name: CASTLE });
+  }
+
+  // ── Astronomy Tower — NE corner, tallest landmark ─────────────────────────
+  castleTower(mhw, -mhd, 5*S, 68*S);
+
+  // ── Three corner towers — varied heights ──────────────────────────────────
+  castleTower(-mhw, -mhd, 4*S,   52*S);   // NW — Clock Tower wing
+  castleTower(-mhw,  mhd, 3.5*S, 42*S);   // SW
+  castleTower( mhw,  mhd, 3*S,   36*S);   // SE
+
+  // ── Clock Tower annex — small wing attached to NW tower ───────────────────
+  const ctX = -mhw - 12*S, ctZ = -mhd;
+  castleWalls(ctX, ctZ, 8*S, 6*S, 28*S);
+  castleTower(ctX, ctZ, 3*S, 38*S);
+
+  // ── Viaduct bridge — extends north from Astronomy Tower ───────────────────
+  const viaLen = 45*S, viaY = 6*S;
+  drawWall(pts, mhw, viaY, -mhd - 3*S, mhw, viaY, -mhd - viaLen, CASTLE);
+  drawWall(pts, mhw + 3*S, viaY, -mhd, mhw + 3*S, viaY, -mhd - viaLen, CASTLE);
+
+  return applyLimit(pts, 1100);
 }
 
+/**
+ * 🏰 MINAS TIRITH — City of Kings, Gondor, Lord of the Rings
+ * Seven concentric stone tiers carved into Mount Mindolluin, each tier set back
+ * behind the one below. White Tower of Ecthelion crowns the 7th level.
+ */
 export function gen_minas_tirith(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const S = Math.max(0.5, p.scale ?? 1), baseR = 120 * S, totalH = 100 * S, tiers = 7;
-  const stepH = totalH / tiers;
+  const S     = Math.max(0.25, p.scale ?? 0.5);
+  const step  = 1.572 * S;   // STONE2 flush row height
 
+  const tiers = 7;
+  const baseR = 52 * S;       // radius of outermost tier
+  const dR    = 7  * S;       // radius reduction per tier
+  const tierH = 14 * S;       // wall height per tier
+
+  // Seven concentric rings — each tier sits atop the previous
   for (let i = 0; i < tiers; i++) {
-    const r = baseR * (1 - i/(tiers+1)), y = i * stepH;
-    const mat = i === tiers-1 ? IND10 : CNC8;
-    const n = Math.max(32, Math.round(r * 1.2));
-    for (let j = 0; j <= n; j++) {
-      const a = (j/n)*Math.PI*1.6 - Math.PI*0.8;
-      const x = r*Math.cos(a), z = r*Math.sin(a);
-      const yaw = -a*180/Math.PI+90;
-      pts.push({ x, y, z, yaw, name:mat });
-      if (j%2===0) pts.push({ x, y:y+2.5, z, yaw, name:STONE2 });
-    }
+    const r  = baseR - i * dR;
+    const y0 = i * tierH;
+    for (let y = y0; y < y0 + tierH; y += step)
+      drawRing(pts, 0, y, 0, r, STONE2);
+    drawRing(pts, 0, y0 + tierH, 0, r, CASTLE);  // battlement crown
   }
-  // White Tower spire
-  for (let y = totalH; y <= totalH+30; y += 3) {
-    const r = 6*(1-(y-totalH)/40);
-    if (r > 0.5) drawRing(pts, 0, y, 0, r, CNC8);
+
+  // White Tower of Ecthelion — tapers r=5*S→0.8*S over 40*S height
+  const tBase = tiers * tierH;
+  const tH    = 40 * S;
+  for (let y = tBase; y < tBase + tH; y += step) {
+    const t = (y - tBase) / tH;
+    const r = 5 * S + (0.8 * S - 5 * S) * t;
+    drawRing(pts, 0, y, 0, r, STONE2);
   }
-  return pts;
+  // Spire tip
+  for (let y = tBase + tH; y < tBase + tH + 6 * S; y += 2.324 * S)
+    drawRing(pts, 0, y, 0, 0.6 * S, CNC4);
+
+  return applyLimit(pts, 1100);
 }
 
+/**
+ * 🏯 HELM'S DEEP — The Hornburg, Rohan, Lord of the Rings
+ * Ancient fortress in the White Mountains: the Deeping Wall (long curtain wall),
+ * Hornburg (great circular keep on a rock), and Deeping Tower at the east end.
+ */
 export function gen_helms_deep(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const S = Math.max(0.5, p.scale ?? 1);
-  const wallL = 80*S, wallH = 24*S;
+  const S     = Math.max(0.25, p.scale ?? 0.5);
+  const step  = 1.572 * S;   // STONE2 flush row height
+  const cstep = 2 * S;        // CASTLE flush row height
 
-  // Deeping Wall
-  for (let y = 0; y <= wallH; y += 8*S) drawWall(pts, -wallL/2, y, 0, wallL/2, y, 0, STONE2);
+  const wallL = 60 * S;
+  const wallH = 12 * S;
+  const hx    = -wallL/2 - 14*S;   // Hornburg centre X
+  const hornR = 9 * S;              // Hornburg radius
 
-  // Hornburg
-  const hx = -wallL/2 - 20*S;
-  for (let y = 0; y <= wallH+20*S; y += 8*S) drawRing(pts, hx, y, 0, 10*S, STONE2);
+  // ── Deeping Wall ─────────────────────────────────────────────────────────
+  for (let y = 0; y < wallH; y += step)
+    drawWall(pts, -wallL/2, y, 0, wallL/2, y, 0, STONE2);
+  drawWall(pts, -wallL/2, wallH, 0, wallL/2, wallH, 0, CASTLE);
 
-  // Towers along wall
-  for (let tx = -wallL/2; tx <= wallL/2; tx += 25*S) {
-    for (let y = 0; y <= wallH+8*S; y += 8*S) drawRing(pts, tx, y, 0, 4*S, STONE2);
+  // West connector — bridges gap between wall end and Hornburg east perimeter
+  for (let y = 0; y < wallH; y += step)
+    drawWall(pts, hx + hornR, y, 0, -wallL/2, y, 0, STONE2);
+  drawWall(pts, hx + hornR, wallH, 0, -wallL/2, wallH, 0, CASTLE);
+
+  // Wall interval towers — 3 evenly spaced
+  for (const tx of [-wallL/3, 0, wallL/3]) {
+    for (let y = 0; y <= wallH + cstep; y += cstep)
+      drawRing(pts, tx, y, 0, 3*S, CASTLE);
   }
-  // Culvert at base
-  for (let z = -2*S; z <= 2*S; z += 2*S)
-    drawWall(pts, -8*S, -4*S, z, 8*S, -4*S, z, STONE2);
 
-  return pts;
+  // ── Hornburg — large circular fortress at west end ────────────────────────
+  const hornH = 20 * S;
+  for (let y = 0; y < hornH; y += step)
+    drawRing(pts, hx, y, 0, 9*S, STONE2);
+  drawRing(pts, hx, hornH, 0, 9*S, CASTLE);
+  // Inner keep tower (taller, at Hornburg centre)
+  for (let y = 0; y < hornH + 10*S; y += cstep)
+    drawRing(pts, hx, y, 0, 4*S, CASTLE);
+
+  // ── Deeping Tower — circular tower at east end of wall ───────────────────
+  const dtx = wallL/2 + 4*S;
+  for (let y = 0; y < wallH + 6*S; y += step)
+    drawRing(pts, dtx, y, 0, 5*S, STONE2);
+  drawRing(pts, dtx, wallH + 6*S, 0, 5*S, CASTLE);
+
+  // ── Helm's Gate — raised gate tower above wall centre ────────────────────
+  for (let y = wallH; y < wallH + 8*S; y += cstep)
+    drawRing(pts, 0, y, 0, 3*S, CASTLE);
+
+  return applyLimit(pts, 1100);
 }
 
+/**
+ * 🧱 THE WALL — Night's Watch, Game of Thrones
+ * Colossal ice fortification stretching across the northern border of Westeros,
+ * 213m tall (game-scaled to 60m). Garrisoned by 19 castles, chief among them
+ * Castle Black, with roads wide enough for 12 men abreast along the summit.
+ */
 export function gen_the_wall(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const L = p.length ?? 300, h = 60;
-  for (let y = 0; y <= h; y += 8) drawWall(pts, -L/2, y, 0, L/2, y, 0, IND10);
-  // Castles along top
-  for (let x = -L/2 + 20; x <= L/2; x += 60)
-    for (let y = h; y <= h+16; y += 8) drawRect(pts, x, y, 0, 6, 6, IND10);
-  return pts;
+  const L   = p.length ?? 200;
+  const h   = 60;          // game-scaled height
+  const stp = 9.758;       // IND10 flush row height
+
+  // Front and rear ice faces
+  for (let y = 0; y < h; y += stp) {
+    drawWall(pts, -L/2, y, 0, L/2, y, 0,   IND10);
+    drawWall(pts, -L/2, y, 4, L/2, y, 4,   IND10);
+  }
+  // Battlements along top
+  drawWall(pts, -L/2, h, 0, L/2, h, 0, CASTLE);
+  drawWall(pts, -L/2, h, 4, L/2, h, 4, CASTLE);
+
+  // Night's Watch waycastles — small CASTLE towers projecting above parapet
+  const spacing = Math.max(40, L / 5);
+  for (let x = -L/2 + spacing * 0.5; x < L/2; x += spacing) {
+    for (let y = h; y < h + 14; y += 2)
+      drawRect(pts, x, y, 2, 6, 6, CASTLE);
+  }
+
+  return applyLimit(pts, 1100);
 }
 
+/**
+ * 🏚️ AZKABAN PRISON — Wizarding World, Harry Potter
+ * Remote sea fortress on a rocky North Sea island. Triangular dark stone keep,
+ * three corner watchtowers, and a central tapering dark spire housing the
+ * Dementor cells. Escaped prisoners include Sirius Black (1993).
+ */
 export function gen_azkaban(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const S = Math.max(0.5, p.scale ?? 1);
-  const r = 30*S;
-  // Triangular keep — 3 sides
+  const S    = Math.max(0.25, p.scale ?? 0.5);
+  const step = 9.758 * S;   // IND10 flush row height
+  const r    = 28 * S;
+  const keepH = 50 * S;
+
+  // Triangular keep — 3 sides of dark industrial stone
   for (let i = 0; i < 3; i++) {
-    const a1 = (i/3)*Math.PI*2, a2 = ((i+1)/3)*Math.PI*2;
-    for (let y = 0; y <= 60*S; y += 8*S)
+    const a1 = (i / 3) * Math.PI * 2;
+    const a2 = ((i + 1) / 3) * Math.PI * 2;
+    for (let y = 0; y < keepH; y += step)
       drawWall(pts, r*Math.cos(a1), y, r*Math.sin(a1), r*Math.cos(a2), y, r*Math.sin(a2), IND10);
   }
-  // Central spire
-  for (let y = 60*S; y <= 100*S; y += 4*S)
-    drawRing(pts, 0, y, 0, 4*S*(1-(y-60*S)/40*S*0.8), IND10);
-  return pts;
+  // Corner watchtowers at each triangle vertex
+  for (let i = 0; i < 3; i++) {
+    const a  = (i / 3) * Math.PI * 2;
+    const tx = r * Math.cos(a), tz = r * Math.sin(a);
+    for (let y = 0; y < keepH + 12*S; y += 2.3*S)
+      drawRing(pts, tx, y, tz, 3*S, CNC8);
+  }
+  // Central spire — tapers from r=5*S to 0 over 40*S
+  const spireH = 40 * S;
+  for (let y = keepH; y < keepH + spireH; y += step) {
+    const t = (y - keepH) / spireH;
+    const rr = 5 * S * (1 - t);
+    if (rr > 0.3 * S) drawRing(pts, 0, y, 0, rr, IND10);
+  }
+
+  return applyLimit(pts, 1100);
 }
 
+/**
+ * 👁️ EYE OF SAURON
+ * Barad-dûr tower crown, Lord of the Rings.
+ * Tall tapered dark tower (IND10), two flanking horn spires, fiery pupil slit
+ * (barrel_red ellipse at crown), and a ring of CNC8 battlements at the summit.
+ */
 export function gen_eye_of_sauron(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const r = p.r ?? 50, h = r * 1.8, tw = r * 0.56, er = r * 0.44;
-  for (let y = 0; y <= h; y += 8) {
-    const t = 1-(y/h);
-    drawRing(pts, 0, y, 0, tw*(t*0.7+0.3), IND10);
-    if (y > h*0.8) {
-      for (let i = 0; i < 2; i++) {
-        const a = i*Math.PI;
-        pts.push({ x:(tw+5)*Math.cos(a), y, z:(tw+5)*Math.sin(a), yaw:-a*180/Math.PI+90, name:IND10 });
+  const S  = Math.max(0.5, p.scale ?? 1);
+  const rB = 20 * S;   // base radius
+  const h  = 90 * S;   // tower height
+  const step = 9.758 * S;  // IND10 panel height — flush ring stacking
+
+  // ── Main tower — tapers from rB at base to rTop at crown ──────────────────
+  for (let y = 0; y < h; y += step) {
+    const t = y / h;
+    const r = rB * (1 - t * 0.65);   // tapers to 35% of base radius
+    drawRing(pts, 0, y, 0, r, IND10);
+  }
+
+  // ── Battlements / crown platform at top ───────────────────────────────────
+  const crownY = h;
+  const crownR = rB * 0.36;
+  for (let di = 0; di <= 2; di++) drawRing(pts, 0, crownY + di*2.3*S, 0, crownR + di*1.5*S, CNC8);
+
+  // ── Two flanking horn spires (the "lids" of the Eye) ──────────────────────
+  // One N (+Z), one S (-Z), angled outward and upward
+  for (let side = 0; side < 2; side++) {
+    const sz   = side === 0 ? 1 : -1;
+    const nSeg = 8;
+    for (let seg = 0; seg < nSeg; seg++) {
+      const t0 = seg / nSeg, t1 = (seg + 1) / nSeg;
+      const z0 = sz * (crownR + t0 * 18*S);
+      const z1 = sz * (crownR + t1 * 18*S);
+      const y0 = crownY + t0 * 30*S;
+      const y1 = crownY + t1 * 30*S;
+      const r0 = (3 - t0 * 2.5) * S;
+      if (r0 > 0.3*S) drawWall(pts, 0, y0, z0, 0, y1, z1, MILCNC);
+      // Flanking width panels for spire girth
+      if (r0 > 0.5*S) {
+        pts.push({ x: -r0, y: y0 + (y1-y0)*0.5, z: (z0+z1)*0.5, yaw: -90, name: CNC4 });
+        pts.push({ x:  r0, y: y0 + (y1-y0)*0.5, z: (z0+z1)*0.5, yaw:  90, name: CNC4 });
       }
     }
   }
-  const eyeY = h+10;
-  for (let r = 2; r <= er; r += 4) drawRing(pts, 0, eyeY, 0, r, IND10);
-  return pts;
+
+  // ── The Eye — upright vertical arches + horizontal glow ring ─────────────────
+  //
+  // Two perpendicular eyelid arches (XY plane and ZY plane) make the eye visible
+  // from all four horizontal approach directions. A wide horizontal iris ring
+  // is visible from above and from angled ground-level views.
+  //
+  // Orientation: wide E-W (X axis), narrow N-S (Z axis) — classic cat-eye slit.
+  // Spires sweep out to N/S (+Z/-Z) framing the eye from those sides.
+  const eyeBase = crownY + 20 * S;
+  const eyeW    = rB * 0.92;       // half-span east-west (nearly as wide as tower base)
+  const eyeH    = rB * 0.70;       // upper eyelid arch height above centre
+  const eyeD    = rB * 0.20;       // narrow cat-eye depth (N-S)
+  const nLid    = 12;              // barrel count per arch half
+
+  // 1. Horizontal iris glow ring — outward-facing, wide X narrow Z
+  //    Visible from above and from diagonal ground angles.
+  const nGlow = 24;
+  for (let i = 0; i < nGlow; i++) {
+    const a = (i / nGlow) * Math.PI * 2;
+    pts.push({
+      x:   Math.cos(a) * eyeW,
+      y:   eyeBase,
+      z:   Math.sin(a) * eyeD,
+      yaw: 90 - a * 180 / Math.PI,   // outward-facing (radial, not tangential)
+      name: "barrel_red",
+    });
+  }
+
+  // 2. Upper eyelid arch — in the XY plane, facing ±Z (visible from N/S approach)
+  //    Arcs from east rim to west rim over the top of the eye.
+  for (let i = 0; i <= nLid; i++) {
+    const a  = (i / nLid) * Math.PI;
+    const bx = Math.cos(a) * eyeW;
+    const by = eyeBase + Math.sin(a) * eyeH;
+    pts.push({ x: bx, y: by, z: -0.4*S, yaw:   0, name: "barrel_red" }); // faces +Z
+    pts.push({ x: bx, y: by, z:  0.4*S, yaw: 180, name: "barrel_red" }); // faces -Z
+  }
+
+  // 3. Lower eyelid arch — shallower curve below centre (the bottom lid)
+  for (let i = 0; i <= nLid; i++) {
+    const a  = (i / nLid) * Math.PI;
+    const bx = Math.cos(a) * eyeW;
+    const by = eyeBase - Math.sin(a) * eyeH * 0.38;
+    pts.push({ x: bx, y: by, z: -0.4*S, yaw:   0, name: "barrel_red" });
+    pts.push({ x: bx, y: by, z:  0.4*S, yaw: 180, name: "barrel_red" });
+  }
+
+  // 4. Upper eyelid arch — in the ZY plane, facing ±X (visible from E/W approach)
+  for (let i = 0; i <= nLid; i++) {
+    const a  = (i / nLid) * Math.PI;
+    const bz = Math.cos(a) * eyeD;
+    const by = eyeBase + Math.sin(a) * eyeH;
+    pts.push({ x: -0.4*S, y: by, z: bz, yaw: -90, name: "barrel_red" }); // faces -X
+    pts.push({ x:  0.4*S, y: by, z: bz, yaw:  90, name: "barrel_red" }); // faces +X
+  }
+
+  // 5. Lower eyelid arch — ZY plane
+  for (let i = 0; i <= nLid; i++) {
+    const a  = (i / nLid) * Math.PI;
+    const bz = Math.cos(a) * eyeD;
+    const by = eyeBase - Math.sin(a) * eyeH * 0.38;
+    pts.push({ x: -0.4*S, y: by, z: bz, yaw: -90, name: "barrel_red" });
+    pts.push({ x:  0.4*S, y: by, z: bz, yaw:  90, name: "barrel_red" });
+  }
+
+  // 6. Vertical pupil slit — barrel column at exact centre, spanning eye height
+  const nPupil = 8;
+  for (let i = 0; i < nPupil; i++) {
+    const py = eyeBase - eyeH * 0.32 + (i / (nPupil - 1)) * eyeH * 0.64;
+    pts.push({ x: 0, y: py, z: 0, yaw: 0, name: "barrel_red" });
+  }
+
+  return applyLimit(pts, 1100);
 }
 
+/**
+ * 🔷 FORTRESS OF SOLITUDE — Superman's Arctic Sanctuary, DC Comics
+ * Isolated ice palace in the Arctic, formed from giant white crystal spires
+ * that Superman's father Jor-El designed to grow from Kryptonian technology.
+ * Outer ring of 6 tall spires, inner ring of 4 medium spires, central mega-spire.
+ */
 export function gen_fortress_solitude(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const S = Math.max(0.5, p.scale ?? 1), r = 60 * S;
-  for (let i = 0; i < 30; i++) {
-    const cx = ((i*7919)%100/100 - 0.5)*r, cz = ((i*4001)%100/100 - 0.5)*r;
-    const ch = 20 + (i*13)%80;
-    for (let y = 0; y < ch; y += 4) {
-      const taper = 1-(y/ch);
-      const w = (4+(i%3)*0.7)*taper;
-      for (let j = 0; j < 3; j++) {
-        const a1 = j*Math.PI*2/3, a2 = (j+1)*Math.PI*2/3;
-        drawWall(pts, cx+w*Math.cos(a1), y, cz+w*Math.sin(a1), cx+w*Math.cos(a2), Math.min(y+10,ch), cz+w*Math.sin(a2), STONE);
-      }
+  const S    = Math.max(0.25, p.scale ?? 0.5);
+  const step = 1.572 * S;  // STONE2 flush row height
+
+  function crystal(cx: number, cz: number, rBase: number, h: number) {
+    for (let y = 0; y < h; y += step) {
+      const r = rBase * (1 - (y / h) * 0.9);  // taper to 10% at peak
+      if (r > 0.3 * S) drawRing(pts, cx, y, cz, r, STONE2);
     }
   }
-  for (let y = 0; y < 120; y += 4) {
-    const t = 1-(y/120)*0.9;
-    drawRing(pts, 0, y, 0, 8*t, STONE2);
+
+  // Outer ring — 6 tall crystals
+  const outerR = 36 * S;
+  const outerH = [55, 42, 64, 38, 52, 46].map(v => v * S);
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2;
+    crystal(Math.cos(a) * outerR, Math.sin(a) * outerR, 5 * S, outerH[i]);
   }
-  return pts;
+
+  // Inner ring — 4 medium crystals, rotated 45°
+  const innerR = 17 * S;
+  const innerH = [30, 26, 34, 28].map(v => v * S);
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+    crystal(Math.cos(a) * innerR, Math.sin(a) * innerR, 3.5 * S, innerH[i]);
+  }
+
+  // Central mega-spire
+  crystal(0, 0, 9 * S, 75 * S);
+
+  return applyLimit(pts, 1100);
 }
 
 
@@ -2490,74 +2913,127 @@ const _C_PALETTE = [
 const _cpick = (i: number) => _C_PALETTE[Math.abs(i) % _C_PALETTE.length];
 
 // ── Sky Fort ──────────────────────────────────────────────────────────────────
-// Elevated platform on container stilts with perimeter walls and corner towers.
+// Highly detailed military bastion on stilts — features internal rooms, 
+// a container-built staircase, courtyard deck, and watchtower lookouts.
 export function gen_sky_fort(p: GenParams): Point3D[] {
-  const S    = p.scale ?? 1;
-  const elevM = p.elevation ?? 14;
-  const elev = Math.max(2, Math.round(elevM / _CH));  // convert metres → stacks
+  const S     = p.scale ?? 1;
+  const elevM = p.elevation ?? 20;
+  const elev  = Math.max(2, Math.round(elevM / _CH));
   const pts: Point3D[] = [];
 
-  const nSide  = Math.max(2, Math.round(S * 3));  // containers per wall side
-  const SIZE   = nSide * _CD;                       // platform footprint (m)
-  const floorY = elev * _CH;                        // Y of platform base
+  const nSide  = Math.max(4, Math.round(S * 5)); 
+  const SIZE   = nSide * _CD;
+  const floorY = elev * _CH;
+  const _CW    = 2.702;
 
-  // 8 stilt columns: 4 corners inward by CD/2, 4 mid-edge inward by CD/2
-  const stilts: [number, number, number][] = [
-    [_CD/2,       _CD/2,      0 ],   // NW
-    [SIZE-_CD/2,  _CD/2,      0 ],   // NE
-    [_CD/2,       SIZE-_CD/2, 0 ],   // SW
-    [SIZE-_CD/2,  SIZE-_CD/2, 0 ],   // SE
-    [SIZE/2,      _CD/2,      90],   // N mid
-    [SIZE/2,      SIZE-_CD/2, 90],   // S mid
-    [_CD/2,       SIZE/2,     0 ],   // W mid
-    [SIZE-_CD/2,  SIZE/2,     0 ],   // E mid
+  // ── 1. REINFORCED MILITARY PILLARS ────────────────────────────────────────
+  // Distinct corner pillars (2x2 stacks)
+  const cornOff = _CD / 2;
+  const corners: [number, number][] = [
+    [cornOff, cornOff], [SIZE - cornOff, cornOff],
+    [cornOff, SIZE - cornOff], [SIZE - cornOff, SIZE - cornOff]
   ];
-  for (let si = 0; si < stilts.length; si++) {
-    const [sx, sz, syaw] = stilts[si];
-    for (let st = 0; st < elev; st++)
-      pts.push({ x: sx, y: st * _CH, z: sz, yaw: syaw, scale: 1, name: _cpick(si + st) });
-  }
 
-  // Perimeter walls: 2 rows of containers standing upright around the platform edge
-  for (let row = 0; row < 2; row++) {
-    const wy = floorY + row * _CH;
-    for (let i = 0; i < nSide; i++) {
-      // N wall (z=0, running X)
-      pts.push({ x: i*_CD+_CD/2, y: wy, z: 0,    yaw: 90, scale:1, name: _cpick(i+row)   });
-      // S wall (z=SIZE, running X)
-      pts.push({ x: i*_CD+_CD/2, y: wy, z: SIZE,  yaw: 90, scale:1, name: _cpick(i+row+1) });
-    }
-    for (let i = 0; i < nSide; i++) {
-      // W wall (x=0, running Z)
-      pts.push({ x: 0,    y: wy, z: i*_CD+_CD/2, yaw: 0, scale:1, name: _cpick(i+row+2) });
-      // E wall (x=SIZE, running Z)
-      pts.push({ x: SIZE, y: wy, z: i*_CD+_CD/2, yaw: 0, scale:1, name: _cpick(i+row+3) });
-    }
-  }
-
-  // Corner towers: 3 extra rows at each corner (L-shaped pair per row)
-  const wallTop = floorY + 2 * _CH;
-  const corners: [number, number][] = [[0,0],[SIZE,0],[0,SIZE],[SIZE,SIZE]];
   for (let ci = 0; ci < 4; ci++) {
     const [cx, cz] = corners[ci];
-    const ox = cx === 0 ? _CD/2 : -_CD/2;   // inward X offset
-    const oz = cz === 0 ? _CD/2 : -_CD/2;   // inward Z offset
-    for (let row = 0; row < 3; row++) {
-      const wy = wallTop + row * _CH;
-      pts.push({ x: cx + ox, y: wy, z: cz,      yaw: 0,  scale:1, name: "land_container_1a" });
-      pts.push({ x: cx,      y: wy, z: cz + oz, yaw: 90, scale:1, name: "land_container_1b" });
+    for (let st = 0; st < elev; st++) {
+      const y = st * _CH;
+      // Four containers facing inward to form a solid square column
+      pts.push({ x: cx - _CW, y, z: cz, yaw: 0,  name: "land_containerlocked" });
+      pts.push({ x: cx + _CW, y, z: cz, yaw: 0,  name: "land_containerlocked" });
+      pts.push({ x: cx, y, z: cz - _CW, yaw: 90, name: "land_container_1mo" });
+      pts.push({ x: cx, y, z: cz + _CW, yaw: 90, name: "land_container_1mo" });
     }
   }
 
-  // Barrel accents on corner tower tops
-  const topY = wallTop + 3 * _CH;
-  for (let ci = 0; ci < 4; ci++) {
-    const cx = ci < 2 ? _CD/2 : SIZE - _CD/2;
-    const cz = ci % 2 === 0 ? _CD/2 : SIZE - _CD/2;
-    pts.push({ x: cx, y: topY, z: cz, name: ci % 2 === 0 ? "barrel_red" : "barrel_blue", yaw: 0, scale: 1 });
+  // ── 2. INTEGRATED ACCESS STAIRS ──────────────────────────────────────────
+  // A steeper, shielded staircase leading directly to a West-face entrance.
+  const stepRise = 2.5;
+  const nSteps   = Math.ceil(floorY / stepRise);
+  const rampX    = -(nSteps * 4); // Stairs start out west and move East
+  for (let i = 0; i < nSteps; i++) {
+    const y = i * stepRise;
+    const x = rampX + (i * 4);
+    const z = SIZE / 2;
+    // The "Step" platform (yaw 90 = 10m wide bridge)
+    pts.push({ x, y, z, yaw: 90, name: "land_container_1mo" });
+    // Protective side-shields
+    pts.push({ x, y: y + _CH, z: z - _CD/2, yaw: 90, name: "land_container_1mo", scale: 0.6 });
+    pts.push({ x, y: y + _CH, z: z + _CD/2, yaw: 90, name: "land_container_1mo", scale: 0.6 });
+  }
+  // Transition platform into the entrance
+  pts.push({ x: -2, y: floorY - 0.5, z: SIZE / 2, yaw: 90, name: "land_container_1bo" });
+
+  // ── 3. BASTION DECK (Level 0) ─────────────────────────────────────────────
+  // A frame-like platform with a central open courtyard
+  for (let i = 0; i < nSide; i++) {
+    const off = i * _CD + _CD/2;
+    pts.push({ x: off,  y: floorY - 2.1, z: 0,    yaw: 90, pitch: -90, name: "land_container_1bo" });
+    pts.push({ x: off,  y: floorY - 2.1, z: SIZE, yaw: 90, pitch: -90, name: "land_container_1bo" });
+    pts.push({ x: 0,     y: floorY - 2.1, z: off, yaw: 0,  pitch: -90, name: "land_container_1bo" });
+    pts.push({ x: SIZE,  y: floorY - 2.1, z: off, yaw: 0,  pitch: -90, name: "land_container_1bo" });
+    
+    if (i === Math.floor(nSide / 2)) {
+      for (let j = 0; j < nSide; j++) {
+        pts.push({ x: j * _CD, y: floorY - 2.1, z: off, yaw: 0, pitch: -90, name: "land_containerlocked" });
+      }
+    }
   }
 
-  return applyLimit(pts, 1100);
+  // ── 4. FORTIFIED BARRACKS & ENTRANCE (Level 1) ────────────────────────────
+  // Perimeter walls with a designated ENTRANCE GAP on the West face
+  const midIdx = Math.floor(nSide / 2);
+  for (let row = 0; row < 3; row++) {
+    const wy = floorY + row * _CH;
+    for (let i = 0; i < nSide; i++) {
+      const offset = i * _CD + _CD / 2;
+      pts.push({ x: offset, y: wy, z: 0,    yaw: 90, name: _cpick(i + row) });
+      pts.push({ x: offset, y: wy, z: SIZE, yaw: 90, name: _cpick(i + row + 1) });
+      pts.push({ x: SIZE,   y: wy, z: offset, yaw: 0,  name: _cpick(i + row + 3) });
+      
+      // West Wall: Create a 1-container-wide doorway at row 0
+      const isDoorway = (i === midIdx && row === 0);
+      if (!isDoorway) {
+        pts.push({ x: 0, y: wy, z: offset, yaw: 0, name: _cpick(i + row + 2) });
+      }
+    }
+  }
+
+  // Corner Rooms Logic...
+  for (const [cx, cz] of corners) {
+    const rY = floorY;
+    const dx = cx < SIZE/2 ? _CD/2 : -_CD/2;
+    const dz = cz < SIZE/2 ? _CD/2 : -_CD/2;
+    pts.push({ x: cx, y: rY, z: cz + dz, yaw: 90, name: "land_containerlocked" });
+    pts.push({ x: cx + dx, y: rY, z: cz, yaw: 0,  name: "land_containerlocked" });
+    pts.push({ x: cx + dx, y: rY, z: cz + dz*2, yaw: 0,  name: "land_container_1moh" });
+    pts.push({ x: cx + dx*2, y: rY, z: cz + dz, yaw: 90, name: "land_container_1moh" });
+    pts.push({ x: cx + dx, y: rY, z: cz + dz, yaw: 0, name: "land_container_1a", scale: 0.8 });
+    pts.push({ x: cx + dx, y: rY + _CH - 2.1, z: cz + dz, yaw: 0, pitch: -90, name: "land_containerlocked" });
+  }
+
+  // ── 5. LOOKOUT WATCHTOWERS (Levels 2 & 3) ─────────────────────────────────
+  for (const [cx, cz] of corners) {
+    // Watchtower Pod 1
+    const y2 = floorY + _CH;
+    pts.push({ x: cx, y: y2, z: cz, yaw: 45, name: "land_container_1bo" });
+    
+    // Watchtower Pod 2 (Higher lookout)
+    const y3 = floorY + 2 * _CH;
+    pts.push({ x: cx, y: y3, z: cz, yaw: -45, name: "land_container_1moh" });
+    
+    // Antennas and defense
+    pts.push({ x: cx, y: y3 + _CH, z: cz, name: "barrel_red", yaw: 0 });
+    pts.push({ x: cx + 1, y: y3 + _CH, z: cz + 1, name: "barrel_blue", yaw: 0 });
+  }
+
+  // ── 6. CENTER COMMAND HUB ────────────────────────────────────────────────
+  const hubX = SIZE / 2;
+  const hubZ = SIZE / 2;
+  pts.push({ x: hubX, y: floorY, z: hubZ, yaw: 0, name: "land_containerlocked" });
+  pts.push({ x: hubX, y: floorY + _CH, z: hubZ, yaw: 90, name: "land_container_1bo" });
+
+  return applyLimit(pts, 1150);
 }
 
 // ── Container Pyramid (Ziggurat Monument) ─────────────────────────────────────
@@ -2769,104 +3245,242 @@ export function gen_container_station(p: GenParams): Point3D[] {
 //  STRUCTURES / MILITARY
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * 🪖 BUNKER COMPLEX — WWII / Cold War reinforced concrete command bunker
+ * Flat-roofed rectangular CNC8 shell with interior MILCNC cross-walls dividing
+ * three compartments, ventilation towers on the roof, and a blast door vestibule
+ * at the south face.
+ */
 export function gen_bunker(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const S = Math.max(0.5, p.scale ?? 1), w = 40*S, d = 30*S, floors = 3;
-  for (let f = 0; f < floors; f++) {
-    const y = f * 5;
-    drawRect(pts, 0, y, 0, w/2, d/2, IND10);
-    // Internal cross walls
-    drawWall(pts, -w/4, y, -d/2, -w/4, y, d/2, IND10);
-    drawWall(pts,  w/4, y, -d/2,  w/4, y, d/2, IND10);
+  const S    = Math.max(0.5, p.scale ?? 1);
+  const step = 2.3 * S;    // CNC8 flush row height
+  const hw   = 18 * S;     // half-width (X)
+  const hd   = 12 * S;     // half-depth (Z)
+  const h    = 9  * S;     // wall height
+
+  // Outer concrete shell
+  for (let y = 0; y < h; y += step)
+    drawRect(pts, 0, y, 0, hw, hd, CNC8);
+  // Roof slab
+  drawRect(pts, 0, h, 0, hw, hd, CNC8);
+
+  // Interior dividing cross-walls — 2 walls creating 3 rooms
+  for (let y = 0; y < h; y += step) {
+    drawWall(pts, -hw/2, y, -hd, -hw/2, y, hd, MILCNC);
+    drawWall(pts,  hw/2, y, -hd,  hw/2, y, hd, MILCNC);
   }
-  // Blast door
-  drawWall(pts, -8, floors*5, 0, 8, floors*5, 0, IND10);
-  return pts;
+
+  // Blast door vestibule — short CNC8 extension at south face centre
+  for (let y = 0; y < h * 0.6; y += step)
+    drawWall(pts, -5*S, y, hd, 5*S, y, hd + 3*S, CNC8);
+
+  // Ventilation towers on roof — 2 stubby cylinders
+  for (const vx of [-hw * 0.5, hw * 0.5] as number[]) {
+    for (let y = h; y < h + 4*S; y += step)
+      drawRing(pts, vx, y, 0, 2*S, CNC8);
+  }
+
+  return applyLimit(pts, 1100);
 }
 
+/**
+ * 🏛️ THE PENTAGON — US Department of Defense HQ, Arlington, Virginia (1943)
+ * Five concentric pentagonal rings of 5-storey office buildings (rings E→A,
+ * outer to inner), separated by open courtyards and connected by 10 radial
+ * spoke corridors. Largest office building in the world: 6.5M sq ft.
+ */
 export function gen_pentagon(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const r = p.r ?? 100, rings = 5;
+  const r    = p.r ?? 100;
+  const stp  = 4.744;         // MILCNC flush row height (no S — r param controls size)
+  const flH  = 5;             // floor spacing (5m per floor × 4 floors = 20m)
+  const rings = 5;
+
+  // Five concentric pentagonal rings (E = outer, A = inner)
   for (let ri = 0; ri < rings; ri++) {
-    const rr = r*(1-ri*0.15);
+    const rr = r * (1 - ri * 0.16);
     for (let i = 0; i < 5; i++) {
-      const a1 = (i/5)*Math.PI*2 - Math.PI/2, a2 = ((i+1)/5)*Math.PI*2 - Math.PI/2;
-      for (let fl = 0; fl <= 3; fl++)
-        drawWall(pts, rr*Math.cos(a1), fl*4, rr*Math.sin(a1), rr*Math.cos(a2), fl*4, rr*Math.sin(a2), IND10);
+      const a1 = (i / 5) * Math.PI * 2 - Math.PI / 2;
+      const a2 = ((i + 1) / 5) * Math.PI * 2 - Math.PI / 2;
+      for (let y = 0; y < flH * 4; y += stp)
+        drawWall(pts, rr*Math.cos(a1), y, rr*Math.sin(a1), rr*Math.cos(a2), y, rr*Math.sin(a2), MILCNC);
+    }
+    // Corner filler — one outward-facing panel at each vertex to close the 108° notch
+    for (let i = 0; i < 5; i++) {
+      const aV  = (i / 5) * Math.PI * 2 - Math.PI / 2;
+      const yaw = 90 - aV * 180 / Math.PI;
+      for (let y = 0; y < flH * 4; y += stp)
+        pts.push({ x: rr * Math.cos(aV), y, z: rr * Math.sin(aV), yaw, name: MILCNC });
     }
   }
-  return pts;
+
+  // 10 radial spoke corridors connecting rings (2 per pentagon face)
+  for (let i = 0; i < 5; i++) {
+    const aMid = ((i + 0.5) / 5) * Math.PI * 2 - Math.PI / 2;
+    const cx   = Math.cos(aMid), cz = Math.sin(aMid);
+    const rOuter = r, rInner = r * (1 - (rings - 1) * 0.16);
+    for (let y = 0; y < flH * 2; y += stp) {
+      drawWall(pts, cx * rInner, y, cz * rInner, cx * rOuter, y, cz * rOuter, MILCNC);
+    }
+  }
+
+  return applyLimit(pts, 1100);
 }
 
+/**
+ * ⭐ STAR FORT — Vauban-style polygonal fortification (17th century)
+ * Classic trace italienne design: outer star polygon of angled bastions and
+ * curtain walls designed to eliminate blind spots from cannon fire.
+ * Exemplified by Fort Bourtange (Netherlands, 1593) and Fort McHenry (USA, 1798).
+ */
 export function gen_star_fort(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const r = p.r ?? 60, pts2 = p.points ?? 5;
-  const inner = r*0.6;
-  for (let i = 0; i < pts2*2; i++) {
-    const a1 = (i/(pts2*2))*Math.PI*2, a2 = ((i+1)/(pts2*2))*Math.PI*2;
-    const r1 = i%2===0 ? r : inner, r2 = i%2===0 ? inner : r;
-    for (let y = 0; y <= 8; y += 4)
+  const r     = p.r ?? 60;
+  const nPts  = Math.round(p.points ?? 5);
+  const inner = r * 0.62;   // concave gorge radius
+  const h     = 10;         // wall height (r param controls plan size)
+  const step  = 1.572;      // STONE2 flush step
+
+  // Outer star walls — alternating bastion tips (r) and gorge corners (inner)
+  for (let i = 0; i < nPts * 2; i++) {
+    const a1 = (i / (nPts * 2)) * Math.PI * 2;
+    const a2 = ((i + 1) / (nPts * 2)) * Math.PI * 2;
+    const r1  = i % 2 === 0 ? r     : inner;
+    const r2  = i % 2 === 0 ? inner : r;
+    for (let y = 0; y < h; y += step)
       drawWall(pts, r1*Math.cos(a1), y, r1*Math.sin(a1), r2*Math.cos(a2), y, r2*Math.sin(a2), STONE2);
+    drawWall(pts, r1*Math.cos(a1), h, r1*Math.sin(a1), r2*Math.cos(a2), h, r2*Math.sin(a2), CASTLE);
   }
-  return pts;
+
+  // Inner citadel ring at centre
+  for (let y = 0; y < h * 0.75; y += step)
+    drawRing(pts, 0, y, 0, inner * 0.45, STONE2);
+
+  return applyLimit(pts, 1100);
 }
 
+/**
+ * 🏟️ ARENA FORT — Circular curtain-wall fortification with projecting towers
+ * Round medieval/Roman-style fortified compound: IND10 curtain wall ring with
+ * CASTLE battlements, four D-shaped projecting towers at the cardinal points,
+ * and a circular inner keep at the centre.
+ */
 export function gen_arena_fort(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const r = p.r ?? 50, h = 20;
-  for (let y = 0; y <= h; y += 4) drawRing(pts, 0, y, 0, r, IND10);
-  // Towers at 4 points
+  const r     = p.r ?? 50;
+  const h     = 16;        // wall height (r param controls plan size)
+  const step  = 9.758;     // IND10 flush step
+  const cstep = 2.0;       // CASTLE flush step
+
+  // Outer curtain wall
+  for (let y = 0; y < h; y += step)
+    drawRing(pts, 0, y, 0, r, IND10);
+  drawRing(pts, 0, h, 0, r, CASTLE);
+
+  // Four D-shaped projecting towers at cardinal points — project beyond wall
+  const tR = r * 0.14;
   for (let i = 0; i < 4; i++) {
-    const a = (i/4)*Math.PI*2;
-    for (let y = 0; y <= h+8; y += 4) drawRing(pts, r*Math.cos(a), y, r*Math.sin(a), 5, IND10);
+    const a  = (i / 4) * Math.PI * 2;
+    const tx = r * Math.cos(a), tz = r * Math.sin(a);
+    for (let y = 0; y <= h + cstep * 3; y += cstep)
+      drawRing(pts, tx, y, tz, tR, CASTLE);
   }
-  return pts;
+
+  // Inner keep — taller central tower
+  const keepR = r * 0.18;
+  for (let y = 0; y < h * 1.4; y += step)
+    drawRing(pts, 0, y, 0, keepR, IND10);
+  drawRing(pts, 0, h * 1.4, 0, keepR, CASTLE);
+
+  return applyLimit(pts, 1100);
 }
 
+/**
+ * 🚪 GATEHOUSE — Medieval fortified gate passage
+ * Twin cylindrical flanking towers with CASTLE battlements, connecting curtain
+ * walls, and a pointed arch spanning the gate passage. Typical of English and
+ * French medieval castle design (12th–14th century).
+ */
 export function gen_gatehouse(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const S = Math.max(0.5, p.scale ?? 1), w = 32*S, h = 22*S;
+  const S     = Math.max(0.5, p.scale ?? 1);
+  const step  = 1.572 * S;   // STONE2 flush row height
+  const cstep = 2 * S;        // CASTLE flush step
+  const w     = 28 * S;       // full width between tower centres
+  const h     = 20 * S;       // tower height
+  const tR    = 5 * S;        // tower radius
 
   // Two flanking towers
-  for (let tx = -w/2; tx <= w/2; tx += w) {
-    for (let y = 0; y <= h; y += 4*S) drawRing(pts, tx, y, 0, 6*S, STONE2);
-    for (let cr = 0; cr < 8; cr++) {
-      const a = (cr/8)*Math.PI*2, yaw = -a*180/Math.PI+90;
-      pts.push({ x:tx+6.5*S*Math.cos(a), y:h+1.5*S, z:6.5*S*Math.sin(a), yaw, name:STONE2 });
-    }
+  for (const tx of [-w/2, w/2]) {
+    for (let y = 0; y < h; y += step)
+      drawRing(pts, tx, y, 0, tR, STONE2);
+    // Battlement crown
+    for (let y = h; y <= h + cstep * 2; y += cstep)
+      drawRing(pts, tx, y, 0, tR + 0.5*S, CASTLE);
   }
-  // Gate passage walls
-  for (let y = 0; y <= h*0.7; y += 4*S) {
-    drawWall(pts, -w/2+6*S, y, -4*S, -w/2+6*S, y, 4*S, STONE2);
-    drawWall(pts,  w/2-6*S, y, -4*S,  w/2-6*S, y, 4*S, STONE2);
+
+  // Gate passage walls connecting the two towers
+  const passH = h * 0.65;
+  for (let y = 0; y < passH; y += step) {
+    drawWall(pts, -w/2 + tR, y, -3*S, -w/2 + tR, y, 3*S, STONE2);
+    drawWall(pts,  w/2 - tR, y, -3*S,  w/2 - tR, y, 3*S, STONE2);
   }
-  // Arch over gate
-  for (let s = 0; s <= 8; s++) {
-    const a = (s/8)*Math.PI;
-    const ax = Math.cos(a)*8*S, ay = h*0.4 + Math.sin(a)*8*S;
-    pts.push({ x:ax, y:ay, z:-4*S, yaw:0, name:STONE2 });
-    pts.push({ x:ax, y:ay, z: 4*S, yaw:180, name:STONE2 });
+  // Parapet walkway across top of passage
+  for (let y = passH; y <= passH + cstep * 2; y += cstep)
+    drawWall(pts, -w/2 + tR, y, 0, w/2 - tR, y, 0, CASTLE);
+
+  // Pointed arch spanning the gate (front and rear faces)
+  const archW = w/2 - tR;
+  const archBase = 0;
+  const nArch = 10;
+  for (let s = 0; s <= nArch; s++) {
+    const a  = (s / nArch) * Math.PI;
+    const ax = Math.cos(a) * archW;
+    const ay = archBase + passH * 0.3 + Math.sin(a) * archW * 0.65;
+    pts.push({ x: ax, y: ay, z: -3*S, yaw:   0, name: STONE2 });
+    pts.push({ x: ax, y: ay, z:  3*S, yaw: 180, name: STONE2 });
   }
-  return pts;
+
+  return applyLimit(pts, 1100);
 }
 
+/**
+ * 🪖 NORMANDY BUNKERS — Atlantic Wall, D-Day 1944
+ * German Widerstandsnest defensive network: staggered line of Tobruk-style
+ * CNC8 bunkers with stepped roofs and gun slits, backed by a second row and
+ * fronted by a continuous hedge-row barbed wire barrier line.
+ */
 export function gen_normandy(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
   const spread = p.spread ?? 80;
-  const bunkers = [
-    { x:-spread/2, z:0 }, { x:0, z:0 }, { x:spread/2, z:0 },
-    { x:-spread/3, z:20 }, { x:spread/3, z:20 },
-  ];
-  for (const b of bunkers) {
-    drawRect(pts, b.x, 0, b.z, 8, 5, IND10);
-    drawRect(pts, b.x, 4, b.z, 8, 5, IND10);
-    // Gun slit
-    pts.push({ x:b.x, y:2, z:b.z-5.5, yaw:0, name:IND10 });
+  const step   = 2.3;   // CNC8 flush row height (no S — spread param controls scale)
+
+  function bunker(bx: number, bz: number) {
+    const hw = 8, hd = 5, bh = 6;
+    for (let y = 0; y < bh; y += step)
+      drawRect(pts, bx, y, bz, hw, hd, CNC8);
+    // Roof slab
+    drawRect(pts, bx, bh, bz, hw, hd, CNC8);
+    // Stepped roof parapet
+    drawRect(pts, bx, bh + step, bz, hw - 2, hd - 1, CNC8);
+    // Gun slit panels facing forward (-Z)
+    pts.push({ x: bx, y: bh * 0.4, z: bz - hd - 0.5, yaw: 0, name: CNC8 });
   }
-  // Barbed wire trenches
-  for (let x = -spread/2; x <= spread/2; x += 4)
-    pts.push({ x, y:0.2, z:-15, yaw:90, name:"staticobj_mil_hbarrier_big" });
-  return pts;
+
+  // Front row — 3 bunkers
+  bunker(-spread/2, 0);
+  bunker(0,         0);
+  bunker( spread/2, 0);
+  // Second row — 2 bunkers staggered
+  bunker(-spread/3, 18);
+  bunker( spread/3, 18);
+
+  // Barbed wire barrier line in front
+  for (let x = -spread/2 - 4; x <= spread/2 + 4; x += 4)
+    pts.push({ x, y: 0.2, z: -14, yaw: 90, name: "staticobj_mil_hbarrier_big" });
+
+  return applyLimit(pts, 1100);
 }
 
 export function gen_alcatraz(_p: GenParams): Point3D[] {

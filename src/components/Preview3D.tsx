@@ -232,7 +232,7 @@ function BuildRenderer({ points, selectedId }: {
 
         return (
           <group key={name}>
-            {availableGlbs.has(name) ? (
+            {availableGlbs.has(name) && !name.includes("container") ? (
               <ErrorBoundary fallback={<FastBox classname={name} color={getMimic(name).color} instances={instances} />}>
                 <Suspense fallback={<FastBox classname={name} color={getMimic(name).color} instances={instances} />}>
                   <InstancedGroup classname={name} instances={normalInsts} />

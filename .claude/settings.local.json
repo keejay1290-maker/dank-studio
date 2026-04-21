@@ -55,7 +55,13 @@
       "Bash(python3 -)",
       "Bash(mkdir -p /tmp/asar_extract)",
       "Bash(npx asar *)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(node -e \"require\\('@react-three/postprocessing'\\); console.log\\('ok'\\)\")",
+      "Bash(node -e \"const p = require\\('postprocessing'\\); console.log\\(Object.keys\\(p\\).filter\\(k=>k.includes\\('Tone'\\)||k.includes\\('SSAO'\\)\\)\\)\")",
+      "Bash(node -e \"const {ToneMappingMode} = require\\('postprocessing'\\); console.log\\(ToneMappingMode\\)\")",
+      "Bash(node -e \"const p = require\\('@react-three/postprocessing'\\); console.log\\(Object.keys\\(p\\).filter\\(k=>k.includes\\('SSA'\\)||k.includes\\('Tone'\\)||k.includes\\('Bloom'\\)\\)\\)\")",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }

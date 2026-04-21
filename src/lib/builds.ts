@@ -201,6 +201,7 @@ const MONUMENTS: BuildEntry[] = [
   },
   {
     key: "arc_triomphe", label: "Arc de Triomphe", category: "Monuments",
+    description: "Paris, 1836. 50m limestone triumphal arch — main 29m semicircular arch on N/S faces, secondary 18.7m arches on E/W faces, carved attic above.",
     defaultParams: { scale: 1 },
     params: [
       { key: "scale", label: "Scale", min: 0.5, max: 3, step: 0.25, default: 1 },
@@ -208,6 +209,7 @@ const MONUMENTS: BuildEntry[] = [
   },
   {
     key: "sydney_opera", label: "Sydney Opera House", category: "Monuments",
+    description: "Sydney, 1973. Utzon's sail-shell masterpiece — 3-tier podium on Bennelong Point, Concert Hall (west, 67m) and Opera Theatre (east, 59m) as nested paired vaults tapering from front to rear.",
     defaultParams: { scale: 1 },
     params: [
       { key: "scale", label: "Scale", min: 0.5, max: 3, step: 0.25, default: 1 },
@@ -215,6 +217,7 @@ const MONUMENTS: BuildEntry[] = [
   },
   {
     key: "cn_tower", label: "CN Tower", category: "Monuments",
+    description: "Toronto, 1976. 553m free-standing concrete tower — Y-shaped tripod base with 3 massive fins, tapered hexagonal shaft, wide observation pod at 342m with glass-floor deck, SkyPod disc at 447m, tapering antenna spire.",
     defaultParams: { scale: 1 },
     params: [
       { key: "scale", label: "Scale", min: 0.5, max: 3, step: 0.25, default: 1 },
@@ -222,6 +225,7 @@ const MONUMENTS: BuildEntry[] = [
   },
   {
     key: "space_needle", label: "Space Needle", category: "Monuments",
+    description: "Seattle, 1962. 184m — three-legged tripod base converging to an ultra-thin shaft, iconic flying-saucer observation deck with flared underside, tapering spire.",
     defaultParams: { scale: 1 },
     params: [
       { key: "scale", label: "Scale", min: 0.5, max: 3, step: 0.25, default: 1 },
@@ -229,6 +233,7 @@ const MONUMENTS: BuildEntry[] = [
   },
   {
     key: "leaning_pisa", label: "Leaning Tower of Pisa", category: "Monuments",
+    description: "Pisa, 1372. 56m white marble campanile with 3.97° southward lean — 8 tiers with projecting open colonnades at each gallery floor, narrow belfry at crown.",
     defaultParams: { scale: 1 },
     params: [
       { key: "scale", label: "Scale", min: 0.5, max: 3, step: 0.25, default: 1 },
@@ -240,27 +245,31 @@ const MONUMENTS: BuildEntry[] = [
 const FANTASY: BuildEntry[] = [
   {
     key: "hogwarts", label: "Hogwarts Castle", category: "Fantasy",
-    defaultParams: { scale: 1 },
+    description: "Scottish Gothic castle — main keep with parapets, Great Hall south wing with pointed gable, Astronomy Tower (NE, tallest), 3 corner towers at varied heights, Clock Tower annex, viaduct bridge.",
+    defaultParams: { scale: 0.5 },
     params: [
-      { key: "scale", label: "Scale", min: 0.5, max: 2, step: 0.25, default: 1 },
+      { key: "scale", label: "Scale", min: 0.25, max: 1.5, step: 0.25, default: 0.5 },
     ],
   },
   {
     key: "minas_tirith", label: "Minas Tirith", category: "Fantasy",
-    defaultParams: { scale: 1 },
+    description: "City of Kings, Gondor — seven concentric stone tiers carved into Mount Mindolluin, each set back above the last, crowned by the White Tower of Ecthelion.",
+    defaultParams: { scale: 0.5 },
     params: [
-      { key: "scale", label: "Scale", min: 0.5, max: 2, step: 0.25, default: 1 },
+      { key: "scale", label: "Scale", min: 0.25, max: 1.5, step: 0.25, default: 0.5 },
     ],
   },
   {
     key: "helms_deep", label: "Helm's Deep", category: "Fantasy",
-    defaultParams: { scale: 1 },
+    description: "The Hornburg fortress of Rohan — the great Deeping Wall curtain wall with interval towers, the large circular Hornburg keep on the west rock, and the Deeping Tower at the east end.",
+    defaultParams: { scale: 0.5 },
     params: [
-      { key: "scale", label: "Scale", min: 0.5, max: 2, step: 0.25, default: 1 },
+      { key: "scale", label: "Scale", min: 0.25, max: 1.5, step: 0.25, default: 0.5 },
     ],
   },
   {
     key: "the_wall_game_of_thrones", label: "The Wall (GoT)", category: "Fantasy",
+    description: "Colossal Night's Watch ice fortification on the northern border of Westeros — dual-face curtain wall game-scaled to 60m, with CASTLE battlements and evenly-spaced waycastles along the parapet.",
     defaultParams: { length: 200 },
     params: [
       { key: "length", label: "Length (m)", min: 80, max: 400, step: 20, default: 200 },
@@ -268,23 +277,26 @@ const FANTASY: BuildEntry[] = [
   },
   {
     key: "azkaban_prison", label: "Azkaban Prison", category: "Fantasy",
-    defaultParams: { scale: 1 },
+    description: "Remote North Sea island fortress from Harry Potter — triangular IND10 dark keep, three corner watchtowers, and a central tapering spire housing the Dementor cells.",
+    defaultParams: { scale: 0.5 },
     params: [
-      { key: "scale", label: "Scale", min: 0.5, max: 2, step: 0.25, default: 1 },
+      { key: "scale", label: "Scale", min: 0.25, max: 1.5, step: 0.25, default: 0.5 },
     ],
   },
   {
     key: "eye_of_sauron", label: "Eye of Sauron", category: "Fantasy",
-    defaultParams: { r: 50 },
+    description: "Barad-dûr tower crown, LOTR. Tapered dark IND10 tower, CNC8 crown battlements, twin flanking horn spires arching outward, fiery barrel_red elliptical pupil slit at the summit.",
+    defaultParams: { scale: 1 },
     params: [
-      { key: "r", label: "Tower Radius (m)", min: 20, max: 100, step: 5, default: 50 },
+      { key: "scale", label: "Scale", min: 0.5, max: 3, step: 0.25, default: 1 },
     ],
   },
   {
     key: "fortress_of_solitude", label: "Fortress of Solitude", category: "Fantasy",
-    defaultParams: { scale: 1 },
+    description: "Superman's Arctic sanctuary — Kryptonian-grown white crystal spires in three rings: 6 outer tall spires, 4 inner medium spires, central mega-spire tapering to a point.",
+    defaultParams: { scale: 0.5 },
     params: [
-      { key: "scale", label: "Scale", min: 0.5, max: 3, step: 0.25, default: 1 },
+      { key: "scale", label: "Scale", min: 0.25, max: 1.5, step: 0.25, default: 0.5 },
     ],
   },
   {
@@ -349,6 +361,7 @@ const CONTAINER_BUILDS: BuildEntry[] = [
 const STRUCTURES: BuildEntry[] = [
   {
     key: "bunker_complex", label: "Bunker Complex", category: "Structures",
+    description: "WWII/Cold War reinforced concrete command bunker — flat-roofed CNC8 shell with MILCNC interior partitions, blast door vestibule, and ventilation towers on the roof.",
     defaultParams: { scale: 1 },
     params: [
       { key: "scale", label: "Scale", min: 0.5, max: 3, step: 0.25, default: 1 },
@@ -356,6 +369,7 @@ const STRUCTURES: BuildEntry[] = [
   },
   {
     key: "the_pentagon", label: "The Pentagon", category: "Structures",
+    description: "US Department of Defense HQ, Arlington, Virginia (1943) — five concentric pentagonal rings of 4-storey MILCNC office buildings connected by 5 radial spoke corridors.",
     defaultParams: { r: 100 },
     params: [
       { key: "r", label: "Radius (m)", min: 40, max: 200, step: 10, default: 100 },
@@ -363,6 +377,7 @@ const STRUCTURES: BuildEntry[] = [
   },
   {
     key: "star_fort", label: "Star Fort", category: "Structures",
+    description: "Vauban-style trace italienne star fort — outer star polygon of angled bastion tips and gorge corners designed to eliminate cannon blind spots, with inner citadel ring.",
     defaultParams: { r: 80, points: 5 },
     params: [
       { key: "r", label: "Radius (m)", min: 30, max: 160, step: 10, default: 80 },
@@ -371,6 +386,7 @@ const STRUCTURES: BuildEntry[] = [
   },
   {
     key: "arena_fort", label: "Arena Fort", category: "Structures",
+    description: "Circular curtain-wall fort — IND10 ring wall with CASTLE battlements, four D-shaped projecting towers at the cardinal points, and a taller circular inner keep.",
     defaultParams: { r: 60 },
     params: [
       { key: "r", label: "Radius (m)", min: 30, max: 120, step: 10, default: 60 },
@@ -378,6 +394,7 @@ const STRUCTURES: BuildEntry[] = [
   },
   {
     key: "gatehouse", label: "Gatehouse", category: "Structures",
+    description: "Medieval fortified gate passage — twin STONE2 cylindrical flanking towers with CASTLE battlements, connecting curtain walls, and a pointed arch spanning the gate.",
     defaultParams: { scale: 1 },
     params: [
       { key: "scale", label: "Scale", min: 0.5, max: 3, step: 0.25, default: 1 },
@@ -385,9 +402,10 @@ const STRUCTURES: BuildEntry[] = [
   },
   {
     key: "normandy_bunkers", label: "Normandy Bunkers", category: "Structures",
-    defaultParams: { scale: 1 },
+    description: "Atlantic Wall Widerstandsnest, D-Day 1944 — staggered line of Tobruk-style CNC8 bunkers with stepped roofs and gun slits, fronted by a barbed wire barrier line.",
+    defaultParams: { spread: 80 },
     params: [
-      { key: "scale", label: "Scale", min: 0.5, max: 3, step: 0.25, default: 1 },
+      { key: "spread", label: "Spread (m)", min: 40, max: 160, step: 20, default: 80 },
     ],
   },
   {

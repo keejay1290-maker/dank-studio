@@ -113,6 +113,14 @@ const IND10  = "staticobj_wall_indcnc_10";    // 9.012m × 9.758m industrial
 
 ---
 
+## RECENT CHANGES (2026-04-20)
+
+| What | Detail |
+|---|---|
+| **Arc de Triomphe rework** | Real proportions (50m×45m×22m). Main arch (N/S faces): 29m tall, 14.6m wide semicircle with row-by-row cutout math. Secondary arches (E/W faces): 18.7m tall, 8.5m wide — previously completely missing. Arch voussoir crown panels added. Attic cap CNC8. Description added to builds.ts |
+| **Sydney Opera House rework** | 3-tier stepped podium (85×44m). Shell vaults rewritten with `drawVault()`: ribs taper from full size at front (+Z) to zero at rear (sqrt-taper fan shape). Concert Hall: 3 nested vaults (outer 67m, middle, inner). Opera Theatre: 2 nested vaults (outer 59m). Bennelong restaurant added. South-facing arch end panels added for approach-side visibility |
+| **CN Tower rework** | Correct proportions: podY=112*S (real 342m), spaceY=146*S (real 447m), h=185*S (553m). Base: inner face panels added to each of 3 fins (MILCNC). Shaft tapers r=4.5→3.2. Main observation pod: bell-curve profile (sin(t*π) radius envelope) with glass-floor ring. SkyPod upper disc at 447m. Shaft rings between pods added. Antenna tapers to r≈0 at tip. All 3 have descriptions in builds.ts |
+
 ## RECENT CHANGES (2026-04-19)
 
 | What | Detail |
