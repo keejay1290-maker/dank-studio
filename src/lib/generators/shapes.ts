@@ -1718,6 +1718,42 @@ export function gen_stonehenge(p: GenParams): Point3D[] {
 }
 
 /**
+ * ⭐ PENTAGRAM — 5-pointed star of red shipping containers
+ * Slightly smaller than Stonehenge (r≈22 vs r=30).
+ * 5 lines, each connecting non-adjacent vertices; ~4–5 containers per arm.
+ */
+export function gen_pentagram(p: GenParams): Point3D[] {
+  const pts: Point3D[] = [];
+  const r  = Math.max(10, Math.min(p.r ?? 22, 60));
+  const sc = p.scale ?? 1.0;
+  const CL = 10 * sc;  // effective container length at chosen scale
+  const CONT = "land_container_1bo";
+
+  // 5 vertices on a circle, top-aligned (−π/2 offset)
+  const verts = Array.from({ length: 5 }, (_, i) => {
+    const a = (i / 5) * Math.PI * 2 - Math.PI / 2;
+    return { x: r * Math.cos(a), z: r * Math.sin(a) };
+  });
+
+  // Draw each of the 5 star lines: vertex i → vertex (i+2)%5
+  for (let i = 0; i < 5; i++) {
+    const v1 = verts[i];
+    const v2 = verts[(i + 2) % 5];
+    const dx  = v2.x - v1.x;
+    const dz  = v2.z - v1.z;
+    const len = Math.sqrt(dx * dx + dz * dz);
+    const yaw = Math.atan2(dx, dz) * 180 / Math.PI;
+    const nx  = dx / len;
+    const nz  = dz / len;
+
+    for (let d = CL / 2; d < len; d += CL)
+      pts.push({ x: v1.x + nx * d, y: 0, z: v1.z + nz * d, yaw, scale: sc, name: CONT });
+  }
+
+  return applyLimit(pts, 1100);
+}
+
+/**
  * 🕰️ BIG BEN — Elizabeth Tower (V2 rebuild)
  *
  * Research:

@@ -107,6 +107,7 @@ const REGISTRY: Record<string, (p: GenParams) => Point3D[]> = {
   colosseum:               G.gen_colosseum,
   pyramid_giza:            G.gen_pyramid,
   stonehenge:              G.gen_stonehenge,
+  pentagram:               G.gen_pentagram,
   big_ben:                 G.gen_big_ben,
   angkor_wat:              G.gen_angkor_wat,
   parthenon:               G.gen_parthenon,

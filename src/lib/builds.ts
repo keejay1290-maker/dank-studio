@@ -176,6 +176,15 @@ const MONUMENTS: BuildEntry[] = [
     ],
   },
   {
+    key: "pentagram", label: "Pentagram", category: "Structures",
+    description: "5-pointed star of red shipping containers — ~20 containers at default size",
+    defaultParams: { r: 22, scale: 1 },
+    params: [
+      { key: "r", label: "Radius (m)", min: 10, max: 60, step: 2, default: 22 },
+      { key: "scale", label: "Container Scale", min: 0.25, max: 1, step: 0.25, default: 1 },
+    ],
+  },
+  {
     key: "big_ben", label: "Big Ben", category: "Monuments",
     description: "Elizabeth Tower, Westminster — Gothic limestone shaft with 4 clock faces, belfry, corner pinnacles and spire",
     defaultParams: { scale: 1 },
