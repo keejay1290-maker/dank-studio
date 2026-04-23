@@ -370,7 +370,7 @@ const CONTAINER_BUILDS: BuildEntry[] = [
 const STRUCTURES: BuildEntry[] = [
   {
     key: "bunker_complex", label: "Bunker Complex", category: "Structures",
-    description: "WWII/Cold War reinforced concrete command bunker — flat-roofed CNC8 shell with MILCNC interior partitions, blast door vestibule, and ventilation towers on the roof.",
+    description: "Underground concrete bunker — front entrance passage, internal corridor, 3 exploration rooms, ventilation towers",
     defaultParams: { scale: 1 },
     params: [
       { key: "scale", label: "Scale", min: 0.5, max: 3, step: 0.25, default: 1 },
@@ -430,37 +430,40 @@ const STRUCTURES: BuildEntry[] = [
 const NAVAL: BuildEntry[] = [
   {
     key: "aircraft_carrier", label: "Aircraft Carrier", category: "Naval",
-    defaultParams: { scale: 1 },
+    description: "Nimitz-class supercarrier — 200m flight deck, island superstructure, catapult tracks",
+    defaultParams: { length: 200 },
     params: [
-      { key: "scale", label: "Scale", min: 0.5, max: 2, step: 0.25, default: 1 },
+      { key: "length", label: "Length (m)", min: 100, max: 250, step: 10, default: 200 },
     ],
   },
   {
     key: "submarine", label: "Submarine", category: "Naval",
-    defaultParams: { scale: 1 },
+    description: "Los Angeles-class nuclear submarine — tapered pressure hull, conning sail, cruciform fins",
+    defaultParams: { length: 100 },
     params: [
-      { key: "scale", label: "Scale", min: 0.5, max: 3, step: 0.25, default: 1 },
+      { key: "length", label: "Length (m)", min: 50, max: 150, step: 10, default: 100 },
     ],
   },
   {
     key: "oil_rig", label: "Oil Rig", category: "Naval",
-    defaultParams: { scale: 1 },
-    params: [
-      { key: "scale", label: "Scale", min: 0.5, max: 2, step: 0.25, default: 1 },
-    ],
+    description: "North Sea semi-submersible — 4 pontoon legs, lattice deck, 50m drill derrick, flare stack",
+    defaultParams: {},
+    params: [],
   },
   {
     key: "pirate_ship", label: "Pirate Ship", category: "Naval",
-    defaultParams: { scale: 1 },
+    description: "17th-century galleon — tapered hull, forecastle, sterncastle, 3 masts with crow's nests, 8 cannon ports",
+    defaultParams: { length: 60 },
     params: [
-      { key: "scale", label: "Scale", min: 0.5, max: 3, step: 0.25, default: 1 },
+      { key: "length", label: "Length (m)", min: 40, max: 90, step: 5, default: 60 },
     ],
   },
   {
     key: "bridge_truss", label: "Truss Bridge", category: "Naval",
+    description: "Warren truss road bridge — diagonal V-pattern steel, 2 suspension towers, MILCNC deck",
     defaultParams: { length: 120 },
     params: [
-      { key: "length", label: "Length (m)", min: 40, max: 300, step: 20, default: 120 },
+      { key: "length", label: "Span (m)", min: 60, max: 200, step: 10, default: 120 },
     ],
   },
 ];

@@ -761,7 +761,7 @@ export function gen_stark_tower(p: GenParams): Point3D[] {
 
   // ── SPIRE ANTENNA ────────────────────────────────────────────────────────
   // Two perpendicular fins per level form a narrow needle rising 30m above the tower.
-  for (let sy = towerTopY; sy < towerTopY + 30 * S; sy += 9.012 * S) {
+  for (let sy = towerTopY; sy < towerTopY + 30 * S; sy += 9.758 * S) {
     pts.push({ x: 0, y: sy, z: 0, yaw: 0,  pitch: 0, name: IND10 });
     pts.push({ x: 0, y: sy, z: 0, yaw: 90, pitch: 0, name: IND10 });
   }
@@ -2249,29 +2249,21 @@ export function gen_cn_tower(p: GenParams): Point3D[] {
   const podY   = 112 * S;   // main observation pod   (real 342m)
   const spaceY = 146 * S;   // SkyPod upper disc       (real 447m)
 
-  // ── Y-shaped tripod base — 3 fins as stacked horizontal MILCNC slabs ────────
-  // Each row is a flat drawWall on the outer fin face, stepping inward as it rises.
-  // Outer face yaw formula: the wall runs tangentially so it faces radially outward.
-  // Start = (cos(a)*r + sin(a)*hw, y, sin(a)*r - cos(a)*hw)
-  // End   = (cos(a)*r - sin(a)*hw, y, sin(a)*r + cos(a)*hw) → yaw = 90 - a°
-  const finStep = 4.744 * S;   // MILCNC panel height — flush vertical stacking
+  // ── Y-shaped tripod base — 3 container-stacked legs stepping inward as they rise ──
+  const CONT = "land_container_1bo";
   for (let i = 0; i < 3; i++) {
-    const a = (i / 3) * Math.PI * 2;
+    const a  = (i / 3) * Math.PI * 2;
     const cA = Math.cos(a), sA = Math.sin(a);
-    for (let y = 0; y < 48*S; y += finStep) {
-      const t    = y / (48*S);
-      const rOut = (22 - t * 17.5) * S;
-      const hw   = (1 - t) * 9 * S;
-      if (hw < S) continue;
-      // Outer face slab
-      drawWall(pts,
-        cA*rOut + sA*hw, y, sA*rOut - cA*hw,
-        cA*rOut - sA*hw, y, sA*rOut + cA*hw,
-        MILCNC);
-      // Side face (left edge) — radial line inward, gives fin thickness
-      const rIn = rOut * 0.55;
-      drawWall(pts, cA*rOut + sA*hw, y, sA*rOut - cA*hw, cA*rIn + sA*hw, y, sA*rIn - cA*hw, CNC8);
-      drawWall(pts, cA*rOut - sA*hw, y, sA*rOut + cA*hw, cA*rIn - sA*hw, y, sA*rIn + cA*hw, CNC8);
+    const yaw = 90 - a * 180 / Math.PI;
+    for (let stack = 0; stack < 5; stack++) {
+      const t  = stack / 4;
+      const rr = (20 - t * 14) * S;  // steps inward r=20 → r=6
+      const yy = stack * 10 * S;
+      // Centre column of leg
+      pts.push({ x: cA*rr,              y: yy, z: sA*rr,              yaw, name: CONT });
+      // Flanking containers for leg width
+      pts.push({ x: cA*rr + sA*4*S,    y: yy, z: sA*rr - cA*4*S,    yaw, name: CONT });
+      pts.push({ x: cA*rr - sA*4*S,    y: yy, z: sA*rr + cA*4*S,    yaw, name: CONT });
     }
   }
 
@@ -2331,15 +2323,21 @@ export function gen_space_needle(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
   const S = Math.max(0.5, p.scale ?? 1), h = 184 * S;
 
-  // Tripod base — stacked CNC4 column panels per leg, each stepping inward as it rises.
-  // yaw = 90 - a° (outward-facing: at a=0 → yaw=90/East, a=π/2 → yaw=0/North, etc.)
+  // Tripod base — container stacks stepping inward as they rise.
+  const CONT_SN = "land_container_1bo";
   for (let i = 0; i < 3; i++) {
     const a   = (i / 3) * Math.PI * 2;
+    const cA  = Math.cos(a), sA = Math.sin(a);
     const yaw = 90 - a * 180 / Math.PI;
-    for (let y = 0; y < 50*S; y += 2.324*S) {  // CNC4 panel height = 2.324m
-      const t = y / (50*S);
-      const r = (20 - t * 15.5) * S;
-      pts.push({ x: Math.cos(a)*r, y, z: Math.sin(a)*r, yaw, name: CNC4 });
+    for (let stack = 0; stack < 4; stack++) {
+      const t  = stack / 3;
+      const rr = (18 - t * 14) * S;  // steps inward r=18 → r=4
+      const yy = stack * 12 * S;
+      // Centre container of leg
+      pts.push({ x: cA*rr,           y: yy, z: sA*rr,           yaw, name: CONT_SN });
+      // Flanking containers for visible leg width
+      pts.push({ x: cA*rr + sA*3*S, y: yy, z: sA*rr - cA*3*S, yaw, name: CONT_SN });
+      pts.push({ x: cA*rr - sA*3*S, y: yy, z: sA*rr + cA*3*S, yaw, name: CONT_SN });
     }
   }
 
@@ -2706,23 +2704,17 @@ export function gen_eye_of_sauron(p: GenParams): Point3D[] {
   for (let di = 0; di <= 2; di++) drawRing(pts, 0, crownY + di*2.3*S, 0, crownR + di*1.5*S, CNC8);
 
   // ── Two flanking horn spires (the "lids" of the Eye) ──────────────────────
-  // One N (+Z), one S (-Z), angled outward and upward
+  // One N (+Z), one S (-Z), angled outward and upward.
+  // Use solid MILCNC rings placed along the spire arc path — no gap-prone drawWall segments.
+  const nSeg = 12;
   for (let side = 0; side < 2; side++) {
-    const sz   = side === 0 ? 1 : -1;
-    const nSeg = 8;
+    const sz = side === 0 ? 1 : -1;
     for (let seg = 0; seg < nSeg; seg++) {
-      const t0 = seg / nSeg, t1 = (seg + 1) / nSeg;
-      const z0 = sz * (crownR + t0 * 18*S);
-      const z1 = sz * (crownR + t1 * 18*S);
-      const y0 = crownY + t0 * 30*S;
-      const y1 = crownY + t1 * 30*S;
-      const r0 = (3 - t0 * 2.5) * S;
-      if (r0 > 0.3*S) drawWall(pts, 0, y0, z0, 0, y1, z1, MILCNC);
-      // Flanking width panels for spire girth
-      if (r0 > 0.5*S) {
-        pts.push({ x: -r0, y: y0 + (y1-y0)*0.5, z: (z0+z1)*0.5, yaw: -90, name: CNC4 });
-        pts.push({ x:  r0, y: y0 + (y1-y0)*0.5, z: (z0+z1)*0.5, yaw:  90, name: CNC4 });
-      }
+      const t  = seg / nSeg;
+      const z0 = sz * (crownR + t * 18*S);
+      const y0 = crownY + t * 30*S;
+      const r0 = Math.max(0.3*S, (3 - t * 2.6) * S);
+      drawRing(pts, 0, y0, z0, r0, MILCNC);
     }
   }
 
@@ -3317,39 +3309,80 @@ export function gen_container_station(p: GenParams): Point3D[] {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * 🪖 BUNKER COMPLEX — WWII / Cold War reinforced concrete command bunker
- * Flat-roofed rectangular CNC8 shell with interior MILCNC cross-walls dividing
- * three compartments, ventilation towers on the roof, and a blast door vestibule
- * at the south face.
+ * 🪖 BUNKER COMPLEX — Underground concrete command bunker with exploration rooms
+ * Front entrance gap on south face leads into a vestibule corridor. Main interior
+ * spine splits into 3 rooms via MILCNC dividers. Secondary exit on north face.
+ * Solid CNC8 roof with ventilation towers.
  */
 export function gen_bunker(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const S    = Math.max(0.5, p.scale ?? 1);
-  const step = 2.3 * S;    // CNC8 flush row height
-  const hw   = 18 * S;     // half-width (X)
-  const hd   = 12 * S;     // half-depth (Z)
-  const h    = 9  * S;     // wall height
+  const S     = Math.max(0.5, p.scale ?? 1);
+  const step  = 2.3 * S;   // CNC8 flush row height
+  const hw    = 20 * S;    // half-width (X)
+  const hd    = 14 * S;    // half-depth (Z)
+  const h     = 6.9 * S;   // wall height (3 rows: 3 × 2.3)
+  const doorW = 4 * S;     // half-width of entrance gap
+  const doorH = 2 * step;  // door height (2 rows ≈ 4.6 m)
 
-  // Outer concrete shell
-  for (let y = 0; y < h; y += step)
-    drawRect(pts, 0, y, 0, hw, hd, CNC8);
-  // Roof slab
-  drawRect(pts, 0, h, 0, hw, hd, CNC8);
-
-  // Interior dividing cross-walls — 2 walls creating 3 rooms
-  for (let y = 0; y < h; y += step) {
-    drawWall(pts, -hw/2, y, -hd, -hw/2, y, hd, MILCNC);
-    drawWall(pts,  hw/2, y, -hd,  hw/2, y, hd, MILCNC);
+  // Corner fills for a drawRect at (cx,cy,cz) with half-extents (w,d)
+  function cornerFills(cx: number, cy: number, cz: number, w: number, d: number) {
+    pts.push({ x: cx - w, y: cy, z: cz - d, yaw: 225, name: CNC8 });
+    pts.push({ x: cx + w, y: cy, z: cz - d, yaw: 135, name: CNC8 });
+    pts.push({ x: cx + w, y: cy, z: cz + d, yaw:  45, name: CNC8 });
+    pts.push({ x: cx - w, y: cy, z: cz + d, yaw: 315, name: CNC8 });
   }
 
-  // Blast door vestibule — short CNC8 extension at south face centre
-  for (let y = 0; y < h * 0.6; y += step)
-    drawWall(pts, -5*S, y, hd, 5*S, y, hd + 3*S, CNC8);
+  // ── OUTER SHELL — entrance gap in south face (z = +hd) ───────────────────
+  for (let y = 0; y < h; y += step) {
+    // North face — solid
+    drawWall(pts, -hw, y, -hd, hw, y, -hd, CNC8);
+    // East face — solid
+    drawWall(pts, hw, y, -hd, hw, y, hd, CNC8);
+    // West face — solid
+    drawWall(pts, -hw, y, hd, -hw, y, -hd, CNC8);
+    // South face — gap in centre for entrance
+    if (y < doorH) {
+      drawWall(pts, -hw, y, hd, -doorW, y, hd, CNC8);  // west pier
+      drawWall(pts,  doorW, y, hd,  hw, y, hd, CNC8);  // east pier
+    } else {
+      drawWall(pts, -hw, y, hd, hw, y, hd, CNC8);      // above door: full span
+    }
+    cornerFills(0, y, 0, hw, hd);
+  }
 
-  // Ventilation towers on roof — 2 stubby cylinders
-  for (const vx of [-hw * 0.5, hw * 0.5] as number[]) {
-    for (let y = h; y < h + 4*S; y += step)
-      drawRing(pts, vx, y, 0, 2*S, CNC8);
+  // North exit door frame — CNC4 panels framing a small exit
+  for (let y = 0; y < doorH; y += step)
+    pts.push({ x: 0, y, z: -hd - 0.5 * S, yaw: 0, name: CNC4 });
+
+  // ── ROOF SLAB ─────────────────────────────────────────────────────────────
+  drawRect(pts, 0, h, 0, hw, hd, CNC8);
+  cornerFills(0, h, 0, hw, hd);
+
+  // Roof ventilation towers
+  for (const vx of [-hw * 0.4, hw * 0.4] as number[]) {
+    for (let y = h + step; y < h + step + 4 * S; y += step)
+      drawRing(pts, vx, y, 0, 2 * S, CNC8);
+  }
+
+  // ── ENTRANCE VESTIBULE — short corridor outside south face ────────────────
+  const vestL = 6 * S;
+  for (let y = 0; y < doorH; y += step) {
+    drawWall(pts, -doorW, y, hd, -doorW, y, hd + vestL, CNC8);
+    drawWall(pts,  doorW, y, hd,  doorW, y, hd + vestL, CNC8);
+  }
+  // Vestibule lintel / roof edge
+  drawWall(pts, -doorW, doorH, hd,         doorW, doorH, hd,         CNC8);
+  drawWall(pts, -doorW, doorH, hd + vestL, doorW, doorH, hd + vestL, CNC8);
+
+  // ── INTERIOR WALLS — corridor spine + 3 rooms ────────────────────────────
+  const divX = hw / 3;
+  for (let y = 0; y < h; y += step) {
+    // West room divider
+    drawWall(pts, -divX, y, -hd, -divX, y, hd * 0.5, MILCNC);
+    // East room divider
+    drawWall(pts,  divX, y, -hd,  divX, y, hd * 0.5, MILCNC);
+    // Central back wall — separates rear rooms from front corridor
+    drawWall(pts, -divX, y, -hd * 0.3, divX, y, -hd * 0.3, MILCNC);
   }
 
   return applyLimit(pts, 1100);
@@ -3587,90 +3620,279 @@ export function gen_alcatraz(_p: GenParams): Point3D[] {
 
 export function gen_carrier(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const L = p.length ?? 200, W = 30;
-  // Hull deck
-  for (let x = -L/2; x <= L/2; x += 6) {
-    pts.push({ x, y:0, z:-W/2, yaw:0, name:"land_container_1bo" });
-    pts.push({ x, y:0, z: W/2, yaw:0, name:"land_container_1bo" });
-    pts.push({ x, y:0, z:0,    yaw:0, name:"land_container_1bo" });
+  const L = Math.min(p.length ?? 200, 250);   // flight deck length
+  const W = 30;                                  // deck half-width
+  const step = 9.758;   // IND10 step (no S — length param controls size)
+
+  // ── Hull — IND10 rings at each cross-section ─────────────────────────────
+  for (let x = -L/2; x <= L/2; x += 9.012) {
+    const t = Math.abs(x) / (L/2);
+    // Hull tapers at bow (+x) and stern (-x)
+    const hw = W * (1 - Math.pow(t, 3) * 0.4);
+    // Hull depth — 3 rows below deck
+    for (let y = -step * 2; y < 0; y += step)
+      drawWall(pts, x, y, -hw, x, y, hw, IND10);
+    // Hull sides
+    drawWall(pts, x, -step * 2, -hw, x, 0, -hw, IND10);
+    drawWall(pts, x, -step * 2,  hw, x, 0,  hw, IND10);
   }
-  // Island superstructure
-  drawRect(pts, L/2-20, 2, W/2+2, 8, 6, IND10);
-  for (let y = 2; y <= 18; y += 4) drawRect(pts, L/2-20, y, W/2+2, 4, 3, IND10);
-  return pts;
+
+  // ── Flight deck — MILCNC flat panels (pitch:-90 = lying flat) ─────────────
+  for (let x = -L/2; x <= L/2; x += 9.608) {
+    for (let z = -W; z <= W; z += 9.608)
+      pts.push({ x, y: 0, z, yaw: 0, pitch: -90, name: MILCNC });
+  }
+
+  // ── Island superstructure — starboard side (z = W + 3) ────────────────────
+  const islandX = L/2 - 30;
+  const islandZ = W + 3;
+  for (let y = 0; y < step * 3; y += 2.3) {
+    drawRect(pts, islandX, y, islandZ, 12, 5, CNC8);
+    pts.push({ x: islandX-12, y, z: islandZ-5, yaw: 225, name: CNC8 });
+    pts.push({ x: islandX+12, y, z: islandZ-5, yaw: 135, name: CNC8 });
+    pts.push({ x: islandX+12, y, z: islandZ+5, yaw:  45, name: CNC8 });
+    pts.push({ x: islandX-12, y, z: islandZ+5, yaw: 315, name: CNC8 });
+  }
+  // Radar mast
+  for (let y = step * 3; y < step * 5; y += 4.744)
+    drawRing(pts, islandX, y, islandZ, 2, MILCNC);
+  // Radar dish
+  pts.push({ x: islandX, y: step * 5 + 2, z: islandZ, yaw: 0, pitch: -90, name: CNC4 });
+
+  // ── Catapult tracks — 2 forward, 1 angled ─────────────────────────────────
+  // Forward cats along X-axis on deck
+  for (let x = -L/2 + 10; x <= -L/2 + 80; x += 8)
+    pts.push({ x, y: 0.5, z: -W * 0.4, yaw: 90, name: CNC4 });
+  for (let x = -L/2 + 10; x <= -L/2 + 80; x += 8)
+    pts.push({ x, y: 0.5, z:  W * 0.4, yaw: 90, name: CNC4 });
+
+  // ── Bow anchor deck ───────────────────────────────────────────────────────
+  pts.push({ x: -L/2 + 5, y: 0, z: 0, yaw: 0, pitch: -90, name: CNC8 });
+
+  return applyLimit(pts, 1100);
 }
 
 export function gen_submarine(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const L = p.length ?? 80, S = L/80;
-  for (let z = -L/2; z <= L/2; z += 4*S) {
-    const t = Math.abs(z)/(L/2);
-    const r = (5 - t*3)*S;
+  const L = Math.min(p.length ?? 100, 150);
+  const S = L / 100;
+
+  // ── Pressure hull — circular cross-sections along Z ────────────────────────
+  for (let z = -L/2; z <= L/2; z += 9.012) {
+    const t = Math.abs(z) / (L / 2);
+    // Tapers at bow (+z) to pointed, at stern (-z) slightly
+    const r = t > 0.8 ? (1 - t) / 0.2 * 5 * S : 5 * S;
     if (r > 0.5) drawRing(pts, 0, 0, z, r, IND10);
   }
-  // Conning tower
-  for (let y = 5*S; y <= 14*S; y += 3*S) drawRect(pts, 0, y, -5*S, 3*S, 3*S, IND10);
-  // Planes / fins
-  for (const [z,y] of [[10*S,0],[-(L/2-8*S),2*S]]) {
-    drawWall(pts, -8*S, y, z, 8*S, y, z, IND10);
+  // Hull cap panels at bow tip
+  pts.push({ x: 0, y: 0, z: L/2, yaw: 0, name: IND10 });
+
+  // ── Sail (conning tower) — at 1/3 from bow ─────────────────────────────────
+  const sailZ = L * 0.15;  // offset forward of centre
+  for (let y = 5*S; y <= 14*S; y += 2.3*S)
+    drawRect(pts, 0, y, sailZ, 3*S, 4*S, CNC8);
+  // Periscope + antenna on sail top
+  drawRing(pts, 0, 14*S + 2, sailZ, 1.5*S, CNC4);
+  pts.push({ x: 0, y: 14*S + 6, z: sailZ, yaw: 0, name: CNC4 });
+
+  // ── Cruciform rear fins ────────────────────────────────────────────────────
+  const finZ = -L/2 + 12*S;
+  const finPairs: [number, number, number, number][] = [
+    [0, 0, finZ, finZ],
+    [0, 0, finZ, finZ],
+  ];
+  void finPairs; // unused — fins drawn below
+  for (const [fx, fz] of [[8*S, finZ], [-8*S, finZ], [0, finZ-8*S], [0, finZ+8*S]] as [number,number][]) {
+    drawWall(pts, 0, 0, finZ, fx, 4*S, fz, IND10);
   }
-  return pts;
+
+  return applyLimit(pts, 1100);
 }
 
 export function gen_oil_rig(_p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const levels = 5, legOff = 20;
-  // 4 legs
-  for (const [lx,lz] of [[-legOff,-legOff],[legOff,-legOff],[-legOff,legOff],[legOff,legOff]]) {
-    for (let y = 0; y <= levels*8; y += 4) drawRing(pts, lx, y, lz, 3, IND10);
+  const legOff = 22;     // distance of each leg from centre
+  const legH   = 40;     // leg height
+  const deckH  = 40;     // deck floor height
+  const step   = 9.758;  // IND10 step
+
+  // ── 4 large cylindrical legs ───────────────────────────────────────────────
+  for (const [lx, lz] of [[-legOff,-legOff],[legOff,-legOff],[-legOff,legOff],[legOff,legOff]] as [number,number][]) {
+    for (let y = 0; y <= legH; y += step)
+      drawRing(pts, lx, y, lz, 5, IND10);
+    drawDisk(pts, lx, 0, lz, 5, IND10);  // pontoon base
   }
-  // Deck platforms
-  for (let lv = 1; lv <= levels; lv++) {
-    const y = lv*8;
-    drawRect(pts, 0, y, 0, legOff+3, legOff+3, IND10);
+
+  // ── Cross-bracing diagonal between legs ────────────────────────────────────
+  const braceH = legH * 0.5;
+  // 4 diagonal braces connecting adjacent legs at mid-height
+  const lp: [number,number][] = [[-legOff,-legOff],[legOff,-legOff],[legOff,legOff],[-legOff,legOff]];
+  for (let i = 0; i < 4; i++) {
+    const [ax, az] = lp[i];
+    const [bx, bz] = lp[(i+1)%4];
+    drawWall(pts, ax, braceH, az, bx, braceH, bz, IND10);
+    // Second diagonal brace at 75% height
+    drawWall(pts, ax, braceH*1.5, az, bx, braceH*1.5, bz, CNC8);
   }
-  // Drill tower
-  for (let y = levels*8; y <= levels*8+30; y += 4) drawRing(pts, 0, y, 0, 3, IND10);
-  return pts;
+
+  // ── Deck platform ─────────────────────────────────────────────────────────
+  for (let y = deckH; y <= deckH + step; y += step) {
+    drawRect(pts, 0, y, 0, legOff + 8, legOff + 8, IND10);
+    // Corner fills
+    const hw = legOff + 8;
+    pts.push({ x: -hw, y, z: -hw, yaw: 225, name: IND10 });
+    pts.push({ x:  hw, y, z: -hw, yaw: 135, name: IND10 });
+    pts.push({ x:  hw, y, z:  hw, yaw:  45, name: IND10 });
+    pts.push({ x: -hw, y, z:  hw, yaw: 315, name: IND10 });
+  }
+  // Deck surface (flat MILCNC)
+  for (let x = -(legOff+6); x <= legOff+6; x += 9.608)
+    for (let z = -(legOff+6); z <= legOff+6; z += 9.608)
+      pts.push({ x, y: deckH + step, z, yaw: 0, pitch: -90, name: MILCNC });
+
+  // ── Derrick drill tower ────────────────────────────────────────────────────
+  const derrickH = deckH + step;
+  for (let y = derrickH; y < derrickH + 50; y += step)
+    drawRing(pts, 0, y, 0, 4, IND10);
+  // Cross-bracing on derrick
+  for (let y = derrickH + 10; y < derrickH + 50; y += 20) {
+    drawWall(pts, -4, y, 0, 4, y, 0, CNC8);
+    drawWall(pts, 0, y, -4, 0, y, 4, CNC8);
+  }
+  // Flare stack
+  for (let y = derrickH + 50; y < derrickH + 60; y += 4.744)
+    drawRing(pts, 15, y, 15, 1, MILCNC);
+
+  // Accommodation module
+  for (let y = deckH + step; y < deckH + step + 9.758*2; y += 9.758) {
+    drawRect(pts, legOff - 5, y, legOff - 5, 10, 8, IND10);
+  }
+
+  return applyLimit(pts, 1100);
 }
 
 export function gen_pirate_ship(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const L = p.length ?? 50, W = 10;
-  // Hull
-  for (let z = -L/2; z <= L/2; z += 5) {
-    const t = Math.abs(z)/(L/2)*0.4;
-    const hw = (W/2)*(1-t*0.5);
+  const L = Math.min(p.length ?? 60, 90);
+  const S = L / 60;
+
+  // ── Hull — IND10 cross-section rings tapering bow and stern ───────────────
+  for (let z = -L/2; z <= L/2; z += 9.012) {
+    const t = Math.abs(z) / (L/2);
+    const hw = (8 - t * 5) * S;
+    const depth = (4 - t * 2) * S;
+    if (hw < 1) continue;
+    // Lower hull (underwater) — narrow
+    for (let y = -depth; y < 0; y += 9.758)
+      drawWall(pts, -hw*0.6, y, z, hw*0.6, y, z, IND10);
+    // Upper hull sides
     drawWall(pts, -hw, 0, z, hw, 0, z, STONE2);
-    drawWall(pts, -hw, 4, z, hw, 4, z, STONE2);
+    drawWall(pts, -hw, 9.758*S, z, hw, 9.758*S, z, STONE2);
   }
-  // Masts
-  for (const mx of [-L/4, 0, L/4]) drawWall(pts, mx, 4, 0, mx, 20, 0, STONE2);
-  // Crow's nest
-  drawRing(pts, 0, 18, 0, 3, STONE2);
-  return pts;
+  // Hull end caps
+  drawRing(pts,  0, 5*S, -L/2, 4*S, IND10);  // stern
+  pts.push({ x: 0, y: 5*S, z: L/2, yaw: 0, name: IND10 });  // bow cap
+
+  // ── Main deck ─────────────────────────────────────────────────────────────
+  const deckY = 9.758 * S;
+  for (let z = -L/2 + 4; z <= L/2 - 4; z += 9.608)
+    pts.push({ x: 0, y: deckY, z, yaw: 0, pitch: -90, name: MILCNC });
+
+  // ── Forecastle (raised bow platform) ──────────────────────────────────────
+  const fcZ = L/2 - 10*S;
+  for (let y = deckY; y <= deckY + 4*S; y += 2*S)
+    drawRect(pts, 0, y, fcZ + 3*S, 5*S, 7*S, CASTLE);
+
+  // ── Sterncastle (raised stern platform) ───────────────────────────────────
+  const scZ = -L/2 + 10*S;
+  for (let y = deckY; y <= deckY + 8*S; y += 2*S)
+    drawRect(pts, 0, y, scZ - 3*S, 7*S, 7*S, CASTLE);
+  // Captain's cabin window rings
+  drawRing(pts, 0, deckY + 4*S, scZ - 10*S, 3*S, CNC4);
+
+  // ── 3 masts — vertical stacks of MILCNC panels ────────────────────────────
+  const masts = [L/4, 0, -L/5];
+  for (const mz of masts) {
+    const mH = mz === 0 ? 28*S : 22*S;  // main mast tallest
+    for (let y = deckY; y < deckY + mH; y += 4.744)
+      pts.push({ x: 0, y, z: mz, yaw: 0, name: MILCNC });
+    // Yardarm (horizontal boom)
+    const yardY = deckY + mH * 0.6;
+    drawWall(pts, -5*S, yardY, mz, 5*S, yardY, mz, CNC8);
+    // Crow's nest
+    drawRing(pts, 0, deckY + mH * 0.7, mz, 2*S, CNC8);
+  }
+
+  // ── Cannon ports — CASTLE panels along hull sides, 4 per side ─────────────
+  for (let i = 0; i < 4; i++) {
+    const cz = -L/4 + i * (L/4);
+    pts.push({ x: -6.5*S, y: 5*S, z: cz, yaw: -90, name: CASTLE }); // port side
+    pts.push({ x:  6.5*S, y: 5*S, z: cz, yaw:  90, name: CASTLE }); // starboard
+  }
+
+  // ── Jolly Roger flag — barrel_red at main mast top ────────────────────────
+  pts.push({ x: 0, y: deckY + 28*S + 2, z: 0, name: "barrel_red" });
+
+  return applyLimit(pts, 1100);
 }
 
 export function gen_bridge_truss(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const L = p.length ?? 80, H = 12, W = 8;
-  const deckZ = W/2;
-  // Top chords
-  drawWall(pts, -L/2, H, -deckZ,  L/2, H, -deckZ, IND10);
-  drawWall(pts, -L/2, H,  deckZ,  L/2, H,  deckZ, IND10);
-  // Bottom chords (deck)
-  drawWall(pts, -L/2, 0, -deckZ, L/2, 0, -deckZ, IND10);
-  drawWall(pts, -L/2, 0,  deckZ, L/2, 0,  deckZ, IND10);
-  // Verticals + diagonals
-  for (let x = -L/2; x <= L/2; x += 8) {
-    for (const z of [-deckZ, deckZ]) {
-      drawWall(pts, x, 0, z, x, H, z, IND10);
-      if (x < L/2) drawWall(pts, x, 0, z, x+8, H, z, IND10);
+  const L = Math.min(p.length ?? 120, 200);
+  const H = 20;      // truss height
+  const W = 12;      // deck half-width
+  const tH = 36;     // tower height
+
+  // ── Top chord (upper truss rail) ───────────────────────────────────────────
+  drawWall(pts, -L/2, H, -W, L/2, H, -W, IND10);
+  drawWall(pts, -L/2, H,  W, L/2, H,  W, IND10);
+
+  // ── Bottom chord (deck level) ──────────────────────────────────────────────
+  drawWall(pts, -L/2, 0, -W, L/2, 0, -W, IND10);
+  drawWall(pts, -L/2, 0,  W, L/2, 0,  W, IND10);
+
+  // ── Road deck — MILCNC flat panels ────────────────────────────────────────
+  for (let x = -L/2; x <= L/2; x += 9.608)
+    pts.push({ x, y: 0, z: 0, yaw: 0, pitch: -90, name: MILCNC });
+
+  // ── Warren truss diagonals — V pattern every 12m ──────────────────────────
+  const panel = 12;
+  for (let i = 0; i < Math.floor(L / panel); i++) {
+    const x1 = -L/2 + i * panel;
+    const x2 = x1 + panel;
+    const xM = (x1 + x2) / 2;
+    for (const z of [-W, W]) {
+      // Upward V: from bottom-left → top-centre, top-centre → bottom-right
+      drawWall(pts, x1, 0, z, xM, H, z, IND10);
+      drawWall(pts, xM, H, z, x2, 0, z, IND10);
     }
-    drawWall(pts, x, 0, -deckZ, x, 0,  deckZ, IND10);
-    drawWall(pts, x, H, -deckZ, x, H,  deckZ, IND10);
+    // Vertical cross-member at each panel
+    drawWall(pts, x2, 0, -W, x2, H, -W, IND10);
+    drawWall(pts, x2, 0,  W, x2, H,  W, IND10);
+    // Cross-deck at panel intervals
+    drawWall(pts, x2, 0, -W, x2, 0, W, CNC8);
+    drawWall(pts, x2, H, -W, x2, H, W, CNC8);
   }
-  return pts;
+
+  // ── Two towers (pylons) ────────────────────────────────────────────────────
+  for (const tx of [-L/4, L/4]) {
+    for (let y = 0; y <= tH; y += 9.758) {
+      drawRect(pts, tx, y, 0, 4, W + 4, IND10);
+    }
+    // Tower cap
+    drawRect(pts, tx, tH, 0, 3, W + 3, CNC8);
+    // Cross-beam between tower legs at top
+    drawWall(pts, tx, tH - 5, -W, tx, tH - 5, W, CNC8);
+  }
+
+  // ── Suspension cables — diagonal STONE2 runs from tower top to deck ────────
+  for (const tx of [-L/4, L/4]) {
+    // Cables from tower top to each bridge end
+    drawWall(pts, tx, tH, 0, -L/2, 0, 0, STONE2);
+    drawWall(pts, tx, tH, 0,  L/2, 0, 0, STONE2);
+  }
+
+  return applyLimit(pts, 1100);
 }
 
 
