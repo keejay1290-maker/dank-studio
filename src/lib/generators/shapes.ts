@@ -2249,21 +2249,21 @@ export function gen_cn_tower(p: GenParams): Point3D[] {
   const podY   = 112 * S;   // main observation pod   (real 342m)
   const spaceY = 146 * S;   // SkyPod upper disc       (real 447m)
 
-  // ── Y-shaped tripod base — 3 container-stacked legs stepping inward as they rise ──
+  // ── Y-shaped tripod base — containers stacked flush (CONT_H=2.782m step) ──
   const CONT = "land_container_1bo";
+  const CONT_H = 2.782, CONT_W = 2.702;
+  const legStacks = Math.ceil(48 * S / CONT_H);
   for (let i = 0; i < 3; i++) {
     const a  = (i / 3) * Math.PI * 2;
     const cA = Math.cos(a), sA = Math.sin(a);
     const yaw = 90 - a * 180 / Math.PI;
-    for (let stack = 0; stack < 5; stack++) {
-      const t  = stack / 4;
-      const rr = (20 - t * 14) * S;  // steps inward r=20 → r=6
-      const yy = stack * 10 * S;
-      // Centre column of leg
-      pts.push({ x: cA*rr,              y: yy, z: sA*rr,              yaw, name: CONT });
-      // Flanking containers for leg width
-      pts.push({ x: cA*rr + sA*4*S,    y: yy, z: sA*rr - cA*4*S,    yaw, name: CONT });
-      pts.push({ x: cA*rr - sA*4*S,    y: yy, z: sA*rr + cA*4*S,    yaw, name: CONT });
+    for (let stack = 0; stack < legStacks; stack++) {
+      const t  = stack / Math.max(1, legStacks - 1);
+      const rr = (20 - t * 16) * S;  // r=20S → r=4S
+      const yy = stack * CONT_H;     // flush vertical stacking
+      pts.push({ x: cA*rr,                      y: yy, z: sA*rr,                      yaw, name: CONT });
+      pts.push({ x: cA*rr - sA*CONT_W,          y: yy, z: sA*rr + cA*CONT_W,          yaw, name: CONT });
+      pts.push({ x: cA*rr + sA*CONT_W,          y: yy, z: sA*rr - cA*CONT_W,          yaw, name: CONT });
     }
   }
 
@@ -2323,21 +2323,21 @@ export function gen_space_needle(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
   const S = Math.max(0.5, p.scale ?? 1), h = 184 * S;
 
-  // Tripod base — container stacks stepping inward as they rise.
+  // Tripod base — containers stacked flush (CONT_H=2.782m step, CONT_W=2.702m side-by-side)
   const CONT_SN = "land_container_1bo";
+  const SN_H = 2.782, SN_W = 2.702;
+  const snStacks = Math.ceil(50 * S / SN_H);
   for (let i = 0; i < 3; i++) {
     const a   = (i / 3) * Math.PI * 2;
     const cA  = Math.cos(a), sA = Math.sin(a);
     const yaw = 90 - a * 180 / Math.PI;
-    for (let stack = 0; stack < 4; stack++) {
-      const t  = stack / 3;
-      const rr = (18 - t * 14) * S;  // steps inward r=18 → r=4
-      const yy = stack * 12 * S;
-      // Centre container of leg
-      pts.push({ x: cA*rr,           y: yy, z: sA*rr,           yaw, name: CONT_SN });
-      // Flanking containers for visible leg width
-      pts.push({ x: cA*rr + sA*3*S, y: yy, z: sA*rr - cA*3*S, yaw, name: CONT_SN });
-      pts.push({ x: cA*rr - sA*3*S, y: yy, z: sA*rr + cA*3*S, yaw, name: CONT_SN });
+    for (let stack = 0; stack < snStacks; stack++) {
+      const t  = stack / Math.max(1, snStacks - 1);
+      const rr = (18 - t * 14) * S;  // r=18S → r=4S
+      const yy = stack * SN_H;        // flush vertical stacking
+      pts.push({ x: cA*rr,              y: yy, z: sA*rr,              yaw, name: CONT_SN });
+      pts.push({ x: cA*rr - sA*SN_W,   y: yy, z: sA*rr + cA*SN_W,   yaw, name: CONT_SN });
+      pts.push({ x: cA*rr + sA*SN_W,   y: yy, z: sA*rr - cA*SN_W,   yaw, name: CONT_SN });
     }
   }
 
@@ -2439,18 +2439,24 @@ export function gen_hogwarts(p: GenParams): Point3D[] {
     drawRing(pts, cx, towerH + step*2,   cz, r + 0.5*S, CASTLE);
   }
 
-  // ── Main castle keep — 56 × 36m, 20m walls ────────────────────────────────
+  // ── Main castle keep — walls trimmed at each tower's tangent ─────────────
   const mhw = 28*S, mhd = 18*S, mH = 20*S;
-  castleWalls(0, 0, mhw, mhd, mH);
-  // Parapet atop keep walls
-  for (let x = -mhw; x <= mhw; x += 8*S) {
+  const rNE = 5*S, rNW = 4*S, rSW = 3.5*S, rSE = 3*S;
+  for (let y = 0; y <= mH; y += step) {
+    drawWall(pts, -mhw+rNW, y, -mhd,  mhw-rNE,  y, -mhd, CASTLE); // N
+    drawWall(pts,  mhw,     y, -mhd+rNE, mhw,    y,  mhd-rSE, CASTLE); // E
+    drawWall(pts,  mhw-rSE, y,  mhd, -mhw+rSW,   y,  mhd, CASTLE); // S
+    drawWall(pts, -mhw,     y,  mhd-rSW, -mhw,   y, -mhd+rNW, CASTLE); // W
+  }
+  // Parapet atop keep walls — also trimmed at tower tangents
+  for (let x = -mhw+rNW; x <= mhw-rNE; x += 8*S)
     pts.push({ x, y: mH+step, z: -mhd, yaw: 0,   name: CASTLE });
+  for (let x = -mhw+rSW; x <= mhw-rSE; x += 8*S)
     pts.push({ x, y: mH+step, z:  mhd, yaw: 180, name: CASTLE });
-  }
-  for (let z = -mhd; z <= mhd; z += 8*S) {
-    pts.push({ x: -mhw, y: mH+step, z, yaw: 270, name: CASTLE });
+  for (let z = -mhd+rNE; z <= mhd-rSE; z += 8*S)
     pts.push({ x:  mhw, y: mH+step, z, yaw: 90,  name: CASTLE });
-  }
+  for (let z = -mhd+rNW; z <= mhd-rSW; z += 8*S)
+    pts.push({ x: -mhw, y: mH+step, z, yaw: 270, name: CASTLE });
 
   // ── Great Hall — south-facing gothic wing, taller than keep ───────────────
   const ghW = 14*S, ghD = 10*S, ghH = 30*S;
@@ -3745,10 +3751,10 @@ export function gen_oil_rig(_p: GenParams): Point3D[] {
     pts.push({ x:  hw, y, z:  hw, yaw:  45, name: IND10 });
     pts.push({ x: -hw, y, z:  hw, yaw: 315, name: IND10 });
   }
-  // Deck surface (flat MILCNC)
-  for (let x = -(legOff+6); x <= legOff+6; x += 9.608)
-    for (let z = -(legOff+6); z <= legOff+6; z += 9.608)
-      pts.push({ x, y: deckH + step, z, yaw: 0, pitch: -90, name: MILCNC });
+  // Deck surface — IND10 flat tiles, step matches panel dims for flush coverage
+  for (let x = -(legOff+4); x <= legOff+4; x += 9.012)
+    for (let z = -(legOff+4); z <= legOff+4; z += 9.758)
+      pts.push({ x, y: deckH + step, z, yaw: 0, pitch: -90, name: IND10 });
 
   // ── Derrick drill tower ────────────────────────────────────────────────────
   const derrickH = deckH + step;
@@ -3763,9 +3769,11 @@ export function gen_oil_rig(_p: GenParams): Point3D[] {
   for (let y = derrickH + 50; y < derrickH + 60; y += 4.744)
     drawRing(pts, 15, y, 15, 1, MILCNC);
 
-  // Accommodation module
+  // Accommodation module with corner fills
   for (let y = deckH + step; y < deckH + step + 9.758*2; y += 9.758) {
-    drawRect(pts, legOff - 5, y, legOff - 5, 10, 8, IND10);
+    const ax = legOff - 5, az = legOff - 5;
+    drawRect(pts, ax, y, az, 10, 8, IND10);
+    pts.push({x:ax-10,y,z:az-8,yaw:225,name:IND10},{x:ax+10,y,z:az-8,yaw:135,name:IND10},{x:ax+10,y,z:az+8,yaw:45,name:IND10},{x:ax-10,y,z:az+8,yaw:315,name:IND10});
   }
 
   return applyLimit(pts, 1100);
@@ -4039,14 +4047,14 @@ export function gen_sphere(p: GenParams): Point3D[] {
 export function gen_ring(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
   const r = p.r ?? 20, h = 8;
-  for (let y = 0; y <= h; y += 4) drawRing(pts, 0, y, 0, r, CNC8);
+  for (let y = 0; y <= h; y += 2.3) drawRing(pts, 0, y, 0, r, CNC8);
   return pts;
 }
 
 export function gen_cylinder(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
   const r = p.r ?? 10, h = p.h ?? 20;
-  for (let y = 0; y <= h; y += 4) drawRing(pts, 0, y, 0, r, CNC8);
+  for (let y = 0; y <= h; y += 2.3) drawRing(pts, 0, y, 0, r, CNC8);
   drawDisk(pts, 0, 0, 0, r, CNC8);
   drawDisk(pts, 0, h, 0, r, CNC8);
   return pts;
@@ -4071,7 +4079,7 @@ export function gen_torus(p: GenParams): Point3D[] {
 export function gen_cube(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
   const s = p.size ?? 20;
-  for (let y = 0; y <= s; y += 4) drawRect(pts, 0, y, 0, s/2, s/2, CNC8);
+  for (let y = 0; y <= s; y += 2.3) drawRect(pts, 0, y, 0, s/2, s/2, CNC8);
   drawDisk(pts, 0, 0, 0, s/2, CNC8);
   drawDisk(pts, 0, s, 0, s/2, CNC8);
   return pts;
@@ -4479,12 +4487,14 @@ export function gen_sagrada_familia(p: GenParams): Point3D[] {
     const rows = Math.round(h / step);
     for (let row = 0; row < rows; row++) {
       const t = row / rows;
-      // Organic taper: wide at base, waist at 40%, wider at 70%, then narrow tip
-      const r = baseR * (1 - t * 0.7 + Math.sin(t * Math.PI * 1.5) * 0.15);
-      if (r > 0.3 * S) drawRing(pts, cx, row * step, cz, r, STONE2);
+      // Smooth taper with 3-period undulation for organic Gaudí silhouette
+      const shrink = 1 - t * 0.85;
+      const undulate = Math.sin(t * Math.PI * 3) * 0.05;
+      const r = baseR * Math.max(0.15, shrink + undulate);
+      drawRing(pts, cx, row * step, cz, r, STONE2);
     }
-    // Pinnacle: distinctive Gaudí star-burst tip
-    drawRing(pts, cx, h, cz, 0.8 * S, CNC4);
+    // Pinnacle: Gaudí star-burst tip
+    drawRing(pts, cx, h, cz, 0.6 * S, CNC4);
     pts.push({ x: cx, y: h + 2.324 * S, z: cz, yaw: 0, name: CNC4 });
   }
 
@@ -4650,6 +4660,7 @@ export function gen_great_wall(p: GenParams): Point3D[] {
       pts.push({x:x-thw,y,z:cW/2-thd,yaw:225,name:CNC8},{x:x+thw,y,z:cW/2-thd,yaw:135,name:CNC8},{x:x+thw,y,z:cW/2+thd,yaw:45,name:CNC8},{x:x-thw,y,z:cW/2+thd,yaw:315,name:CNC8});
     }
     drawRect(pts, x, tH, cW/2, thw, thd, CASTLE);
+    pts.push({x:x-thw,y:tH,z:cW/2-thd,yaw:225,name:CASTLE},{x:x+thw,y:tH,z:cW/2-thd,yaw:135,name:CASTLE},{x:x+thw,y:tH,z:cW/2+thd,yaw:45,name:CASTLE},{x:x-thw,y:tH,z:cW/2+thd,yaw:315,name:CASTLE});
   }
 
   return applyLimit(pts, 1100);
