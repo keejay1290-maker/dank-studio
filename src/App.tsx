@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { Preview3D } from "./components/Preview3D";
 import { ObjectPicker } from "./components/ObjectPicker";
+import { NpcLoadoutBuilder } from "./components/NpcLoadoutBuilder";
 import { ALL_BUILDS, CATEGORIES } from "./lib/builds";
 import {
   exportCombinedDraw,
@@ -10,7 +11,7 @@ import {
 import type { Point3D, DrawnWall, DrawnObject, BuildEntry } from "./lib/types";
 import "./App.css";
 
-type AppMode = "library" | "draw" | "panel";
+type AppMode = "library" | "draw" | "panel" | "npc" | "loadout";
 type DrawMode = "wall" | "place" | "select";
 
 function App() {
@@ -197,7 +198,7 @@ function App() {
       <header className="flex items-center gap-0 px-4 glass h-12 flex-shrink-0 z-20">
         <span className="text-sm font-black text-white tracking-[0.2em] mr-8">DANK STUDIO</span>
 
-        {(["library", "draw", "panel"] as AppMode[]).map(m => (
+        {(["library", "draw", "panel", "npc", "loadout"] as AppMode[]).map(m => (
           <button
             key={m}
             onClick={() => setMode(m)}
@@ -207,7 +208,11 @@ function App() {
                 : "text-zinc-500 hover:text-zinc-300"
             }`}
           >
-            {m === "library" ? "Library" : m === "draw" ? "Free Draw" : "Panel Builder"}
+            {m === "library" ? "Library"
+             : m === "draw" ? "Free Draw"
+             : m === "panel" ? "Panel Builder"
+             : m === "npc" ? "NPC Builder"
+             : "Loadout Builder"}
             {mode === m && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500 shadow-[0_0_8px_var(--accent)]" />
             )}
@@ -237,6 +242,9 @@ function App() {
       </header>
 
       {/* ── Body ─────────────────────────────────────────────────────────── */}
+      {(mode === "npc" || mode === "loadout") ? (
+        <NpcLoadoutBuilder mode={mode} />
+      ) : (
       <div className="flex flex-1 overflow-hidden relative">
 
         {/* ── Left sidebar ─────────────────────────────────────────────── */}
@@ -495,6 +503,7 @@ function App() {
           )}
         </aside>
       </div>
+      )}
 
       {showWallPicker && (
         <ObjectPicker

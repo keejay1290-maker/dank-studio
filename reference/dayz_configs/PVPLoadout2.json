@@ -1,0 +1,37 @@
+{
+  "name": "Military - AKM",
+  "spawnWeight": 1,
+  "characterTypes": [
+    "SurvivorM_Mirek", "SurvivorM_Boris", "SurvivorM_Cyril", "SurvivorM_Denis",
+    "SurvivorM_Elias", "SurvivorM_Francis", "SurvivorM_Guo", "SurvivorM_Hassan",
+    "SurvivorM_Indar", "SurvivorM_Jose", "SurvivorM_Kaito", "SurvivorM_Lewis",
+    "SurvivorM_Manua", "SurvivorM_Niki", "SurvivorM_Oliver", "SurvivorM_Peter",
+    "SurvivorM_Quinn", "SurvivorM_Rolf", "SurvivorM_Seth", "SurvivorM_Taiki",
+    "SurvivorF_Eva", "SurvivorF_Frida", "SurvivorF_Gabi", "SurvivorF_Helga",
+    "SurvivorF_Irena", "SurvivorF_Judy", "SurvivorF_Keiko", "SurvivorF_Linda",
+    "SurvivorF_Maria", "SurvivorF_Naomi", "SurvivorF_Baty"
+  ],
+  "attachmentSlotItemSets": [
+    {
+      "slotName": "shoulderL",
+      "discreteItemSets": [{
+        "itemType": "M14", "spawnWeight": 1,
+        "attributes": { "healthMin": 0.8, "healthMax": 1, "quantityMin": 1, "quantityMax": 1 },
+        "quickBarSlot": 1,
+        "complexChildrenTypes": [
+          { "itemType": "MK4Optic", "attributes": { "healthMin": 0.9, "healthMax": 0.9, "quantityMin": 1, "quantityMax": 1 }, "quickBarSlot": -1, "simpleChildrenTypes": ["Battery9V"], "simpleChildrenUseDefaultAttributes": true },
+          { "itemType": "Mag_M14_20Rnd", "attributes": { "healthMin": 0.8, "healthMax": 0.9, "quantityMin": 1, "quantityMax": 1 }, "quickBarSlot": -1, "simpleChildrenTypes": [], "simpleChildrenUseDefaultAttributes": true }
+        ],
+        "simpleChildrenTypes": [], "simpleChildrenUseDefaultAttributes": true
+      }]
+    },
+    {
+      "slotName": "shoulderR",
+      "discreteItemSets": [
+        { "itemType": "M4A1", "spawnWeight": 1, "attributes": { "healthMin": 0.8, "healthMax": 0.8, "quantityMin": 1, "quantityMax": 1 }, "quickBarSlot": 2, "complexChildrenTypes": [], "simpleChildrenTypes": ["M4_CQBBttstck", "M4_RISHndgrd"], "simpleChildrenUseDefaultAttributes": true },
+        { "itemType": "AUG", "spawnWeight": 1, "attributes": { "healthMin": 0.8, "healthMax": 0.8, "quantityMin": 1, "quantityMax": 1 }, "quickBarSlot": 2, "complexChildrenTypes": [], "simpleChildrenTypes": ["Mag_STANAG_60Rnd"], "simpleChildrenUseDefaultAttributes": true }
+      ]
+    }
+  ],
+  "discreteUnsortedItemSets": []
+}
