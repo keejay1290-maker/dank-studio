@@ -84,3 +84,28 @@ drawWall(pts, x2, y, z,     x2, y, z+4*S, MAT);
 **Why:** A 2D wall with no depth looks like a floating panel from any non-frontal view. 4*S gives enough depth to read as a solid wall without doubling the panel count.
 
 **How to apply:** Any wall generator that currently uses a single `drawWall` line per floor row — add the rear face and end caps in the same floor loop.
+
+---
+
+## PROBLEM 4: Rectangular Walls Meeting Corner Towers (Castle Keep)
+
+When a `castleWalls`/`drawRect` enclosure has circular towers placed AT the corners, the wall panels extend TO the tower center. The 45° corner fills are then inside the tower ring (invisible but cluttered). Visually, the seam between flat wall and curved ring is visible.
+
+**Fix:** Draw each wall with endpoints trimmed at the tower tangent — let the ring cover the corner:
+
+```ts
+// Per-corner tower radii (can differ at each corner)
+const rNE = 5*S, rNW = 4*S, rSW = 3.5*S, rSE = 3*S;
+for (let y = 0; y <= wallH; y += step) {
+  drawWall(pts, -hw+rNW, y, -hd,  hw-rNE,  y, -hd, MAT); // N face
+  drawWall(pts,  hw,     y, -hd+rNE, hw,    y,  hd-rSE, MAT); // E face
+  drawWall(pts,  hw-rSE, y,  hd, -hw+rSW,   y,  hd, MAT); // S face
+  drawWall(pts, -hw,     y,  hd-rSW, -hw,   y, -hd+rNW, MAT); // W face
+}
+// NO corner fills needed — tower rings cover the corners
+// Also trim any parapet/battlement loops to the same tangent bounds
+```
+
+**When NOT to use this:** If the tower is at the CENTER of a rectangular annex (not at a corner), use normal drawRect + 45° fills — the tower is inside, not at corners.
+
+**Why:** Wall stops at tower surface → clean visual join. Wall extending to tower center → panels overlap ring AND 45° fills appear as floating panels inside the ring.
