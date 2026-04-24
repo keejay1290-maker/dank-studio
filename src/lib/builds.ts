@@ -1,4 +1,4 @@
-// ─────────────────────────────────────────────────────────────────────────────
+﻿// ─────────────────────────────────────────────────────────────────────────────
 // DANK STUDIO — Build Library
 // All entries shown in the sidebar. Each maps to a generator key + params.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -567,9 +567,11 @@ const NAVAL: BuildEntry[] = [
   },
   {
     key: "oil_rig", label: "Oil Rig", category: "Naval",
-    description: "North Sea semi-submersible — 4 pontoon legs, lattice deck, 50m drill derrick, flare stack",
-    defaultParams: {},
-    params: [],
+    description: "North Sea semi-submersible — 4 pontoon legs, container cladding, crane, lighthouse, helipad, flare stack, cell-tower derrick",
+    defaultParams: { scale: 1 },
+    params: [
+      { key: "scale", label: "Scale", min: 0.5, max: 2, step: 0.25, default: 1 },
+    ],
   },
   {
     key: "pirate_ship", label: "Pirate Ship", category: "Naval",
@@ -580,8 +582,8 @@ const NAVAL: BuildEntry[] = [
     ],
   },
   {
-    key: "bridge_truss", label: "Truss Bridge", category: "Naval",
-    description: "Warren truss road bridge — diagonal V-pattern steel, 2 suspension towers, MILCNC deck",
+    key: "bridge_truss", label: "Cable-Stayed Bridge", category: "Naval",
+    description: "Cable-stayed suspension bridge — twin pylons, cable fans, warren truss approach spans, IND10 deck, spotlights",
     defaultParams: { length: 120 },
     params: [
       { key: "length", label: "Span (m)", min: 60, max: 200, step: 10, default: 120 },

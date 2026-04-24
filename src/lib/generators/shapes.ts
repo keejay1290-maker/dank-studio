@@ -1,4 +1,4 @@
-// ─────────────────────────────────────────────────────────────────────────────
+﻿// ─────────────────────────────────────────────────────────────────────────────
 // DANK STUDIO — All Shape Generators
 //
 // CONVENTIONS:
@@ -3993,68 +3993,130 @@ export function gen_submarine(p: GenParams): Point3D[] {
   return applyLimit(pts, 1100);
 }
 
-export function gen_oil_rig(_p: GenParams): Point3D[] {
+export function gen_oil_rig(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const legOff = 22;     // distance of each leg from centre
-  const legH   = 40;     // leg height
-  const deckH  = 40;     // deck floor height
-  const step   = 9.758;  // IND10 step
+  const S      = Math.max(0.5, p.scale ?? 1);
+  const legOff = 22 * S;   // distance of each leg from centre
+  const deckH  = 40;       // fixed deck height — not S-scaled
+  const step   = 9.758;    // IND10 step — NEVER multiply by S
 
-  // ── 4 large cylindrical legs ───────────────────────────────────────────────
-  for (const [lx, lz] of [[-legOff,-legOff],[legOff,-legOff],[-legOff,legOff],[legOff,legOff]] as [number,number][]) {
-    for (let y = 0; y <= legH; y += step)
+  // Container constants
+  const CONT   = "land_container_1bo";
+  const CONT_H = 2.782;   // vertical step — exact, never S-scale
+  const CONT_W = 2.702;   // lateral side spacing
+
+  // ── 4 large cylindrical legs with container cladding ──────────────────────
+  const legCorners: [number,number][] = [
+    [-legOff,-legOff],[legOff,-legOff],[-legOff,legOff],[legOff,legOff]
+  ];
+  for (const [lx, lz] of legCorners) {
+    // IND10 rings from sea level to deck
+    for (let y = 0; y <= deckH; y += step)
       drawRing(pts, lx, y, lz, 5, IND10);
     drawDisk(pts, lx, 0, lz, 5, IND10);  // pontoon base
+
+    // Container cladding — 3 columns per leg, yaw facing outward
+    const legAngle = Math.atan2(lx, lz);
+    const legYaw   = legAngle * 180 / Math.PI + 90;
+    for (const side of [-1, 0, 1]) {
+      const cx = lx + side * CONT_W * Math.cos(legAngle);
+      const cz = lz + side * CONT_W * Math.sin(legAngle);
+      for (let y = CONT_H; y < deckH - CONT_H; y += CONT_H)
+        pts.push({ x: cx, y, z: cz, yaw: legYaw, name: CONT });
+    }
   }
 
-  // ── Cross-bracing diagonal between legs ────────────────────────────────────
-  const braceH = legH * 0.5;
-  // 4 diagonal braces connecting adjacent legs at mid-height
-  const lp: [number,number][] = [[-legOff,-legOff],[legOff,-legOff],[legOff,legOff],[-legOff,legOff]];
+  // ── Cross-bracing between legs ─────────────────────────────────────────────
+  const lp: [number,number][] = [
+    [-legOff,-legOff],[legOff,-legOff],[legOff,legOff],[-legOff,legOff]
+  ];
   for (let i = 0; i < 4; i++) {
     const [ax, az] = lp[i];
     const [bx, bz] = lp[(i+1)%4];
-    drawWall(pts, ax, braceH, az, bx, braceH, bz, IND10);
-    // Second diagonal brace at 75% height
-    drawWall(pts, ax, braceH*1.5, az, bx, braceH*1.5, bz, CNC8);
+    // CNC8 horizontal braces at 40% and 70% height
+    drawWall(pts, ax, deckH*0.4, az, bx, deckH*0.4, bz, CNC8);
+    drawWall(pts, ax, deckH*0.7, az, bx, deckH*0.7, bz, CNC8);
+    // Vertical pipe at midpoint of each span
+    const mx = (ax+bx)/2, mz = (az+bz)/2;
+    pts.push({ x: mx, y: deckH*0.5, z: mz, yaw: 0, name: "staticobj_pier_tube_big" });
   }
 
-  // ── Deck platform ─────────────────────────────────────────────────────────
-  for (let y = deckH; y <= deckH + step; y += step) {
-    drawRect(pts, 0, y, 0, legOff + 8, legOff + 8, IND10);
-    // Corner fills
-    const hw = legOff + 8;
-    pts.push({ x: -hw, y, z: -hw, yaw: 225, name: IND10 });
-    pts.push({ x:  hw, y, z: -hw, yaw: 135, name: IND10 });
-    pts.push({ x:  hw, y, z:  hw, yaw:  45, name: IND10 });
-    pts.push({ x: -hw, y, z:  hw, yaw: 315, name: IND10 });
-  }
-  // Deck surface — IND10 flat tiles, step matches panel dims for flush coverage
+  // ── Deck perimeter walls ───────────────────────────────────────────────────
+  const hw = legOff + 8;
+  drawRect(pts, 0, deckH + step, 0, hw, hw, IND10);
+  pts.push({ x: -hw, y: deckH+step, z: -hw, yaw: 225, name: IND10 });
+  pts.push({ x:  hw, y: deckH+step, z: -hw, yaw: 135, name: IND10 });
+  pts.push({ x:  hw, y: deckH+step, z:  hw, yaw:  45, name: IND10 });
+  pts.push({ x: -hw, y: deckH+step, z:  hw, yaw: 315, name: IND10 });
+
+  // ── Deck surface — IND10 flat grid ────────────────────────────────────────
   for (let x = -(legOff+4); x <= legOff+4; x += 9.012)
     for (let z = -(legOff+4); z <= legOff+4; z += 9.758)
       pts.push({ x, y: deckH + step, z, yaw: 0, pitch: -90, name: IND10 });
 
-  // ── Derrick drill tower ────────────────────────────────────────────────────
-  const derrickH = deckH + step;
-  for (let y = derrickH; y < derrickH + 50; y += step)
-    drawRing(pts, 0, y, 0, 4, IND10);
-  // Cross-bracing on derrick
-  for (let y = derrickH + 10; y < derrickH + 50; y += 20) {
-    drawWall(pts, -4, y, 0, 4, y, 0, CNC8);
-    drawWall(pts, 0, y, -4, 0, y, 4, CNC8);
-  }
-  // Flare stack
-  for (let y = derrickH + 50; y < derrickH + 60; y += 4.744)
-    drawRing(pts, 15, y, 15, 1, MILCNC);
+  // ── Main derrick tower (cell tower lattice steel) ─────────────────────────
+  pts.push({ x: 0, y: deckH + step, z: 0, yaw: 0, name: "land_tower_tc1" });
 
-  // Accommodation module with corner fills
-  for (let y = deckH + step; y < deckH + step + 9.758*2; y += 9.758) {
-    const ax = legOff - 5, az = legOff - 5;
-    drawRect(pts, ax, y, az, 10, 8, IND10);
-    pts.push({x:ax-10,y,z:az-8,yaw:225,name:IND10},{x:ax+10,y,z:az-8,yaw:135,name:IND10},{x:ax+10,y,z:az+8,yaw:45,name:IND10},{x:ax-10,y,z:az+8,yaw:315,name:IND10});
+  // ── Dock crane at south face + crane rails along X ────────────────────────
+  pts.push({ x: 0,  y: deckH + step, z: -legOff, yaw: 180, name: "staticobj_pier_crane_a" });
+  pts.push({ x: -6, y: deckH + step, z: -legOff, yaw:   0, name: "staticobj_pier_crane_rails" });
+  pts.push({ x:  6, y: deckH + step, z: -legOff, yaw:   0, name: "staticobj_pier_crane_rails" });
+
+  // ── Lighthouse at SE corner (navigation/safety) ───────────────────────────
+  pts.push({ x: legOff+8, y: deckH + step, z: legOff+8, yaw: 0, name: "staticobj_lighthouse" });
+
+  // ── Helipad — MILCNC disk, one step above main deck ───────────────────────
+  const hpX = 0, hpZ = legOff + 12, hpY = deckH + step * 2;
+  drawDisk(pts, hpX, hpY, hpZ, 10, MILCNC);
+  // Spotlights around helipad edge
+  for (const [sx, sz] of [[-8,0],[8,0],[0,-8],[0,8]] as [number,number][])
+    pts.push({ x: hpX+sx, y: hpY, z: hpZ+sz, yaw: 0, name: "staticobj_misc_spotlight" });
+
+  // ── Industrial details on deck ─────────────────────────────────────────────
+  // Large crude oil storage tanks
+  pts.push({ x: -legOff+6, y: deckH+step, z:  6, yaw:  0, name: "land_tank_big" });
+  pts.push({ x:  legOff-6, y: deckH+step, z:  6, yaw:  0, name: "land_tank_big" });
+
+  // Diesel power generator module
+  pts.push({ x: -legOff+6, y: deckH+step, z: -8, yaw: 90, name: "land_dieselpowerplant_tank_big" });
+
+  // Vertical pipe stacks over each leg corner on deck surface
+  for (const [px, pz] of legCorners)
+    pts.push({ x: px, y: deckH+step, z: pz, yaw: 0, name: "staticobj_pier_tube_big" });
+
+  // Warning barrels around deck edge
+  const barrelPositions: [number,number][] = [
+    [-hw+4,0],[hw-4,0],[0,-hw+4],[0,hw-4],[-hw+4,-hw+4],[hw-4,hw-4]
+  ];
+  for (const [bx, bz] of barrelPositions)
+    pts.push({ x: bx, y: deckH+step, z: bz, yaw: 0, name: "barrel_red" });
+
+  // Water supply barrels
+  for (const [bx, bz] of [[-8,-8],[8,-8],[-8,8],[8,8]] as [number,number][])
+    pts.push({ x: bx, y: deckH+step, z: bz, yaw: 0, name: "barrel_blue" });
+
+  // ── Flare stack — MILCNC taper rising 25m, barrel_red flame at top ────────
+  const flareX = -legOff + 5, flareZ = legOff - 5;
+  const flareBase = deckH + step;
+  for (let fy = flareBase; fy < flareBase + 25; fy += 4.744)
+    drawRing(pts, flareX, fy, flareZ, 1.5, MILCNC);
+  pts.push({ x: flareX, y: flareBase + 25, z: flareZ, yaw: 0, name: "barrel_red" });
+
+  // ── Accommodation module — 2×4 container block (crew quarters) ────────────
+  const accX = legOff - 8, accZ = -(legOff - 8);
+  for (let row = 0; row < 2; row++) {
+    for (let col = 0; col < 4; col++) {
+      pts.push({
+        x: accX,
+        y: deckH + step + row * CONT_H,
+        z: accZ + col * 3.5,
+        yaw: 90,
+        name: CONT,
+      });
+    }
   }
 
-  return applyLimit(pts, 1100);
+  return applyLimit(pts, 1150);
 }
 
 export function gen_pirate_ship(p: GenParams): Point3D[] {
@@ -4188,61 +4250,99 @@ export function gen_pirate_ship(p: GenParams): Point3D[] {
 
 export function gen_bridge_truss(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const L = Math.min(p.length ?? 120, 200);
-  const H = 20;      // truss height
-  const W = 12;      // deck half-width
-  const tH = 36;     // tower height
+  const L  = Math.min(p.length ?? 120, 200);
+  const W  = 8;     // deck half-width
+  const tH = 45;    // pylon height above deck
+  const dY = 0;     // deck Y level
 
-  // ── Top chord (upper truss rail) ───────────────────────────────────────────
-  drawWall(pts, -L/2, H, -W, L/2, H, -W, IND10);
-  drawWall(pts, -L/2, H,  W, L/2, H,  W, IND10);
+  // ── Deck surface — IND10 flat panels ──────────────────────────────────────
+  for (let z = -L/2; z <= L/2; z += 9.758)
+    for (let x = -W; x <= W; x += 9.012)
+      pts.push({ x, y: dY, z, yaw: 0, pitch: -90, name: IND10 });
 
-  // ── Bottom chord (deck level) ──────────────────────────────────────────────
-  drawWall(pts, -L/2, 0, -W, L/2, 0, -W, IND10);
-  drawWall(pts, -L/2, 0,  W, L/2, 0,  W, IND10);
+  // ── Side rails (barrier walls) — STONE2 along both deck edges ─────────────
+  drawWall(pts, -L/2, dY, -W, L/2, dY, -W, STONE2);
+  drawWall(pts, -L/2, dY,  W, L/2, dY,  W, STONE2);
 
-  // ── Road deck — MILCNC flat panels ────────────────────────────────────────
-  for (let x = -L/2; x <= L/2; x += 9.608)
-    pts.push({ x, y: 0, z: 0, yaw: 0, pitch: -90, name: MILCNC });
+  // ── Two main pylons at z = ±L/4 ───────────────────────────────────────────
+  const pylonZs: number[] = [-L/4, L/4];
+  for (const pyZ of pylonZs) {
+    // Two land_tower_tc1 side-by-side, one IND10 step apart in X
+    pts.push({ x: -6, y: dY, z: pyZ, yaw: 0, name: "land_tower_tc1" });
+    pts.push({ x:  6, y: dY, z: pyZ, yaw: 0, name: "land_tower_tc1" });
+    // Cross-beam linking the two tower legs at top
+    drawWall(pts, -6, dY + tH, pyZ, 6, dY + tH, pyZ, CNC8);
+    // Intermediate cross-beam at half height
+    drawWall(pts, -6, dY + tH*0.5, pyZ, 6, dY + tH*0.5, pyZ, CNC8);
+  }
 
-  // ── Warren truss diagonals — V pattern every 12m ──────────────────────────
-  const panel = 12;
-  for (let i = 0; i < Math.floor(L / panel); i++) {
-    const x1 = -L/2 + i * panel;
-    const x2 = x1 + panel;
-    const xM = (x1 + x2) / 2;
-    for (const z of [-W, W]) {
-      // Upward V: from bottom-left → top-centre, top-centre → bottom-right
-      drawWall(pts, x1, 0, z, xM, H, z, IND10);
-      drawWall(pts, xM, H, z, x2, 0, z, IND10);
+  // ── Cable fans — MILCNC segments from each pylon top to deck anchor points ─
+  // Each pylon fans cables to deck every 15m toward both ends
+  for (const pyZ of pylonZs) {
+    const anchorTop = dY + tH;
+    // Fan toward near bridge end
+    const nearEnd = pyZ < 0 ? -L/2 : L/2;
+    for (let dz = pyZ; Math.abs(dz) <= Math.abs(nearEnd); dz += (nearEnd > pyZ ? 15 : -15)) {
+      drawWall(pts, 0, anchorTop, pyZ, 0, dY, dz, MILCNC);
+      if (Math.abs(dz - nearEnd) < 1) break;
     }
-    // Vertical cross-member at each panel
-    drawWall(pts, x2, 0, -W, x2, H, -W, IND10);
-    drawWall(pts, x2, 0,  W, x2, H,  W, IND10);
-    // Cross-deck at panel intervals
-    drawWall(pts, x2, 0, -W, x2, 0, W, CNC8);
-    drawWall(pts, x2, H, -W, x2, H, W, CNC8);
-  }
-
-  // ── Two towers (pylons) ────────────────────────────────────────────────────
-  for (const tx of [-L/4, L/4]) {
-    for (let y = 0; y <= tH; y += 9.758) {
-      drawRect(pts, tx, y, 0, 4, W + 4, IND10);
+    // Fan toward bridge centre
+    const farEnd = pyZ < 0 ? L/2 : -L/2;
+    for (let dz = pyZ; Math.abs(dz) <= Math.abs(farEnd); dz += (farEnd > pyZ ? 15 : -15)) {
+      drawWall(pts, 0, anchorTop, pyZ, 0, dY, dz, MILCNC);
+      if (Math.abs(dz - farEnd) < 1) break;
     }
-    // Tower cap
-    drawRect(pts, tx, tH, 0, 3, W + 3, CNC8);
-    // Cross-beam between tower legs at top
-    drawWall(pts, tx, tH - 5, -W, tx, tH - 5, W, CNC8);
   }
 
-  // ── Suspension cables — diagonal STONE2 runs from tower top to deck ────────
-  for (const tx of [-L/4, L/4]) {
-    // Cables from tower top to each bridge end
-    drawWall(pts, tx, tH, 0, -L/2, 0, 0, STONE2);
-    drawWall(pts, tx, tH, 0,  L/2, 0, 0, STONE2);
+  // ── Approach span warren truss — end sections ──────────────────────────────
+  // z = -L/2 to -L/4  and  z = L/4 to L/2
+  const trussH = 15;
+  const trussPanel = 12;
+  for (const [spanStart, spanEnd] of [[-L/2, -L/4], [L/4, L/2]] as [number,number][]) {
+    const spanLen = Math.abs(spanEnd - spanStart);
+    const dir = spanEnd > spanStart ? 1 : -1;
+    const panels = Math.floor(spanLen / trussPanel);
+    // Top chord
+    drawWall(pts, -W, trussH, spanStart, -W, trussH, spanEnd, IND10);
+    drawWall(pts,  W, trussH, spanStart,  W, trussH, spanEnd, IND10);
+    // Warren V diagonals
+    for (let i = 0; i < panels; i++) {
+      const z1 = spanStart + dir * i * trussPanel;
+      const z2 = z1 + dir * trussPanel;
+      const zM = (z1 + z2) / 2;
+      for (const x of [-W, W]) {
+        drawWall(pts, x, dY, z1, x, trussH, zM, IND10);
+        drawWall(pts, x, trussH, zM, x, dY, z2, IND10);
+      }
+      // Cross-deck at each panel node
+      drawWall(pts, -W, dY, z2, W, dY, z2, CNC8);
+      drawWall(pts, -W, trussH, z2, W, trussH, z2, CNC8);
+    }
   }
 
-  return applyLimit(pts, 1100);
+  // ── Abutment anchor blocks at each bridge end ──────────────────────────────
+  for (const ez of [-L/2, L/2]) {
+    // 3×3 grid of CNC8 stacked 2 high forming anchor block
+    for (let ax = -W; ax <= W; ax += 8.008) {
+      drawWall(pts, ax, dY,        ez, ax, dY,        ez, CNC8);
+      drawWall(pts, ax, dY + 2.3,  ez, ax, dY + 2.3,  ez, CNC8);
+    }
+  }
+
+  // ── Bridge lighting — spotlights along deck ────────────────────────────────
+  const spotStep = L / 6;
+  for (let i = 1; i <= 5; i++)
+    pts.push({ x: 0, y: dY + 1, z: -L/2 + i * spotStep, yaw: 0, name: "staticobj_misc_spotlight" });
+  // End spotlights
+  pts.push({ x: 0, y: dY + 1, z: -L/2 + spotStep * 0.5, yaw: 0, name: "staticobj_misc_spotlight" });
+
+  // ── Gate posts — tower_tc1 at each portal (z = ±L/2) ─────────────────────
+  for (const gz of [-L/2, L/2]) {
+    pts.push({ x: -W-2, y: dY, z: gz, yaw: 0, name: "land_tower_tc1" });
+    pts.push({ x:  W+2, y: dY, z: gz, yaw: 0, name: "land_tower_tc1" });
+  }
+
+  return applyLimit(pts, 1150);
 }
 
 
