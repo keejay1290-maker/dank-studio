@@ -3351,6 +3351,30 @@ export function gen_container_fortress(p: GenParams): Point3D[] {
     pts.push({ x, y: tiers * _CH, z: side, pitch: -90, yaw: 0, name: "land_container_1bo", scale: 1 });
   }
 
+  // ── Decorative military dressing ─────────────────────────────────────────
+  // Hbarrier sandbag wall outside the main gate (south face)
+  const gateX = side / 2;
+  for (let dx = -12; dx <= 12; dx += 6) {
+    pts.push({ x: gateX + dx, y: 0, z: -8, yaw: 0, name: "staticobj_mil_hbarrier_6m", scale: 1 });
+  }
+  // Searchlights on each corner tower roof
+  const lightY = (tiers + 2) * _CH;
+  for (const [cx, cz] of [[0,0],[side,0],[0,side],[side,side]] as [number,number][]) {
+    pts.push({ x: cx, y: lightY, z: cz, yaw: 45, name: "staticobj_misc_spotlight", scale: 1 });
+  }
+  // Industrial lamp poles along the front wall
+  for (let i = 1; i < sideC; i++) {
+    pts.push({ x: i * _CD, y: 0, z: -2, yaw: 0, name: "staticobj_lamp_ind", scale: 1 });
+  }
+  // Courtyard supplies — fuel drums + crates + a military tent
+  const cyX = side / 2, cyZ = side / 2;
+  pts.push({ x: cyX - 6, y: 0, z: cyZ, yaw: 0, name: "staticobj_mil_mil_tent_big1_3", scale: 1 });
+  for (const [dx, dz] of [[6, -2], [6, 2], [8, 0], [-8, 4], [-8, -4]] as [number, number][]) {
+    pts.push({ x: cyX + dx, y: 0, z: cyZ + dz, yaw: 0, name: "barrel_red", scale: 1 });
+  }
+  // Flagpole on south gate rampart
+  pts.push({ x: gateX, y: tiers * _CH, z: 2, yaw: 0, name: "staticobj_misc_flagpole", scale: 1 });
+
   return applyLimit(pts, 1100);
 }
 
@@ -3533,10 +3557,10 @@ export function gen_bunker(p: GenParams): Point3D[] {
  */
 export function gen_pentagon(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const r    = p.r ?? 100;
-  const stp  = 4.744;         // MILCNC flush row height (no S — r param controls size)
-  const flH  = 5;             // floor spacing (5m per floor × 4 floors = 20m)
+  const r     = p.r ?? 80;
+  const stp   = 9.758;   // IND10 flush row height — bigger panels, cleaner readable silhouette
   const rings = 5;
+  const bldgH = stp * 2;  // 2 IND10 stories per ring = ~19.5m, matches the 5-story real building
 
   // Five concentric pentagonal rings (E = outer, A = inner)
   for (let ri = 0; ri < rings; ri++) {
@@ -3544,15 +3568,15 @@ export function gen_pentagon(p: GenParams): Point3D[] {
     for (let i = 0; i < 5; i++) {
       const a1 = (i / 5) * Math.PI * 2 - Math.PI / 2;
       const a2 = ((i + 1) / 5) * Math.PI * 2 - Math.PI / 2;
-      for (let y = 0; y < flH * 4; y += stp)
-        drawWall(pts, rr*Math.cos(a1), y, rr*Math.sin(a1), rr*Math.cos(a2), y, rr*Math.sin(a2), MILCNC);
+      for (let y = 0; y < bldgH; y += stp)
+        drawWall(pts, rr*Math.cos(a1), y, rr*Math.sin(a1), rr*Math.cos(a2), y, rr*Math.sin(a2), IND10);
     }
     // Corner filler — one outward-facing panel at each vertex to close the 108° notch
     for (let i = 0; i < 5; i++) {
       const aV  = (i / 5) * Math.PI * 2 - Math.PI / 2;
       const yaw = 90 - aV * 180 / Math.PI;
-      for (let y = 0; y < flH * 4; y += stp)
-        pts.push({ x: rr * Math.cos(aV), y, z: rr * Math.sin(aV), yaw, name: MILCNC });
+      for (let y = 0; y < bldgH; y += stp)
+        pts.push({ x: rr * Math.cos(aV), y, z: rr * Math.sin(aV), yaw, name: IND10 });
     }
   }
 
@@ -4692,24 +4716,33 @@ export function gen_colosseum(p: GenParams): Point3D[] {
   }
 
   // ── 1. CAVEA — elliptical tiered seating rings ──────────────────────────────
+  // Each tier is a full IND10 arcade level (9.758m), not a thin 1.572m step,
+  // giving the Colosseum its real 48m-tall silhouette.
+  const TIER_H  = 9.758;           // IND10 height per arcade level
+  const ROWS_PER_TIER = 6;         // 6 STONE2 rows = 9.432m per tier (flush coverage)
   for (let t = 0; t <= numTiers; t++) {
     const tA  = A - (numTiers - t) * tierDepth;
     const tB  = B - (numTiers - t) * tierDepth;
-    const tY  = t * PH;
+    const tY  = t * TIER_H;
     const nP  = Math.max(20, Math.floor(ellipseCirc(tA, tB) / PW));
     const sc  = (ellipseCirc(tA, tB) / nP) / PW;
 
-    for (const rp of traceEllipse(tA, tB, nP)) {
-      if (isEntrance(rp.x, rp.z)) continue;
-      // Retaining wall panel
-      pts.push({ x: rp.x, y: tY, z: rp.z, yaw: +rp.yaw.toFixed(2), scale: +sc.toFixed(4), name: STONE2 });
-      // Seating flat slab on top of each tier edge
-      if (t < numTiers) {
-        const angle = Math.atan2(rp.z, rp.x);
-        const flatA = tA + tierDepth / 2;
-        const flatB = tB + tierDepth / 2;
+    for (let row = 0; row < ROWS_PER_TIER; row++) {
+      const ry = tY + row * PH;
+      for (const rp of traceEllipse(tA, tB, nP)) {
+        if (isEntrance(rp.x, rp.z)) continue;
+        pts.push({ x: rp.x, y: ry, z: rp.z, yaw: +rp.yaw.toFixed(2), scale: +sc.toFixed(4), name: STONE2 });
+      }
+    }
+
+    // Seating flat slab on top edge of each tier
+    if (t < numTiers) {
+      const flatA = tA + tierDepth / 2;
+      const flatB = tB + tierDepth / 2;
+      for (const rp of traceEllipse(flatA, flatB, nP)) {
+        if (isEntrance(rp.x, rp.z)) continue;
         pts.push({
-          x: flatA * Math.cos(angle), y: tY + PH, z: flatB * Math.sin(angle),
+          x: rp.x, y: tY + TIER_H, z: rp.z,
           yaw: +rp.yaw.toFixed(2), pitch: -90,
           scale: +sc.toFixed(4), name: STONE2,
         });
@@ -4717,21 +4750,21 @@ export function gen_colosseum(p: GenParams): Point3D[] {
     }
   }
 
-  // ── 2. OUTER FACADE — 80 classic arched bays ────────────────────────────────
+  // ── 2. OUTER FACADE — 3 arcade levels (real Colosseum has 3 arches + attic) ─
   const facadeA = A + tierDepth;
   const facadeB = B + tierDepth;
-  const FACADE_H = 9.758 * S;    // IND10 height, scaled with building
+  const FACADE_H = (numTiers + 1) * TIER_H;   // rises one level above the cavea
   const facSc   = (ellipseCirc(facadeA, facadeB) / 80) / 9.408;
-  for (const rp of traceEllipse(facadeA, facadeB, 80)) {
-    if (isEntrance(rp.x, rp.z)) continue;
-    // Ground-level foundation row
-    pts.push({ x: rp.x, y: 0, z: rp.z, yaw: +rp.yaw.toFixed(2), scale: +(facSc * 0.45).toFixed(4), name: STONE2 });
-    // Multiple rows of STONE2 panels giving the outer wall actual height
-    for (let fy = PH; fy < FACADE_H * 2; fy += 1.572) {
+  for (let fy = 0; fy < FACADE_H; fy += PH) {
+    for (const rp of traceEllipse(facadeA, facadeB, 80)) {
+      if (isEntrance(rp.x, rp.z)) continue;
       pts.push({ x: rp.x, y: fy, z: rp.z, yaw: +rp.yaw.toFixed(2), scale: +facSc.toFixed(4), name: STONE2 });
     }
-    // Header rim flat cap
-    pts.push({ x: rp.x, y: PH + FACADE_H, z: rp.z, yaw: +rp.yaw.toFixed(2), scale: +facSc.toFixed(4), pitch: -90, name: STONE2 });
+  }
+  // Cornice / attic cap
+  for (const rp of traceEllipse(facadeA, facadeB, 80)) {
+    if (isEntrance(rp.x, rp.z)) continue;
+    pts.push({ x: rp.x, y: FACADE_H, z: rp.z, yaw: +rp.yaw.toFixed(2), scale: +facSc.toFixed(4), pitch: -90, name: STONE2 });
   }
 
   // ── 3. ARENA FLOOR — flat disk ───────────────────────────────────────────────

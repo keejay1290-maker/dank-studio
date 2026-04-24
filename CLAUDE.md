@@ -16,6 +16,7 @@
 - `dank_studio_sphere_math` — sphere/dome panel math, gap elimination
 - `flush_panel_coverage` — step sizes, S-scaling, zero-gap stacking
 - `panel_orientation_math` — yaw/pitch formulas for curved/angled surfaces
+- `panel_step_never_scale` — the #1 bug: panel heights must NEVER be `* S`
 
 **Corner & connection fixes** (load when build has notches or float gaps):
 - `wall_junction_fills` — drawRect corner notches, wall/tower junctions, dual-face walls
@@ -32,6 +33,7 @@
 **Quality / generation** (load for new builds or QA passes):
 - `generator_rework_checklist` — 10-step rework checklist
 - `architectural_perfection` — zero-gap algorithmic sweep methodology
+- `visual_qa_screenshots` — how to Playwright-screenshot all builds × 3 angles
 - `high_fidelity_gen`, `dank_mockup_gen`, `master_stylist`, `dank_sdk`
 - `glb_rendering_rules` — when to use GLB vs BoxGeometry
 
