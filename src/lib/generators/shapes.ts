@@ -48,14 +48,14 @@ const IND10   = "staticobj_wall_indcnc_10";    // 9.012m × 9.758m industrial
  */
 export function gen_death_star(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const R      = Math.min(p.r ?? 35, 55);
+  const R      = Math.min(p.r ?? 40, 55);
   const panelW = 9.012;   // IND10 face width
   const halfH  = 4.879;   // IND10 half-height
 
   // ── Dish direction ────────────────────────────────────────────────────────
-  const dishPhi   = 0.38 * Math.PI;   // ~68° from north pole
+  const dishPhi   = 0.30 * Math.PI;   // ~54° from north pole
   const dishTheta = 0.55 * Math.PI;
-  const dishCone  = 0.42;             // half-angle ~24°
+  const dishCone  = 0.22;             // half-angle ~12.6° — properly scaled dish
   const dcx = Math.sin(dishPhi) * Math.cos(dishTheta);
   const dcy = Math.cos(dishPhi);
   const dcz = Math.sin(dishPhi) * Math.sin(dishTheta);
@@ -63,8 +63,8 @@ export function gen_death_star(p: GenParams): Point3D[] {
   // ── Trench band ────────────────────────────────────────────────────────────
   const trenchHalf = 0.12;   // ±~7° around equator
 
-  // ── Build sphere rings, skipping trench and dish ──────────────────────────
-  const nRings = Math.max(8, Math.round(Math.PI * R / (halfH * 1.5)));
+  // ── Build sphere rings — one ring per panel-height arc for flush coverage ─
+  const nRings = Math.max(8, Math.ceil(Math.PI * R / 9.758));
 
   // North pole cap
   pts.push({ x: 0, y: R * 2 - halfH, z: 0, yaw: 0, pitch: -90, name: IND10 });
