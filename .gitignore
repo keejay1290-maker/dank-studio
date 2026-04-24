@@ -23,3 +23,7 @@ dist-electron
 *.njsproj
 *.sln
 *.sw?
+.claude/worktrees/
+tools/screenshots/
+/screenshots/
+/screenshot_builds.mjs

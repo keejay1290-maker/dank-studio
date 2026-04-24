@@ -2514,14 +2514,13 @@ export function gen_hogwarts(p: GenParams): Point3D[] {
 export function gen_minas_tirith(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
   const S     = Math.max(0.25, p.scale ?? 0.5);
-  const step  = 1.572 * S;   // STONE2 flush row height
+  const step  = 1.572;   // STONE2 flush row height — physical constant
 
   const tiers = 7;
   const baseR = 52 * S;       // radius of outermost tier
   const dR    = 7  * S;       // radius reduction per tier
-  // tierH must be exact multiple of step to avoid gap at battlement row
-  const tierRows = 9;
-  const tierH   = tierRows * step;
+  const tierRows = Math.max(3, Math.ceil(14 * S / step));
+  const tierH   = tierRows * step;  // exact multiple → no gap
 
   // Seven concentric rings — each tier sits atop the previous
   for (let i = 0; i < tiers; i++) {
@@ -2564,8 +2563,8 @@ export function gen_minas_tirith(p: GenParams): Point3D[] {
 export function gen_helms_deep(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
   const S     = Math.max(0.25, p.scale ?? 0.5);
-  const step  = 1.572 * S;   // STONE2 flush row height
-  const cstep = 2 * S;        // CASTLE flush row height
+  const step  = 1.572;   // STONE2 flush row height — physical constant
+  const cstep = 2.0;     // CASTLE flush row height — physical constant
 
   const wallL = 60 * S;
   const wallH = 12 * S;
@@ -2695,7 +2694,7 @@ export function gen_eye_of_sauron(p: GenParams): Point3D[] {
   const S  = Math.max(0.5, p.scale ?? 1);
   const rB = 20 * S;   // base radius
   const h  = 90 * S;   // tower height
-  const step = 9.758 * S;  // IND10 panel height — flush ring stacking
+  const step = 9.758;  // IND10 panel height — physical constant, never S-scaled
 
   // ── Main tower — tapers from rB at base to rTop at crown ──────────────────
   for (let y = 0; y < h; y += step) {
@@ -2808,7 +2807,7 @@ export function gen_eye_of_sauron(p: GenParams): Point3D[] {
 export function gen_fortress_solitude(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
   const S    = Math.max(0.25, p.scale ?? 0.5);
-  const step = 1.572 * S;  // STONE2 flush row height
+  const step = 1.572;  // STONE2 flush row height — physical constant
 
   function crystal(cx: number, cz: number, rBase: number, h: number) {
     for (let y = 0; y < h; y += step) {
@@ -3214,7 +3213,7 @@ export function gen_container_helix(p: GenParams): Point3D[] {
 
   const R           = S * 15;  // rounder (~9 containers/turn)
   const nPerTurn    = Math.max(6, Math.floor(2 * Math.PI * R / _CD));
-  const risePerStep = _CH * 0.5;  // 50% overlap — distinct spiral steps visible
+  const risePerStep = _CH;  // one full container height per step — clean stacking
   const total       = Math.round(nPerTurn * turns);
 
   // Outer helix (clockwise)
@@ -3557,16 +3556,6 @@ export function gen_pentagon(p: GenParams): Point3D[] {
     }
   }
 
-  // 10 radial spoke corridors connecting rings (2 per pentagon face)
-  for (let i = 0; i < 5; i++) {
-    const aMid = ((i + 0.5) / 5) * Math.PI * 2 - Math.PI / 2;
-    const cx   = Math.cos(aMid), cz = Math.sin(aMid);
-    const rOuter = r, rInner = r * (1 - (rings - 1) * 0.16);
-    for (let y = 0; y < flH * 2; y += stp) {
-      drawWall(pts, cx * rInner, y, cz * rInner, cx * rOuter, y, cz * rOuter, MILCNC);
-    }
-  }
-
   return applyLimit(pts, 1100);
 }
 
@@ -3581,7 +3570,7 @@ export function gen_star_fort(p: GenParams): Point3D[] {
   const r     = p.r ?? 60;
   const nPts  = Math.round(p.points ?? 5);
   const inner = r * 0.62;   // concave gorge radius
-  const h     = 10;         // wall height (r param controls plan size)
+  const h     = 30;         // wall height (r param controls plan size)
   const step  = 1.572;      // STONE2 flush step
 
   // Outer star walls — alternating bastion tips (r) and gorge corners (inner)
@@ -3736,19 +3725,55 @@ export function gen_normandy(p: GenParams): Point3D[] {
   return applyLimit(pts, 1100);
 }
 
-export function gen_alcatraz(_p: GenParams): Point3D[] {
+export function gen_alcatraz(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  // Cell block A — long rectangle
-  drawRect(pts, 0, 0, 0, 40, 15, IND10);
-  for (let y = 0; y <= 12; y += 4) drawRect(pts, 0, y, 0, 40, 15, IND10);
-  // Guard towers
-  const tPos = [{ x:42,z:17 },{ x:-42,z:17 },{ x:42,z:-17 },{ x:-42,z:-17 }];
-  for (const t of tPos) {
-    for (let y = 0; y <= 16; y += 4) drawRing(pts, t.x, y, t.z, 4, IND10);
+
+  // ── Main cell house: long rectangle, 3 stories (IND10 = 9.758m per floor) ──
+  // Real cell house: ~120m × 18m footprint
+  const CELL_HW = 60, CELL_HD = 9;
+  for (let y = 0; y < 3 * 9.758; y += 9.758) drawRect(pts, 0, y, 0, CELL_HW, CELL_HD, IND10);
+
+  // ── D-block (isolation wing) — shorter rectangle extending north ──
+  for (let y = 0; y < 2 * 9.758; y += 9.758) drawRect(pts, -50, y, 24, 12, 9, IND10);
+
+  // ── B/C-block cross wings — two parallel rect wings running E-W inside main ──
+  for (let y = 0; y < 2 * 9.758; y += 9.758) {
+    drawRect(pts,  20, y,  0, 8, CELL_HD - 1, IND10);
+    drawRect(pts, -20, y,  0, 8, CELL_HD - 1, IND10);
   }
-  // Lighthouse
-  for (let y = 0; y <= 30; y += 3) drawRing(pts, 0, y, 50, 3*(1-y*0.02), STONE2);
-  return pts;
+
+  // ── Exercise yard: square wall enclosure attached south side ──
+  // ~60m × 40m yard, single-story CNC8 perimeter wall
+  const YARD_Y0 = 0;
+  for (let y = YARD_Y0; y < 2 * 2.3; y += 2.3) drawRect(pts, 0, y, -50, 30, 20, CNC8);
+
+  // ── Guard towers at 4 corners of the cell house — CNC8 rings, ~15m tall ──
+  const towers = [
+    { x:  62, z:  11 },
+    { x: -62, z:  11 },
+    { x:  62, z: -11 },
+    { x: -62, z: -11 },
+  ];
+  for (const t of towers) {
+    for (let y = 0; y <= 4 * 2.3; y += 2.3) drawRing(pts, t.x, y, t.z, 4, CNC8);
+  }
+
+  // ── Yard corner towers ──
+  const yardTowers = [{ x: 32, z: -72 }, { x: -32, z: -72 }];
+  for (const t of yardTowers) {
+    for (let y = 0; y <= 3 * 2.3; y += 2.3) drawRing(pts, t.x, y, t.z, 4, CNC8);
+  }
+
+  // ── Water tower: tall thin drawRing near north end ──
+  for (let y = 0; y <= 6 * 2.3; y += 2.3) drawRing(pts, -55, y, -20, 3, CNC8);
+
+  // ── Industries building: low CNC8 rectangle at east end ──
+  for (let y = 0; y < 2.3; y += 2.3) drawRect(pts, 70, y, 0, 10, 8, CNC8);
+
+  // ── Hospital wing: small IND10 rectangle north-east ──
+  for (let y = 0; y < 9.758; y += 9.758) drawRect(pts, 55, y, -20, 10, 7, IND10);
+
+  return applyLimit(pts, p.n ?? 700);
 }
 
 
@@ -3919,30 +3944,43 @@ export function gen_carrier(p: GenParams): Point3D[] {
 
 export function gen_submarine(p: GenParams): Point3D[] {
   // Virginia-class nuclear submarine
-  // Length ~115m, beam ~10m, teardrop hull, sail at 25% from bow,
+  // Length ~115m, beam ~10m, container hull (3-wide × 3-tall), sail at 25% from bow,
   // cruciform tail fins, twin torpedo bays at bow, periscope + snorkel masts.
   const pts: Point3D[] = [];
   const L     = Math.min(p.length ?? 100, 150);
   const S     = Math.max(0.5, L / 100);
-  const hullR = 5 * S;          // pressure hull radius at widest
-  const STEP  = 9.012;          // IND10 face width — fixed, never scaled
 
-  // ── Pressure hull — tapered IND10 rings along Z axis ─────────────────────
-  // Bow  (+Z): taper from hullR → 0 over last 20% of length
-  // Stern(-Z): taper from hullR → 2*S  over last 15% of length
-  for (let z = -L/2; z <= L/2; z += STEP) {
-    const bowT   = Math.max(0, (z - (L/2 - 20*S)) / (20*S));
-    const sternT = Math.max(0, (-z - (L/2 - 15*S)) / (15*S));
-    const r = hullR * (1 - bowT * 0.95) * (1 - sternT * 0.7);
-    if (r > 0.4 * S) drawRing(pts, 0, hullR, z, r, IND10);
+  // Container constants — never scaled
+  const CONT   = "land_container_1bo";
+  const CONT_H = 2.782;   // vertical step
+  const CONT_W = 2.702;   // lateral step
+  const CONT_L = 6.096;   // container length along Z
+
+  // ── Pressure hull — 3 lanes × 3 layers of containers along Z axis ────────
+  // Leave 10m at each end for IND10 cap rings
+  const bowCapZ   =  L / 2 - 10;
+  const sternCapZ = -L / 2 + 10;
+  const laneOffsets = [-CONT_W, 0, CONT_W];
+  for (const lx of laneOffsets) {
+    for (let layer = 0; layer < 3; layer++) {
+      const cy = layer * CONT_H;
+      for (let z = sternCapZ; z <= bowCapZ; z += CONT_L) {
+        pts.push({ x: lx, y: cy, z, yaw: 0, name: CONT });
+      }
+    }
   }
 
+  // ── Bow and stern IND10 end caps ──────────────────────────────────────────
+  const capR = CONT_W * 1.5;   // covers 3-lane cross-section
+  drawRing(pts, 0, CONT_H, bowCapZ,   capR, IND10);
+  drawRing(pts, 0, CONT_H, sternCapZ, capR, IND10);
+
   // ── Sail / conning tower — located at Z = +L/4 (25% from bow) ────────────
-  // Sail is a streamlined fin: hw=2*S wide, hd=3.5*S fore-aft, 3 rows of CNC8
+  // Sail: drawRect of CNC8, footprint 8m×6m, 3 rows high
   const sailZ  = L / 4;
-  const sailHW = 2 * S;
-  const sailHD = 3.5 * S;
-  const sailY0 = hullR * 2 - 0.5;  // base flush against hull top
+  const sailHW = 4;    // half of 8m footprint
+  const sailHD = 3;    // half of 6m footprint
+  const sailY0 = 3 * CONT_H;  // sits on top of hull
   for (let row = 0; row < 3; row++) {
     const sy = sailY0 + row * 2.3;
     drawRect(pts, 0, sy, sailZ, sailHW, sailHD, CNC8);
@@ -3968,24 +4006,23 @@ export function gen_submarine(p: GenParams): Point3D[] {
     yaw: 0, name: "staticobj_pier_tube_big"
   });
 
-  // ── Cruciform tail control surfaces — last 15% of hull ───────────────────
-  // 4 fins radiating at 0°/90°/180°/270°. Each fin = 3 IND10 panels.
-  const finZ    = -L/2 + 10 * S;       // fin root z position
-  const finBase = hullR;                // start at hull surface
-  const finTip  = hullR + 8 * S;       // fin tip
+  // ── Cruciform tail control surfaces — at stern cap ───────────────────────
+  // Top fin: drawWall upward from hull top; port/starboard: drawWall outward
+  const finZ    = sternCapZ + 2;           // just inside stern cap
+  const hullTop = 3 * CONT_H;             // top of 3-layer hull
+  const hullMid = 1.5 * CONT_H;           // mid-height of hull
+  const hullSide = CONT_W + 1;            // outer edge of hull cross-section
 
-  // Vertical fins (top & bottom) — drawWall along Y at x=0
-  drawWall(pts, 0, finBase + hullR, finZ,  0, finTip + hullR, finZ, IND10);   // top fin
-  drawWall(pts, 0, finBase - 2*S, finZ,   0, finBase - 2*S - 6*S, finZ, IND10); // bottom fin (into hull)
-
-  // Horizontal fins (port & starboard) — drawWall along X at y=hullR (mid-hull)
-  drawWall(pts,  finBase, hullR, finZ,  finTip, hullR, finZ, IND10);    // starboard
-  drawWall(pts, -finBase, hullR, finZ, -finTip, hullR, finZ, IND10);    // port
+  // Top fin
+  drawWall(pts, 0, hullTop, finZ,  0, hullTop + 8, finZ, IND10);
+  // Port and starboard fins at hull mid-height
+  drawWall(pts,  hullSide, hullMid, finZ,  hullSide + 6, hullMid, finZ, IND10);
+  drawWall(pts, -hullSide, hullMid, finZ, -hullSide - 6, hullMid, finZ, IND10);
 
   // ── Bow torpedo bay doors — 2 CNC4 panels at bow tip ─────────────────────
-  const bowZ = L/2 - 2 * S;
-  pts.push({ x:  2 * S, y: hullR, z: bowZ, yaw:  90, name: CNC4 });
-  pts.push({ x: -2 * S, y: hullR, z: bowZ, yaw: -90, name: CNC4 });
+  const bowZ = L / 2 - 2;
+  pts.push({ x:  CONT_W, y: CONT_H, z: bowZ, yaw:  90, name: CNC4 });
+  pts.push({ x: -CONT_W, y: CONT_H, z: bowZ, yaw: -90, name: CNC4 });
 
   // ── ESM/radar antenna — small spotlight on sail bridge ────────────────────
   pts.push({ x: 0.8 * S, y: sailTop, z: sailZ - sailHD * 0.5, yaw: 0, name: "staticobj_misc_spotlight" });
@@ -4386,19 +4423,55 @@ export function gen_dna_helix(p: GenParams): Point3D[] {
 
 export function gen_amphitheater(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const tiers = p.tiers ?? 8, baseR = p.r ?? 40, tierD = 4, stepH = 1.5;
-  const sweepAngle = Math.PI; // fixed 180°
+  const tiers  = Math.min(p.tiers ?? 8, 8);
+  const baseR  = p.r ?? 40;
+  const tierD  = 5;        // 5m outward step per tier
+  const stepH  = 9.758;    // IND10 physical height — never scale this
+  const sweep  = Math.PI;  // true semicircle
+
+  // ── Tiered seating banks: IND10 retaining walls, stepping up and outward ──
   for (let t = 0; t < tiers; t++) {
-    const r = baseR + t * tierD, y = t * stepH;
-    const n = Math.max(8, Math.round(r * sweepAngle / 8));
+    const r = baseR + t * tierD;
+    const y = t * stepH;
+    // Number of panels proportional to arc length; IND10 is ~9m wide, use 9 as step
+    const n = Math.max(6, Math.round(r * sweep / 9));
     for (let i = 0; i <= n; i++) {
-      const a = (i/n)*sweepAngle - sweepAngle/2;
-      pts.push({ x:r*Math.cos(a), y, z:r*Math.sin(a), yaw:-a*180/Math.PI+90, name:STONE2 });
+      const a = (i / n) * sweep - sweep / 2;
+      pts.push({
+        x: r * Math.cos(a),
+        y,
+        z: r * Math.sin(a),
+        yaw: -a * 180 / Math.PI + 90,
+        name: IND10,
+      });
     }
   }
-  // Stage
-  drawRect(pts, 0, 0, 0, baseR*0.4, baseR*0.3, STONE2);
-  return pts;
+
+  // ── Outer colonnade facade: one IND10 ring at y=0 on outermost edge ──
+  const outerR = baseR + tiers * tierD + 4;
+  const facadeN = Math.max(8, Math.round(outerR * sweep / 9));
+  for (let i = 0; i <= facadeN; i++) {
+    const a = (i / facadeN) * sweep - sweep / 2;
+    pts.push({
+      x: outerR * Math.cos(a),
+      y: 0,
+      z: outerR * Math.sin(a),
+      yaw: -a * 180 / Math.PI + 90,
+      name: IND10,
+    });
+  }
+
+  // ── Orchestra / stage floor: CNC8 rectangle at centre base ──
+  const stageHW = Math.round(baseR * 0.45);
+  const stageHD = Math.round(baseR * 0.25);
+  drawRect(pts, 0, 0, 0, stageHW, stageHD, CNC8);
+
+  // ── Skene building (stage backdrop): drawRect wall at rear of stage ──
+  const skeneZ = stageHD + 4;
+  for (let y = 0; y < 2 * 2.3; y += 2.3)
+    drawRect(pts, 0, y, skeneZ, stageHW, 4, CNC8);
+
+  return applyLimit(pts, p.n ?? 600);
 }
 
 export function gen_aqueduct(p: GenParams): Point3D[] {
@@ -4584,7 +4657,7 @@ export function gen_colosseum(p: GenParams): Point3D[] {
   const B      = A * (156 / 189);            // Semi-minor axis (Z) — historical ratio
 
   const PW         = 9.408 * S;   // STONE2 width
-  const PH         = 1.572 * S;   // STONE2 height (one tier step)
+  const PH         = 1.572;       // STONE2 height — physical constant, never * S
   const numTiers   = Math.min(Math.round(p.tiers ?? 4), 5);
   const tierDepth  = 1.452 * S;
 
@@ -4647,15 +4720,17 @@ export function gen_colosseum(p: GenParams): Point3D[] {
   // ── 2. OUTER FACADE — 80 classic arched bays ────────────────────────────────
   const facadeA = A + tierDepth;
   const facadeB = B + tierDepth;
-  const FACADE_H = 11.143; // height of stone2d
-  const facSc   = (ellipseCirc(facadeA, facadeB) / 80) / 8.569;
+  const FACADE_H = 9.758 * S;    // IND10 height, scaled with building
+  const facSc   = (ellipseCirc(facadeA, facadeB) / 80) / 9.408;
   for (const rp of traceEllipse(facadeA, facadeB, 80)) {
     if (isEntrance(rp.x, rp.z)) continue;
-    // Ground-level foundation
+    // Ground-level foundation row
     pts.push({ x: rp.x, y: 0, z: rp.z, yaw: +rp.yaw.toFixed(2), scale: +(facSc * 0.45).toFixed(4), name: STONE2 });
-    // Tall arches — these give it the iconic Colosseum look
-    pts.push({ x: rp.x, y: PH, z: rp.z, yaw: +rp.yaw.toFixed(2), scale: +facSc.toFixed(4), name: "staticobj_wall_stone2d" });
-    // Header rim
+    // Multiple rows of STONE2 panels giving the outer wall actual height
+    for (let fy = PH; fy < FACADE_H * 2; fy += 1.572) {
+      pts.push({ x: rp.x, y: fy, z: rp.z, yaw: +rp.yaw.toFixed(2), scale: +facSc.toFixed(4), name: STONE2 });
+    }
+    // Header rim flat cap
     pts.push({ x: rp.x, y: PH + FACADE_H, z: rp.z, yaw: +rp.yaw.toFixed(2), scale: +facSc.toFixed(4), pitch: -90, name: STONE2 });
   }
 
@@ -5189,14 +5264,14 @@ export function gen_alhambra(p: GenParams): Point3D[] {
 export function gen_hagia_sophia(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
   const S     = Math.max(0.25, p.scale ?? 0.5);
-  const istp  = 9.758 * S;   // IND10 step
-  const mstp  = 4.744 * S;   // MILCNC step
-  const s2stp = 1.572 * S;   // STONE2 step
+  const istp  = 9.758;   // IND10 step — physical, never S-scaled
+  const mstp  = 4.744;   // MILCNC step — physical, never S-scaled
+  const s2stp = 1.572;   // STONE2 step — physical, never S-scaled
 
   // ── Nave body (rectangular) ────────────────────────────────────────────────
   const naveHW = 28 * S;  // half-width  (E-W)
   const naveHD = 20 * S;  // half-depth  (N-S)
-  const naveH  = 25 * S;  // wall height before dome drums
+  const naveH  = Math.ceil(25 * S / istp) * istp;  // exact multiple → no gap
   for (let y = 0; y < naveH; y += istp) {
     drawRect(pts, 0, y, 0, naveHW, naveHD, IND10);
     pts.push({x:-naveHW,y,z:-naveHD,yaw:225,name:IND10},{x:naveHW,y,z:-naveHD,yaw:135,name:IND10},{x:naveHW,y,z:naveHD,yaw:45,name:IND10},{x:-naveHW,y,z:naveHD,yaw:315,name:IND10});
@@ -5261,8 +5336,8 @@ export function gen_hagia_sophia(p: GenParams): Point3D[] {
 export function gen_rivendell(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
   const S     = Math.max(0.25, p.scale ?? 0.5);
-  const s2stp = 1.572 * S;   // STONE2 step
-  const c4stp = 2.324 * S;   // CNC4 step
+  const s2stp = 1.572;   // STONE2 step — physical constant
+  const c4stp = 2.324;   // CNC4 step — physical constant
 
   // ── 5 terraced levels ─────────────────────────────────────────────────────
   // Each level is wider and deeper into the gorge, stepping downward
@@ -5350,8 +5425,8 @@ export function gen_rivendell(p: GenParams): Point3D[] {
 export function gen_isengard(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
   const S    = Math.max(0.25, p.scale ?? 0.5);
-  const istp = 9.758 * S;   // IND10 step
-  const mstp = 4.744 * S;   // MILCNC step
+  const istp = 9.758;   // IND10 step — physical constant
+  const mstp = 4.744;   // MILCNC step — physical constant
 
   // ── Outer Ring Wall of Isengard (gap sections for destroyed look) ──────────
   const outerR = 60 * S;
@@ -5364,7 +5439,7 @@ export function gen_isengard(p: GenParams): Point3D[] {
   for (let y = 0; y < ringH; y += istp) {
     // We manually place panels around the ring, skipping gap fractions
     const circ = 2 * Math.PI * outerR;
-    const nPanels = Math.max(8, Math.ceil(circ / (9.012 * S)));
+    const nPanels = Math.max(8, Math.ceil(circ / 9.012));
     for (let i = 0; i < nPanels; i++) {
       const frac = i / nPanels;
       if (frac > gapStart1 && frac < gapEnd1) continue;
@@ -5623,7 +5698,7 @@ export function gen_winterfell(p: GenParams): Point3D[] {
 export function gen_black_gate(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
   const S    = Math.max(0.5, p.scale ?? 1);
-  const istp = 9.758 * S;   // IND10 row height
+  const istp = 9.758;   // IND10 row height — physical constant
 
   const towerH  = 40 * S;
   const towerR  = 10 * S;
@@ -5690,9 +5765,9 @@ export function gen_black_gate(p: GenParams): Point3D[] {
 export function gen_gondor_beacon(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
   const S    = Math.max(0.5, p.scale ?? 1);
-  const s2   = 1.572 * S;   // STONE2 row height
-  const cstp = 2     * S;   // CASTLE row height
-  const c4   = 2.324 * S;   // CNC4 row height
+  const s2   = 1.572;   // STONE2 row height — physical constant
+  const cstp = 2.0;    // CASTLE row height — physical constant
+  const c4   = 2.324;  // CNC4 row height — physical constant
 
   const towerR = 5  * S;
   const towerH = 30 * S;
@@ -5749,10 +5824,10 @@ export function gen_gondor_beacon(p: GenParams): Point3D[] {
 export function gen_stormwind(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
   const S    = Math.max(0.5, p.scale ?? 0.5);
-  const s2   = 1.572 * S;   // STONE2 row height
-  const c8   = 2.3   * S;   // CNC8 row height
-  const c4   = 2.324 * S;   // CNC4 row height
-  const istp = 9.758 * S;   // IND10 row height
+  const s2   = 1.572;  // STONE2 row height — physical constant
+  const c8   = 2.3;   // CNC8 row height — physical constant
+  const c4   = 2.324; // CNC4 row height — physical constant
+  const istp = 9.758; // IND10 row height — physical constant
 
   // ── Outer city walls — ~120m × 100m ───────────────────────────────────────
   const cwHW = 60 * S;
