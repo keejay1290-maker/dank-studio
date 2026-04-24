@@ -143,6 +143,13 @@ const REGISTRY: Record<string, (p: GenParams) => Point3D[]> = {
   normandy_bunkers:        G.gen_normandy,
   alcatraz_prison:         G.gen_alcatraz,
 
+  // ── World Monuments ─────────────────────────────────────────────────────
+  mont_saint_michel:       G.gen_mont_saint_michel,
+  sagrada_familia:         G.gen_sagrada_familia,
+  chrysler_building:       G.gen_chrysler_building,
+  tower_of_london:         G.gen_tower_of_london,
+  great_wall:              G.gen_great_wall,
+
   // ── Naval / Industrial ──────────────────────────────────────────────────
   aircraft_carrier:        G.gen_carrier,
   submarine:               G.gen_submarine,

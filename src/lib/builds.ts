@@ -248,6 +248,36 @@ const MONUMENTS: BuildEntry[] = [
       { key: "scale", label: "Scale", min: 0.5, max: 3, step: 0.25, default: 1 },
     ],
   },
+  {
+    key: "mont_saint_michel", label: "Mont-Saint-Michel", category: "Monuments",
+    description: "Norman tidal island abbey — 5 ascending stone tiers crowned by a Gothic Benedictine church and slender spire",
+    defaultParams: { scale: 0.5 },
+    params: [{ key: "scale", label: "Scale", min: 0.25, max: 2, step: 0.25, default: 0.5 }],
+  },
+  {
+    key: "sagrada_familia", label: "Sagrada Família", category: "Monuments",
+    description: "Gaudí's organic Barcelona basilica — 13 parabolic stone towers with distinctive corn-cob taper",
+    defaultParams: { scale: 0.5 },
+    params: [{ key: "scale", label: "Scale", min: 0.25, max: 2, step: 0.25, default: 0.5 }],
+  },
+  {
+    key: "chrysler_building", label: "Chrysler Building", category: "Monuments",
+    description: "Art Deco NYC skyscraper — IND10 ziggurat setbacks, eagle gargoyles, 7-tier sunburst crown, MILCNC needle spire",
+    defaultParams: { scale: 0.5 },
+    params: [{ key: "scale", label: "Scale", min: 0.25, max: 2, step: 0.25, default: 0.5 }],
+  },
+  {
+    key: "tower_of_london", label: "Tower of London", category: "Monuments",
+    description: "Norman fortress — White Tower central keep, concentric curtain walls, 13 towers, Traitors' Gate",
+    defaultParams: { scale: 0.5 },
+    params: [{ key: "scale", label: "Scale", min: 0.25, max: 2, step: 0.25, default: 0.5 }],
+  },
+  {
+    key: "great_wall", label: "Great Wall of China", category: "Monuments",
+    description: "IND10 dual-face fortification with watchtowers every 40m — parameterised length from 80m to 300m",
+    defaultParams: { length: 160 },
+    params: [{ key: "length", label: "Length (m)", min: 80, max: 300, step: 10, default: 160 }],
+  },
 ];
 
 // ── Fantasy / Fiction ─────────────────────────────────────────────────────────

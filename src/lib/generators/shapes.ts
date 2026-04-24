@@ -4432,4 +4432,227 @@ export function gen_enterprise(p: GenParams): Point3D[] {
   return applyLimit(pts, 1100);
 }
 
+// ── Mont-Saint-Michel ─────────────────────────────────────────────────────────
+export function gen_mont_saint_michel(p: GenParams): Point3D[] {
+  const pts: Point3D[] = [];
+  const S    = Math.max(0.25, p.scale ?? 0.5);
+  const step = 1.572 * S;  // STONE2
+
+  // 5 ascending tiers — each smaller and higher, like the island rock
+  for (let i = 0; i < 5; i++) {
+    const r  = (35 - i * 6) * S;
+    const y0 = i * 8 * S;
+    const rows = Math.round(8 * S / step);
+    for (let row = 0; row < rows; row++)
+      drawRing(pts, 0, y0 + row * step, 0, r, STONE2);
+    drawRing(pts, 0, y0 + rows * step, 0, r, CASTLE); // battlement each tier
+  }
+
+  // Abbey — Gothic church at summit (CNC4 stepped tiers)
+  const abbeyBase = 5 * 8 * S;
+  const astep = 2.324 * S;  // CNC4 step
+  for (let t = 0; t < 3; t++) {
+    const ar = (8 - t * 2.5) * S;
+    const ay0 = abbeyBase + t * 6 * S;
+    const rows = Math.round(6 * S / astep);
+    for (let row = 0; row < rows; row++)
+      drawRing(pts, 0, ay0 + row * astep, 0, ar, CNC4);
+  }
+  // Abbey spire — MILCNC taper
+  const spireBase = abbeyBase + 3 * 6 * S;
+  for (let y = spireBase; y < spireBase + 25 * S; y += 4.744 * S) {
+    const t = (y - spireBase) / (25 * S);
+    const r = (3 - t * 2.7) * S;
+    if (r > 0.3 * S) drawRing(pts, 0, y, 0, r, MILCNC);
+  }
+
+  return applyLimit(pts, 1100);
+}
+
+// ── Sagrada Família ───────────────────────────────────────────────────────────
+export function gen_sagrada_familia(p: GenParams): Point3D[] {
+  const pts: Point3D[] = [];
+  const S    = Math.max(0.25, p.scale ?? 0.5);
+  const step = 1.572 * S;
+
+  function organicTower(cx: number, cz: number, baseR: number, h: number) {
+    const rows = Math.round(h / step);
+    for (let row = 0; row < rows; row++) {
+      const t = row / rows;
+      // Organic taper: wide at base, waist at 40%, wider at 70%, then narrow tip
+      const r = baseR * (1 - t * 0.7 + Math.sin(t * Math.PI * 1.5) * 0.15);
+      if (r > 0.3 * S) drawRing(pts, cx, row * step, cz, r, STONE2);
+    }
+    // Pinnacle: distinctive Gaudí star-burst tip
+    drawRing(pts, cx, h, cz, 0.8 * S, CNC4);
+    pts.push({ x: cx, y: h + 2.324 * S, z: cz, yaw: 0, name: CNC4 });
+  }
+
+  // Central Jesus Christ tower (tallest)
+  organicTower(0, 0, 8 * S, 86 * S);
+
+  // 4 Evangelist towers at 90° intervals, medium height
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+    organicTower(Math.cos(a) * 18 * S, Math.sin(a) * 18 * S, 5 * S, 67 * S);
+  }
+
+  // 8 outer Apostle towers
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2;
+    organicTower(Math.cos(a) * 30 * S, Math.sin(a) * 30 * S, 3.5 * S, 50 * S);
+  }
+
+  // Nave walls — connecting the tower bases with stone walls
+  for (let y = 0; y < 12 * S; y += step) {
+    drawRing(pts, 0, y, 0, 34 * S, STONE2);  // outer perimeter ring
+  }
+
+  return applyLimit(pts, 1100);
+}
+
+// ── Chrysler Building ─────────────────────────────────────────────────────────
+export function gen_chrysler_building(p: GenParams): Point3D[] {
+  const pts: Point3D[] = [];
+  const S    = Math.max(0.25, p.scale ?? 0.5);
+  const step = 9.758 * S;   // IND10
+
+  const h = 120 * S;
+  function towerW(y: number): number {
+    const t = y / h;
+    if (t < 0.55) return 16 * S;
+    if (t < 0.72) return 12 * S;
+    if (t < 0.88) return  8 * S;
+    return 5 * S;
+  }
+
+  // Main shaft — IND10 ziggurat
+  for (let y = 0; y < h; y += step) {
+    const w = towerW(y);
+    drawRect(pts, 0, y, 0, w, w, IND10);
+    // Corner fills
+    pts.push({ x: -w, y, z: -w, yaw: 225, name: IND10 });
+    pts.push({ x:  w, y, z: -w, yaw: 135, name: IND10 });
+    pts.push({ x:  w, y, z:  w, yaw:  45, name: IND10 });
+    pts.push({ x: -w, y, z:  w, yaw: 315, name: IND10 });
+  }
+
+  // Art Deco sunburst crown — 7 terraced arched tiers of decreasing radius
+  const crownBase = h;
+  const cstep = 2.3 * S;  // CNC8
+  for (let t = 0; t < 7; t++) {
+    const cr = (5 - t * 0.5) * S;
+    const cy0 = crownBase + t * 3 * S;
+    const rows = Math.round(3 * S / cstep);
+    for (let row = 0; row < rows; row++)
+      drawRing(pts, 0, cy0 + row * cstep, 0, cr, CNC8);
+  }
+
+  // Eagle gargoyles — 4 corners of the setback at 72%
+  const eagleY = h * 0.72;
+  const eagleW = towerW(h * 0.55);
+  for (const [ex, ez] of [[-eagleW,-eagleW],[eagleW,-eagleW],[eagleW,eagleW],[-eagleW,eagleW]] as [number,number][]) {
+    pts.push({ x: ex, y: eagleY, z: ez, yaw: 45, name: CNC4 });
+  }
+
+  // Needle spire
+  const spireBase = crownBase + 7 * 3 * S;
+  for (let y = spireBase; y < spireBase + 30 * S; y += 4.744 * S) {
+    const t = (y - spireBase) / (30 * S);
+    const r = (2.5 - t * 2.3) * S;
+    if (r > 0.2 * S) drawRing(pts, 0, y, 0, r, MILCNC);
+  }
+
+  return applyLimit(pts, 1100);
+}
+
+// ── Tower of London ───────────────────────────────────────────────────────────
+export function gen_tower_of_london(p: GenParams): Point3D[] {
+  const pts: Point3D[] = [];
+  const S    = Math.max(0.25, p.scale ?? 0.5);
+  const step = 1.572 * S;
+
+  function tower(cx: number, cz: number, r: number, h: number) {
+    for (let y = 0; y < h; y += step) drawRing(pts, cx, y, cz, r, STONE2);
+    drawRing(pts, cx, h, cz, r + S, CASTLE);
+  }
+
+  // Outer curtain wall (170×130m, scaled)
+  const ohw = 42 * S, ohd = 32 * S, owH = 10 * S;
+  for (let y = 0; y < owH; y += step) {
+    drawWall(pts, -ohw, y, -ohd,  ohw, y, -ohd, STONE2);
+    drawWall(pts, -ohw, y,  ohd,  ohw, y,  ohd, STONE2);
+    drawWall(pts, -ohw, y, -ohd, -ohw, y,  ohd, STONE2);
+    drawWall(pts,  ohw, y, -ohd,  ohw, y,  ohd, STONE2);
+  }
+  drawWall(pts, -ohw, owH, -ohd, ohw, owH, -ohd, CASTLE);
+  drawWall(pts, -ohw, owH,  ohd, ohw, owH,  ohd, CASTLE);
+  drawWall(pts, -ohw, owH, -ohd, -ohw, owH, ohd, CASTLE);
+  drawWall(pts,  ohw, owH, -ohd,  ohw, owH, ohd, CASTLE);
+  // 4 outer corner towers
+  for (const [tx,tz] of [[-ohw,-ohd],[ohw,-ohd],[ohw,ohd],[-ohw,ohd]] as [number,number][])
+    tower(tx, tz, 3 * S, owH + 4 * S);
+
+  // Inner curtain wall
+  const ihw = 24 * S, ihd = 18 * S, iwH = 14 * S;
+  for (let y = 0; y < iwH; y += step) {
+    drawWall(pts, -ihw, y, -ihd,  ihw, y, -ihd, STONE2);
+    drawWall(pts, -ihw, y,  ihd,  ihw, y,  ihd, STONE2);
+    drawWall(pts, -ihw, y, -ihd, -ihw, y,  ihd, STONE2);
+    drawWall(pts,  ihw, y, -ihd,  ihw, y,  ihd, STONE2);
+  }
+  // 4 inner corner towers + 4 mid towers
+  for (const [tx,tz] of [[-ihw,-ihd],[ihw,-ihd],[ihw,ihd],[-ihw,ihd]] as [number,number][])
+    tower(tx, tz, 3.5 * S, iwH + 6 * S);
+  for (const [tx,tz] of [[0,-ihd],[0,ihd],[-ihw,0],[ihw,0]] as [number,number][])
+    tower(tx, tz, 2.5 * S, iwH + 4 * S);
+
+  // White Tower — central IND10 keep with 4 corner turrets
+  const wtH = 22 * S, wtHW = 9 * S;
+  for (let y = 0; y < wtH; y += 9.758 * S) {
+    drawRect(pts, 0, y, 0, wtHW, wtHW, IND10);
+    pts.push({x:-wtHW,y,z:-wtHW,yaw:225,name:IND10},{x:wtHW,y,z:-wtHW,yaw:135,name:IND10},{x:wtHW,y,z:wtHW,yaw:45,name:IND10},{x:-wtHW,y,z:wtHW,yaw:315,name:IND10});
+  }
+  for (const [tx,tz] of [[-wtHW,-wtHW],[wtHW,-wtHW],[wtHW,wtHW],[-wtHW,wtHW]] as [number,number][])
+    tower(tx, tz, 2.5 * S, wtH + 6 * S);
+
+  return applyLimit(pts, 1100);
+}
+
+// ── Great Wall of China ───────────────────────────────────────────────────────
+export function gen_great_wall(p: GenParams): Point3D[] {
+  const pts: Point3D[] = [];
+  const L    = Math.min(p.length ?? 160, 300);
+  const h    = 10;     // wall height in metres
+  const stp  = 9.758;  // IND10 step (no S — length param controls size)
+  const cW   = 4;      // wall depth (front-to-rear gap)
+
+  // Front and rear faces — IND10 rows
+  for (let y = 0; y < h; y += stp) {
+    drawWall(pts, -L/2, y, 0,    L/2, y, 0,   IND10);
+    drawWall(pts, -L/2, y, cW,   L/2, y, cW,  IND10);
+  }
+  // Battlements along top
+  drawWall(pts, -L/2, h, 0,  L/2, h, 0,  CASTLE);
+  drawWall(pts, -L/2, h, cW, L/2, h, cW, CASTLE);
+  // End caps
+  for (let y = 0; y < h; y += stp) {
+    drawWall(pts, -L/2, y, 0, -L/2, y, cW, IND10);
+    drawWall(pts,  L/2, y, 0,  L/2, y, cW, IND10);
+  }
+
+  // Watchtowers every 40m along the wall
+  const spacing = 40;
+  for (let x = -L/2 + spacing/2; x < L/2; x += spacing) {
+    const tH = 16, thw = 5, thd = 5;
+    for (let y = 0; y < tH; y += 2.3) {
+      drawRect(pts, x, y, cW/2, thw, thd, CNC8);
+      pts.push({x:x-thw,y,z:cW/2-thd,yaw:225,name:CNC8},{x:x+thw,y,z:cW/2-thd,yaw:135,name:CNC8},{x:x+thw,y,z:cW/2+thd,yaw:45,name:CNC8},{x:x-thw,y,z:cW/2+thd,yaw:315,name:CNC8});
+    }
+    drawRect(pts, x, tH, cW/2, thw, thd, CASTLE);
+  }
+
+  return applyLimit(pts, 1100);
+}
+
 
