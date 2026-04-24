@@ -2180,57 +2180,40 @@ export function gen_sydney_opera(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
   const S = Math.max(0.5, p.scale ?? 1);
 
-  // 3-tier stepped podium
+  // 3-tier stepped podium (Bennelong peninsula base)
   for (let tier = 0; tier < 3; tier++) {
     drawRect(pts, 0, tier*2.5*S, 0, (45-tier*4)*S, (22-tier*3)*S, CNC8);
   }
   const podTop = 7.5*S;
 
-  // Vault helper: one sail shell as barrel-vault ribs running along Z.
-  // Each rib is an arc in the XY plane; panels face radially outward from the arch centre.
-  // xMid: arch centre X  xHalf: half-span at full size  peakH: apex height
-  // zBack: rear (narrow end)  zFront: front (full-size end)
-  function drawVault(xMid: number, xHalf: number, peakH: number, zBack: number, zFront: number) {
-    const range  = zFront - zBack;
-    const nSlice = Math.max(4, Math.round(range / (4.5*S)));
-    for (let i = 0; i <= nSlice; i++) {
-      const t    = i / nSlice;
-      const z    = zBack + t * range;
-      const sc   = Math.sqrt(t);                   // fan taper: 0 at rear → 1 at front
-      const span = xHalf * sc;
-      const apex = peakH * sc;
-      if (span < 2 || apex < 2) continue;
-      const nRib = Math.max(6, Math.round((span + apex) * Math.PI * 0.5 / (8*S)));
-      for (let s = 0; s <= nRib; s++) {
-        const a   = (s / nRib) * Math.PI;          // 0=right base, π/2=apex, π=left base
-        const cx  = Math.cos(a);                   // outward X component
-        const cy  = Math.sin(a);                   // outward Y component (up)
-        // Panel faces radially outward from arch centre in XY plane
-        const yaw   = Math.atan2(cx, 1e-9) * 180 / Math.PI;           // ±90
-        const pitch = -Math.atan2(cy, Math.abs(cx) + 1e-9) * 180 / Math.PI;
-        pts.push({
-          x: xMid + cx * span,
-          y: podTop + cy * apex,
-          z,
-          yaw,
-          pitch: Math.abs(pitch) > 1 ? pitch : undefined,
-          name: CNC8,
-        });
-      }
+  // Sail helper: ring-stack forming an asymmetric shell (taller on one side).
+  // Creates concentric rings of decreasing radius and increasing Y → shell shape.
+  // cx/cz: centre, baseR: ground radius, peakH: top height, lean: tilt direction (+/-Z)
+  function drawSail(cx: number, cz: number, baseR: number, peakH: number, lean: number) {
+    const step = 1.572;                                  // STONE2 flush step
+    const nRings = Math.max(4, Math.ceil(peakH / step));
+    for (let i = 0; i < nRings; i++) {
+      const t = i / (nRings - 1);
+      const r = baseR * (1 - Math.sin(t * Math.PI * 0.5) * 0.9);   // cosine taper → 10% at top
+      if (r < 0.5) break;
+      const y = podTop + t * peakH;
+      const zOffset = lean * Math.pow(t, 1.6) * baseR * 0.4;         // lean makes the shell curve
+      drawRing(pts, cx, y, cz + zOffset, r, STONE2);
     }
   }
 
-  // Concert Hall (west, x < 0) — 3 nested vaults, tallest outermost
-  drawVault(-22*S, 20*S, 33*S, -20*S,  20*S);
-  drawVault(-14*S, 13*S, 22*S, -13*S,  13*S);
-  drawVault( -8*S,  7*S, 12*S,  -7*S,   7*S);
+  // Concert Hall sails (west cluster, lean forward +Z)
+  drawSail(-18*S,  0,     12*S, 28*S,  1);
+  drawSail(-26*S,  3*S,    8*S, 18*S,  1);
+  drawSail(-30*S, -4*S,    6*S, 12*S,  1);
 
-  // Opera Theatre (east, x > 0) — 2 nested vaults
-  drawVault( 17*S, 16*S, 28*S, -16*S,  16*S);
-  drawVault( 10*S, 10*S, 17*S, -10*S,  10*S);
+  // Opera Theatre sails (east cluster, lean forward +Z — slightly smaller)
+  drawSail( 18*S,  0,     10*S, 23*S,  1);
+  drawSail( 25*S, -3*S,    7*S, 15*S,  1);
+  drawSail( 30*S,  3*S,    5*S, 10*S,  1);
 
-  // Bennelong Room restaurant (far west, small low vault)
-  drawVault(-33*S,  7*S,  8*S,  -6*S,   6*S);
+  // Restaurant shell (far rear, low shallow sail leaning back)
+  drawSail(  0,   12*S,    8*S, 10*S, -0.6);
 
   return applyLimit(pts, 1100);
 }
@@ -3248,21 +3231,23 @@ export function gen_container_helix(p: GenParams): Point3D[] {
 // Hollow square core + 4 arms + connecting ring at arm tips.
 export function gen_container_station(p: GenParams): Point3D[] {
   const S      = p.scale ?? 1;
-  const armLen = Math.max(2, Math.round(S * 3));
+  const armLen = Math.max(3, Math.round(S * 5));
+  const coreSide = Math.max(2, Math.round(S * 3));  // containers per core side
+  const coreLayers = Math.max(2, Math.round(S * 3));
   const pts: Point3D[] = [];
 
-  // Hollow square core: 2 containers per side, 2 layers
-  const coreHalf = _CD;  // core extends ±coreHalf in X and Z
-  for (let layer = 0; layer < 2; layer++) {
+  // Hollow square core — bigger than before, scales with S
+  const coreHalf = coreSide * _CD / 2;  // core extends ±coreHalf in X and Z
+  for (let layer = 0; layer < coreLayers; layer++) {
     const y = layer * _CH;
     // N/S faces (running X, yaw=90)
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < coreSide; i++) {
       const x = -coreHalf + i * _CD + _CD/2;
       pts.push({ x, y, z: -coreHalf, yaw: 90, scale:1, name: _cpick(i + layer)     });
       pts.push({ x, y, z:  coreHalf, yaw: 90, scale:1, name: _cpick(i + layer + 2) });
     }
     // E/W faces (running Z, yaw=0)
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < coreSide; i++) {
       const z = -coreHalf + i * _CD + _CD/2;
       pts.push({ x: -coreHalf, y, z, yaw: 0, scale:1, name: _cpick(i + layer + 4) });
       pts.push({ x:  coreHalf, y, z, yaw: 0, scale:1, name: _cpick(i + layer + 6) });
@@ -3427,23 +3412,24 @@ export function gen_container_starport(p: GenParams): Point3D[] {
 // alleyways, overhanging upper floors, and barrel accent details.
 export function gen_container_shantytown(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const density = Math.max(2, Math.round(p.density ?? 4));  // grid density
-  const maxH    = Math.max(1, Math.round(p.height ?? 3));   // max stack height
+  const density = Math.max(4, Math.round(p.density ?? 6));  // grid density
+  const maxH    = Math.max(2, Math.round(p.height ?? 3));   // max stack height
 
   // Pseudo-random placement using a deterministic seed pattern
   const placements: { x: number; z: number; h: number; yaw: number }[] = [];
   let seed = 7;
   const rand = () => { seed = (seed * 1664525 + 1013904223) & 0xffffffff; return Math.abs(seed) / 0xffffffff; };
 
-  const spacing = _CD + 3;  // grid cell spacing
+  const spacing = _CD + 1;  // tight grid — alleyways created by drop-outs only
+  const offset  = -(density - 1) * spacing / 2;  // centre the grid
   for (let gx = 0; gx < density; gx++) {
     for (let gz = 0; gz < density; gz++) {
-      if (rand() < 0.25) continue;  // random gaps for alleyways
-      const jx = (rand() - 0.5) * 3;
-      const jz = (rand() - 0.5) * 3;
+      if (rand() < 0.15) continue;  // 15% alleyway gaps
+      const jx = (rand() - 0.5) * 1.5;
+      const jz = (rand() - 0.5) * 1.5;
       const h  = 1 + Math.floor(rand() * maxH);
       const yaw = Math.round(rand() * 3) * 90;  // always 0/90/180/270 — grid aligned
-      placements.push({ x: gx * spacing + jx, z: gz * spacing + jz, h, yaw });
+      placements.push({ x: offset + gx * spacing + jx, z: offset + gz * spacing + jz, h, yaw });
     }
   }
 
