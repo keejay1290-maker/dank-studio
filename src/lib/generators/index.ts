@@ -133,6 +133,9 @@ const REGISTRY: Record<string, (p: GenParams) => Point3D[]> = {
   container_drum:          G.gen_container_drum,
   container_helix:         G.gen_container_helix,
   container_station:       G.gen_container_station,
+  container_fortress:      G.gen_container_fortress,
+  container_starport:      G.gen_container_starport,
+  container_shantytown:    G.gen_container_shantytown,
 
   // ── Structures / Military ───────────────────────────────────────────────
   bunker_complex:          G.gen_bunker,

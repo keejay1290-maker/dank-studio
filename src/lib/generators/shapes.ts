@@ -3310,6 +3310,138 @@ export function gen_container_station(p: GenParams): Point3D[] {
   return applyLimit(pts, 1100);
 }
 
+// ── Container Fortress ────────────────────────────────────────────────────────
+// Square perimeter walls of containers stacked flush, corner watchtowers,
+// internal courtyard. Yaw param rotates the entire fortress.
+export function gen_container_fortress(p: GenParams): Point3D[] {
+  const pts: Point3D[] = [];
+  const tiers  = Math.max(2, Math.round(p.tiers ?? 4));
+  const sideC  = Math.max(3, Math.round(p.side ?? 5));  // containers per wall side
+  const side   = sideC * _CD;
+  const CW     = 2.702;  // container width (flush side-by-side)
+
+  // Perimeter walls — N/S faces run along X (yaw=90), E/W run along Z (yaw=0)
+  for (let t = 0; t < tiers; t++) {
+    const y = t * _CH;
+    for (let i = 0; i < sideC; i++) {
+      const x = i * _CD + _CD / 2;
+      pts.push({ x, y, z:    0, yaw:  90, name: _cpick(i+t),   scale: 1 }); // S face
+      pts.push({ x, y, z: side, yaw:  90, name: _cpick(i+t+2), scale: 1 }); // N face
+      pts.push({ x:    0, y, z: x, yaw: 0, name: _cpick(i+t+4), scale: 1 }); // W face
+      pts.push({ x: side, y, z: x, yaw: 0, name: _cpick(i+t+6), scale: 1 }); // E face
+    }
+    // Corner watchtowers — extra container stack slightly inset
+    for (const [cx, cz] of [[0,0],[side,0],[0,side],[side,side]] as [number,number][]) {
+      pts.push({ x: cx, y, z: cz, yaw: 45, name: "land_container_1bo", scale: 1 });
+    }
+  }
+
+  // Raised corner towers — 2 extra tiers above wall
+  for (let t = tiers; t < tiers + 2; t++) {
+    const y = t * _CH;
+    for (const [cx, cz] of [[0,0],[side,0],[0,side],[side,side]] as [number,number][]) {
+      pts.push({ x: cx, y, z: cz, yaw: 45, name: "land_container_1bo", scale: 1 });
+      pts.push({ x: cx - CW/2, y, z: cz, yaw: 90, name: "land_container_1bo", scale: 1 });
+    }
+  }
+
+  // Roof edge on perimeter wall
+  for (let i = 0; i < sideC; i++) {
+    const x = i * _CD + _CD / 2;
+    pts.push({ x, y: tiers * _CH, z:    0, pitch: -90, yaw: 0, name: "land_container_1bo", scale: 1 });
+    pts.push({ x, y: tiers * _CH, z: side, pitch: -90, yaw: 0, name: "land_container_1bo", scale: 1 });
+  }
+
+  return applyLimit(pts, 1100);
+}
+
+// ── Container Starport ────────────────────────────────────────────────────────
+// Circular landing pad ringed by containers, control tower, rotating radar dish.
+export function gen_container_starport(p: GenParams): Point3D[] {
+  const pts: Point3D[] = [];
+  const r      = Math.max(20, p.r ?? 40);
+  const tiers  = Math.max(1, Math.round(p.tiers ?? 3));
+
+  // Landing pad — flat IND10 tiles at y=0
+  for (let x = -r + 5; x <= r - 5; x += 9.012)
+    for (let z = -r + 5; z <= r - 5; z += 9.758)
+      if (x*x + z*z < r*r * 0.7)
+        pts.push({ x, y: 0, z, pitch: -90, yaw: 0, name: IND10 });
+
+  // Outer ring — flush container ring (step = container width 2.702m laterally, depth 10m radially)
+  const nRing = Math.round(2 * Math.PI * r / 2.702);
+  for (let t = 0; t < tiers; t++) {
+    const y = t * _CH;
+    for (let i = 0; i < nRing; i++) {
+      const a = (i / nRing) * Math.PI * 2;
+      // yaw so long axis (10m) faces radially outward
+      const yaw = 90 - a * 180 / Math.PI;
+      pts.push({ x: Math.cos(a)*r, y, z: Math.sin(a)*r, yaw, name: _cpick(i+t), scale: 1 });
+    }
+  }
+
+  // Control tower — stacked containers at edge
+  const twrX = r * 0.6, twrZ = 0;
+  for (let t = 0; t < tiers + 4; t++)
+    pts.push({ x: twrX, y: t * _CH, z: twrZ, yaw: 0, name: "land_container_1bo", scale: 1 });
+
+  // Radar dish on top of tower
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2;
+    pts.push({ x: twrX + Math.cos(a) * 4, y: (tiers + 4) * _CH, z: twrZ + Math.sin(a) * 4,
+      yaw: 90 + a * 180 / Math.PI, pitch: -45, name: "land_container_1bo", scale: 0.3 });
+  }
+
+  // Refuelling bay — row of containers on opposite side
+  for (let i = 0; i < 4; i++)
+    pts.push({ x: -r * 0.6 + i * 2.702, y: 0, z: 5, yaw: 90, name: _cpick(i), scale: 1 });
+
+  return applyLimit(pts, 1100);
+}
+
+// ── Container Shantytown ──────────────────────────────────────────────────────
+// Irregular stacked container settlement — ramshackle multi-level stack with
+// alleyways, overhanging upper floors, and barrel accent details.
+export function gen_container_shantytown(p: GenParams): Point3D[] {
+  const pts: Point3D[] = [];
+  const density = Math.max(2, Math.round(p.density ?? 4));  // grid density
+  const maxH    = Math.max(1, Math.round(p.height ?? 3));   // max stack height
+
+  // Pseudo-random placement using a deterministic seed pattern
+  const placements: { x: number; z: number; h: number; yaw: number }[] = [];
+  let seed = 7;
+  const rand = () => { seed = (seed * 1664525 + 1013904223) & 0xffffffff; return Math.abs(seed) / 0xffffffff; };
+
+  const spacing = _CD + 3;  // grid cell spacing
+  for (let gx = 0; gx < density; gx++) {
+    for (let gz = 0; gz < density; gz++) {
+      if (rand() < 0.25) continue;  // random gaps for alleyways
+      const jx = (rand() - 0.5) * 3;
+      const jz = (rand() - 0.5) * 3;
+      const h  = 1 + Math.floor(rand() * maxH);
+      const yaw = Math.round(rand() * 3) * 90;  // always 0/90/180/270 — grid aligned
+      placements.push({ x: gx * spacing + jx, z: gz * spacing + jz, h, yaw });
+    }
+  }
+
+  // Stack containers flush using _CH step
+  for (const pl of placements) {
+    for (let t = 0; t < pl.h; t++) {
+      pts.push({ x: pl.x, y: t * _CH, z: pl.z, yaw: pl.yaw, name: _cpick(pl.h + t), scale: 1 });
+    }
+    // Occasional overhang on upper floors
+    if (pl.h >= 2 && Math.abs(pl.x + pl.z) % 3 < 1) {
+      pts.push({ x: pl.x + (pl.yaw === 0 ? _CD * 0.4 : 0), y: (pl.h - 1) * _CH,
+        z: pl.z + (pl.yaw === 90 ? _CD * 0.4 : 0), yaw: pl.yaw, name: _cpick(pl.h+2), scale: 1 });
+    }
+    // Barrel details on ground level
+    if (rand() < 0.3)
+      pts.push({ x: pl.x + 4, y: 0, z: pl.z, name: "barrel_blue", yaw: 0, scale: 1 });
+  }
+
+  return applyLimit(pts, 1100);
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 //  STRUCTURES / MILITARY
 // ═══════════════════════════════════════════════════════════════════════════════

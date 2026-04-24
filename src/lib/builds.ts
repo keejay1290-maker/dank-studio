@@ -251,26 +251,26 @@ const MONUMENTS: BuildEntry[] = [
   {
     key: "mont_saint_michel", label: "Mont-Saint-Michel", category: "Monuments",
     description: "Norman tidal island abbey — 5 ascending stone tiers crowned by a Gothic Benedictine church and slender spire",
-    defaultParams: { scale: 0.5 },
-    params: [{ key: "scale", label: "Scale", min: 0.25, max: 2, step: 0.25, default: 0.5 }],
+    defaultParams: { scale: 1 },
+    params: [{ key: "scale", label: "Scale", min: 0.5, max: 2, step: 0.25, default: 1 }],
   },
   {
     key: "sagrada_familia", label: "Sagrada Família", category: "Monuments",
     description: "Gaudí's organic Barcelona basilica — 13 parabolic stone towers with distinctive corn-cob taper",
     defaultParams: { scale: 0.5 },
-    params: [{ key: "scale", label: "Scale", min: 0.25, max: 2, step: 0.25, default: 0.5 }],
+    params: [{ key: "scale", label: "Scale", min: 0.25, max: 1, step: 0.25, default: 0.5 }],
   },
   {
     key: "chrysler_building", label: "Chrysler Building", category: "Monuments",
     description: "Art Deco NYC skyscraper — IND10 ziggurat setbacks, eagle gargoyles, 7-tier sunburst crown, MILCNC needle spire",
-    defaultParams: { scale: 0.5 },
-    params: [{ key: "scale", label: "Scale", min: 0.25, max: 2, step: 0.25, default: 0.5 }],
+    defaultParams: { scale: 1 },
+    params: [{ key: "scale", label: "Scale", min: 0.5, max: 2, step: 0.25, default: 1 }],
   },
   {
     key: "tower_of_london", label: "Tower of London", category: "Monuments",
     description: "Norman fortress — White Tower central keep, concentric curtain walls, 13 towers, Traitors' Gate",
     defaultParams: { scale: 0.5 },
-    params: [{ key: "scale", label: "Scale", min: 0.25, max: 2, step: 0.25, default: 0.5 }],
+    params: [{ key: "scale", label: "Scale", min: 0.25, max: 1, step: 0.25, default: 0.5 }],
   },
   {
     key: "great_wall", label: "Great Wall of China", category: "Monuments",
@@ -285,9 +285,9 @@ const FANTASY: BuildEntry[] = [
   {
     key: "hogwarts", label: "Hogwarts Castle", category: "Fantasy",
     description: "Scottish Gothic castle — main keep with parapets, Great Hall south wing with pointed gable, Astronomy Tower (NE, tallest), 3 corner towers at varied heights, Clock Tower annex, viaduct bridge.",
-    defaultParams: { scale: 0.5 },
+    defaultParams: { scale: 1 },
     params: [
-      { key: "scale", label: "Scale", min: 0.25, max: 1.5, step: 0.25, default: 0.5 },
+      { key: "scale", label: "Scale", min: 0.5, max: 2, step: 0.25, default: 1 },
     ],
   },
   {
@@ -295,15 +295,15 @@ const FANTASY: BuildEntry[] = [
     description: "City of Kings, Gondor — seven concentric stone tiers carved into Mount Mindolluin, each set back above the last, crowned by the White Tower of Ecthelion.",
     defaultParams: { scale: 0.5 },
     params: [
-      { key: "scale", label: "Scale", min: 0.25, max: 1.5, step: 0.25, default: 0.5 },
+      { key: "scale", label: "Scale", min: 0.25, max: 1, step: 0.25, default: 0.5 },
     ],
   },
   {
     key: "helms_deep", label: "Helm's Deep", category: "Fantasy",
     description: "The Hornburg fortress of Rohan — the great Deeping Wall curtain wall with interval towers, the large circular Hornburg keep on the west rock, and the Deeping Tower at the east end.",
-    defaultParams: { scale: 0.5 },
+    defaultParams: { scale: 1 },
     params: [
-      { key: "scale", label: "Scale", min: 0.25, max: 1.5, step: 0.25, default: 0.5 },
+      { key: "scale", label: "Scale", min: 0.5, max: 2, step: 0.25, default: 1 },
     ],
   },
   {
@@ -317,9 +317,9 @@ const FANTASY: BuildEntry[] = [
   {
     key: "azkaban_prison", label: "Azkaban Prison", category: "Fantasy",
     description: "Remote North Sea island fortress from Harry Potter — triangular IND10 dark keep, three corner watchtowers, and a central tapering spire housing the Dementor cells.",
-    defaultParams: { scale: 0.5 },
+    defaultParams: { scale: 1 },
     params: [
-      { key: "scale", label: "Scale", min: 0.25, max: 1.5, step: 0.25, default: 0.5 },
+      { key: "scale", label: "Scale", min: 0.5, max: 2, step: 0.25, default: 1 },
     ],
   },
   {
@@ -333,9 +333,9 @@ const FANTASY: BuildEntry[] = [
   {
     key: "fortress_of_solitude", label: "Fortress of Solitude", category: "Fantasy",
     description: "Superman's Arctic sanctuary — Kryptonian-grown white crystal spires in three rings: 6 outer tall spires, 4 inner medium spires, central mega-spire tapering to a point.",
-    defaultParams: { scale: 0.5 },
+    defaultParams: { scale: 1 },
     params: [
-      { key: "scale", label: "Scale", min: 0.25, max: 1.5, step: 0.25, default: 0.5 },
+      { key: "scale", label: "Scale", min: 0.5, max: 2, step: 0.25, default: 1 },
     ],
   },
   {
@@ -392,6 +392,33 @@ const CONTAINER_BUILDS: BuildEntry[] = [
     defaultParams: { scale: 1 },
     params: [
       { key: "scale", label: "Scale", min: 0.5, max: 2, step: 0.5, default: 1 },
+    ],
+  },
+  {
+    key: "container_fortress", label: "Container Fortress", category: "Containers",
+    description: "Square container perimeter wall with raised corner watchtowers and rooftop edge — no gaps, grid-aligned rotation",
+    defaultParams: { tiers: 4, side: 5 },
+    params: [
+      { key: "tiers",  label: "Wall Height (tiers)", min: 2, max: 8,  step: 1, default: 4 },
+      { key: "side",   label: "Containers Per Side",  min: 3, max: 10, step: 1, default: 5 },
+    ],
+  },
+  {
+    key: "container_starport", label: "Container Starport", category: "Containers",
+    description: "Circular landing pad with container ring, IND10 tarmac, control tower, radar dish and refuelling bay",
+    defaultParams: { r: 40, tiers: 3 },
+    params: [
+      { key: "r",     label: "Pad Radius (m)",  min: 20, max: 80, step: 5,  default: 40 },
+      { key: "tiers", label: "Ring Height",      min: 1,  max: 6,  step: 1,  default: 3  },
+    ],
+  },
+  {
+    key: "container_shantytown", label: "Container Shantytown", category: "Containers",
+    description: "Irregular stacked container settlement — ramshackle multi-level grid with alleyways, overhangs and barrel details",
+    defaultParams: { density: 4, height: 3 },
+    params: [
+      { key: "density", label: "Grid Density", min: 2, max: 7, step: 1, default: 4 },
+      { key: "height",  label: "Max Stack Height", min: 1, max: 5, step: 1, default: 3 },
     ],
   },
 ];
