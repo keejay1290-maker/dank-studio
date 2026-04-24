@@ -3918,38 +3918,77 @@ export function gen_carrier(p: GenParams): Point3D[] {
 }
 
 export function gen_submarine(p: GenParams): Point3D[] {
+  // Virginia-class nuclear submarine
+  // Length ~115m, beam ~10m, teardrop hull, sail at 25% from bow,
+  // cruciform tail fins, twin torpedo bays at bow, periscope + snorkel masts.
   const pts: Point3D[] = [];
-  const L = Math.min(p.length ?? 100, 150);
-  const S = L / 100;
+  const L     = Math.min(p.length ?? 100, 150);
+  const S     = Math.max(0.5, L / 100);
+  const hullR = 5 * S;          // pressure hull radius at widest
+  const STEP  = 9.012;          // IND10 face width — fixed, never scaled
 
-  // ── Pressure hull — circular cross-sections along Z ────────────────────────
-  for (let z = -L/2; z <= L/2; z += 9.012) {
-    const t = Math.abs(z) / (L / 2);
-    // Tapers at bow (+z) to pointed, at stern (-z) slightly
-    const r = t > 0.8 ? (1 - t) / 0.2 * 5 * S : 5 * S;
-    if (r > 0.5) drawRing(pts, 0, 0, z, r, IND10);
+  // ── Pressure hull — tapered IND10 rings along Z axis ─────────────────────
+  // Bow  (+Z): taper from hullR → 0 over last 20% of length
+  // Stern(-Z): taper from hullR → 2*S  over last 15% of length
+  for (let z = -L/2; z <= L/2; z += STEP) {
+    const bowT   = Math.max(0, (z - (L/2 - 20*S)) / (20*S));
+    const sternT = Math.max(0, (-z - (L/2 - 15*S)) / (15*S));
+    const r = hullR * (1 - bowT * 0.95) * (1 - sternT * 0.7);
+    if (r > 0.4 * S) drawRing(pts, 0, hullR, z, r, IND10);
   }
-  // Hull cap panels at bow tip
-  pts.push({ x: 0, y: 0, z: L/2, yaw: 0, name: IND10 });
 
-  // ── Sail (conning tower) — at 1/3 from bow ─────────────────────────────────
-  const sailZ = L * 0.15;  // offset forward of centre
-  for (let y = 5*S; y <= 14*S; y += 2.3*S)
-    drawRect(pts, 0, y, sailZ, 3*S, 4*S, CNC8);
-  // Periscope + antenna on sail top
-  drawRing(pts, 0, 14*S + 2, sailZ, 1.5*S, CNC4);
-  pts.push({ x: 0, y: 14*S + 6, z: sailZ, yaw: 0, name: CNC4 });
-
-  // ── Cruciform rear fins ────────────────────────────────────────────────────
-  const finZ = -L/2 + 12*S;
-  const finPairs: [number, number, number, number][] = [
-    [0, 0, finZ, finZ],
-    [0, 0, finZ, finZ],
-  ];
-  void finPairs; // unused — fins drawn below
-  for (const [fx, fz] of [[8*S, finZ], [-8*S, finZ], [0, finZ-8*S], [0, finZ+8*S]] as [number,number][]) {
-    drawWall(pts, 0, 0, finZ, fx, 4*S, fz, IND10);
+  // ── Sail / conning tower — located at Z = +L/4 (25% from bow) ────────────
+  // Sail is a streamlined fin: hw=2*S wide, hd=3.5*S fore-aft, 3 rows of CNC8
+  const sailZ  = L / 4;
+  const sailHW = 2 * S;
+  const sailHD = 3.5 * S;
+  const sailY0 = hullR * 2 - 0.5;  // base flush against hull top
+  for (let row = 0; row < 3; row++) {
+    const sy = sailY0 + row * 2.3;
+    drawRect(pts, 0, sy, sailZ, sailHW, sailHD, CNC8);
+    // corner fills
+    pts.push({ x: -sailHW, y: sy, z: sailZ - sailHD, yaw: 225, name: CNC8 });
+    pts.push({ x:  sailHW, y: sy, z: sailZ - sailHD, yaw: 135, name: CNC8 });
+    pts.push({ x:  sailHW, y: sy, z: sailZ + sailHD, yaw:  45, name: CNC8 });
+    pts.push({ x: -sailHW, y: sy, z: sailZ + sailHD, yaw: 315, name: CNC8 });
   }
+  // Sail top ring (bridge/fairwater)
+  const sailTop = sailY0 + 3 * 2.3;
+  drawRing(pts, 0, sailTop, sailZ, sailHW * 0.8, CNC4);
+
+  // ── Periscope mast (staticobj_pier_tube_small, h=13m) ─────────────────────
+  pts.push({
+    x: 0, y: sailTop + 1, z: sailZ,
+    yaw: 0, name: "staticobj_pier_tube_small"
+  });
+
+  // ── Snorkel mast (staticobj_pier_tube_big, h=20m) ─────────────────────────
+  pts.push({
+    x: 0, y: sailTop + 1, z: sailZ + sailHD,
+    yaw: 0, name: "staticobj_pier_tube_big"
+  });
+
+  // ── Cruciform tail control surfaces — last 15% of hull ───────────────────
+  // 4 fins radiating at 0°/90°/180°/270°. Each fin = 3 IND10 panels.
+  const finZ    = -L/2 + 10 * S;       // fin root z position
+  const finBase = hullR;                // start at hull surface
+  const finTip  = hullR + 8 * S;       // fin tip
+
+  // Vertical fins (top & bottom) — drawWall along Y at x=0
+  drawWall(pts, 0, finBase + hullR, finZ,  0, finTip + hullR, finZ, IND10);   // top fin
+  drawWall(pts, 0, finBase - 2*S, finZ,   0, finBase - 2*S - 6*S, finZ, IND10); // bottom fin (into hull)
+
+  // Horizontal fins (port & starboard) — drawWall along X at y=hullR (mid-hull)
+  drawWall(pts,  finBase, hullR, finZ,  finTip, hullR, finZ, IND10);    // starboard
+  drawWall(pts, -finBase, hullR, finZ, -finTip, hullR, finZ, IND10);    // port
+
+  // ── Bow torpedo bay doors — 2 CNC4 panels at bow tip ─────────────────────
+  const bowZ = L/2 - 2 * S;
+  pts.push({ x:  2 * S, y: hullR, z: bowZ, yaw:  90, name: CNC4 });
+  pts.push({ x: -2 * S, y: hullR, z: bowZ, yaw: -90, name: CNC4 });
+
+  // ── ESM/radar antenna — small spotlight on sail bridge ────────────────────
+  pts.push({ x: 0.8 * S, y: sailTop, z: sailZ - sailHD * 0.5, yaw: 0, name: "staticobj_misc_spotlight" });
 
   return applyLimit(pts, 1100);
 }
@@ -4019,66 +4058,130 @@ export function gen_oil_rig(_p: GenParams): Point3D[] {
 }
 
 export function gen_pirate_ship(p: GenParams): Point3D[] {
+  // 17th-century galleon (Spanish/English, ~50-70m)
+  // Bow at +Z, stern at -Z. CASTLE walls = wooden plank appearance.
+  // Features: tapered hull, forecastle, tall sterncastle, 3 masts with yardarms,
+  // crow's nests, bowsprit, gun ports, flagpole, rope coils, lifeboats.
   const pts: Point3D[] = [];
-  const L = Math.min(p.length ?? 60, 90);
-  const S = L / 60;
+  const L    = Math.min(p.length ?? 70, 100);
+  const S    = Math.max(0.5, L / 70);
 
-  // ── Hull — IND10 cross-section rings tapering bow and stern ───────────────
-  for (let z = -L/2; z <= L/2; z += 9.012) {
-    const t = Math.abs(z) / (L/2);
-    const hw = (8 - t * 5) * S;
-    const depth = (4 - t * 2) * S;
-    if (hw < 1) continue;
-    // Lower hull (underwater) — narrow
-    for (let y = -depth; y < 0; y += 9.758)
-      drawWall(pts, -hw*0.6, y, z, hw*0.6, y, z, IND10);
-    // Upper hull sides
-    drawWall(pts, -hw, 0, z, hw, 0, z, STONE2);
-    drawWall(pts, -hw, 9.758*S, z, hw, 9.758*S, z, STONE2);
+  // ── Hull sides — CASTLE panels stepping along Z every 8m (face width), 3 rows high ──
+  // Beam tapers: 8*S amidships → 2*S at bow/stern via quadratic profile.
+  // Port (yaw=270) and starboard (yaw=90) panels placed individually for outward facing.
+  const CASTLE_W = 8.0;   // CASTLE face width  → Z step
+  const CASTLE_H = 2.0;   // CASTLE panel height → Y step
+  const hullRows = 3;     // 3 strakes: y=0, 2, 4
+
+  for (let z = -L/2 + CASTLE_W/2; z <= L/2 - CASTLE_W/2 + 0.01; z += CASTLE_W) {
+    const zt = Math.abs(z) / (L / 2);
+    const hw = Math.max(2.0, (8 - 6 * zt * zt) * S);
+    for (let row = 0; row < hullRows; row++) {
+      const y = row * CASTLE_H;
+      pts.push({ x: -hw, y, z, yaw: 270, name: CASTLE });  // port
+      pts.push({ x:  hw, y, z, yaw:  90, name: CASTLE });  // starboard
+    }
   }
-  // Hull end caps
-  drawRing(pts,  0, 5*S, -L/2, 4*S, IND10);  // stern
-  pts.push({ x: 0, y: 5*S, z: L/2, yaw: 0, name: IND10 });  // bow cap
 
-  // ── Main deck ─────────────────────────────────────────────────────────────
-  const deckY = 9.758 * S;
-  for (let z = -L/2 + 4; z <= L/2 - 4; z += 9.608)
-    pts.push({ x: 0, y: deckY, z, yaw: 0, pitch: -90, name: MILCNC });
+  const deckY = hullRows * CASTLE_H;  // main deck level = top of hull strakes
 
-  // ── Forecastle (raised bow platform) ──────────────────────────────────────
-  const fcZ = L/2 - 10*S;
-  for (let y = deckY; y <= deckY + 4*S; y += 2*S)
-    drawRect(pts, 0, y, fcZ + 3*S, 5*S, 7*S, CASTLE);
+  // ── Main deck — MILCNC flat tiles, step=4.052 along X, 4.052 along Z ──────
+  for (let dz = -L/2 + 4; dz <= L/2 - 4; dz += 4.052)
+    for (let dx = -6 * S; dx <= 6 * S; dx += 4.052)
+      pts.push({ x: dx, y: deckY, z: dz, yaw: 0, pitch: -90, name: MILCNC });
 
-  // ── Sterncastle (raised stern platform) ───────────────────────────────────
-  const scZ = -L/2 + 10*S;
-  for (let y = deckY; y <= deckY + 8*S; y += 2*S)
-    drawRect(pts, 0, y, scZ - 3*S, 7*S, 7*S, CASTLE);
-  // Captain's cabin window rings
-  drawRing(pts, 0, deckY + 4*S, scZ - 10*S, 3*S, CNC4);
+  // ── Forecastle (raised bow platform) — bow +Z side ────────────────────────
+  // z from L/2 - 18*S to L/2, 3 rows CASTLE from deckY to deckY + 3*CASTLE_H
+  const fcCZ = L/2 - 9 * S;
+  const fcHW = 5.5 * S;
+  const fcHD = 8.5 * S;
+  for (let row = 0; row < 3; row++) {
+    const fy = deckY + row * CASTLE_H;
+    drawRect(pts, 0, fy, fcCZ, fcHW, fcHD, CASTLE);
+    pts.push({ x: -fcHW, y: fy, z: fcCZ - fcHD, yaw: 225, name: CASTLE });
+    pts.push({ x:  fcHW, y: fy, z: fcCZ - fcHD, yaw: 135, name: CASTLE });
+    pts.push({ x:  fcHW, y: fy, z: fcCZ + fcHD, yaw:  45, name: CASTLE });
+    pts.push({ x: -fcHW, y: fy, z: fcCZ + fcHD, yaw: 315, name: CASTLE });
+  }
+  const fcDeckY = deckY + 3 * CASTLE_H;
 
-  // ── 3 masts — vertical stacks of MILCNC panels ────────────────────────────
-  const masts = [L/4, 0, -L/5];
-  for (const mz of masts) {
-    const mH = mz === 0 ? 28*S : 22*S;  // main mast tallest
-    for (let y = deckY; y < deckY + mH; y += 4.744)
+  // ── Sterncastle (high captain's quarters) — stern -Z side ─────────────────
+  // 5 rows CASTLE — much taller than forecastle
+  const scCZ = -L/2 + 11 * S;
+  const scHW = 6.5 * S;
+  const scHD = 11 * S;
+  for (let row = 0; row < 5; row++) {
+    const sy = deckY + row * CASTLE_H;
+    drawRect(pts, 0, sy, scCZ, scHW, scHD, CASTLE);
+    pts.push({ x: -scHW, y: sy, z: scCZ - scHD, yaw: 225, name: CASTLE });
+    pts.push({ x:  scHW, y: sy, z: scCZ - scHD, yaw: 135, name: CASTLE });
+    pts.push({ x:  scHW, y: sy, z: scCZ + scHD, yaw:  45, name: CASTLE });
+    pts.push({ x: -scHW, y: sy, z: scCZ + scHD, yaw: 315, name: CASTLE });
+  }
+  const scTopY = deckY + 5 * CASTLE_H;
+  // Stern gallery windows (CNC4 panels on stern face)
+  for (let i = -1; i <= 1; i++)
+    pts.push({ x: i * 3 * S, y: deckY + 3 * CASTLE_H, z: scCZ - scHD, yaw: 180, name: CNC4 });
+
+  // ── 3 Masts — MILCNC rings stacked vertically (step=4.744 fixed) ──────────
+  // Foremast:   z = L/4  (toward bow)
+  // Mainmast:   z = 0    (amidships — tallest)
+  // Mizzenmast: z = -L/4 (toward stern)
+  const mastDefs: { mz: number; mastH: number }[] = [
+    { mz:  L / 4, mastH: 24 * S },  // foremast
+    { mz:  0,     mastH: 34 * S },  // mainmast — tallest
+    { mz: -L / 4, mastH: 20 * S },  // mizzenmast
+  ];
+
+  for (const { mz, mastH } of mastDefs) {
+    const mastBaseY = mz > 0 ? fcDeckY : (mz < -L/8 ? scTopY : deckY);
+    // Mast column — single MILCNC panel per step, facing yaw=0
+    for (let y = mastBaseY; y < mastBaseY + mastH; y += 4.744)
       pts.push({ x: 0, y, z: mz, yaw: 0, name: MILCNC });
-    // Yardarm (horizontal boom)
-    const yardY = deckY + mH * 0.6;
-    drawWall(pts, -5*S, yardY, mz, 5*S, yardY, mz, CNC8);
-    // Crow's nest
-    drawRing(pts, 0, deckY + mH * 0.7, mz, 2*S, CNC8);
+
+    const mastTopY = mastBaseY + mastH;
+
+    // Crow's nest platform at 70% mast height (CNC8 ring)
+    const nestY = mastBaseY + mastH * 0.68;
+    drawRing(pts, 0, nestY, mz, 2 * S, CNC8);
+
+    // Lower yardarm at 40% mast height — CNC8 horizontal boom
+    const yard1Y = mastBaseY + mastH * 0.38;
+    const yard1W = mz === 0 ? 9 * S : 7 * S;
+    drawWall(pts, -yard1W, yard1Y, mz, yard1W, yard1Y, mz, CNC8);
+
+    // Upper yardarm at 65% mast height (foremast and mainmast only)
+    if (mz >= 0) {
+      const yard2Y = mastBaseY + mastH * 0.60;
+      const yard2W = yard1W * 0.65;
+      drawWall(pts, -yard2W, yard2Y, mz, yard2W, yard2Y, mz, CNC8);
+    }
+
+    // Flagpole at mainmast top
+    if (mz === 0)
+      pts.push({ x: 0, y: mastTopY, z: 0, yaw: 0, name: "staticobj_misc_flagpole" });
   }
 
-  // ── Cannon ports — CASTLE panels along hull sides, 4 per side ─────────────
-  for (let i = 0; i < 4; i++) {
-    const cz = -L/4 + i * (L/4);
-    pts.push({ x: -6.5*S, y: 5*S, z: cz, yaw: -90, name: CASTLE }); // port side
-    pts.push({ x:  6.5*S, y: 5*S, z: cz, yaw:  90, name: CASTLE }); // starboard
+  // ── Bowsprit — diagonal forward spar projecting from bow ─────────────────
+  // From bow forecastle deck, angling up and forward at ~30°
+  drawWall(pts, 0, fcDeckY, L/2 - 4, 0, fcDeckY + 8 * S, L/2 + 12 * S, CNC8);
+
+  // ── Gun ports — barrel_red as cannon muzzles, 6 per side ─────────────────
+  const gunY = deckY * 0.5;
+  for (let i = 0; i < 6; i++) {
+    const gz = -L/4 + i * (L / 2 / 5.5);
+    const ghw = Math.max(2.0, (8 - 6 * Math.pow(Math.abs(gz) / (L/2), 2)) * S) + 0.5;
+    pts.push({ x: -ghw, y: gunY, z: gz, yaw: 270, name: "barrel_red" });  // port
+    pts.push({ x:  ghw, y: gunY, z: gz, yaw:  90, name: "barrel_red" });  // starboard
   }
 
-  // ── Jolly Roger flag — barrel_red at main mast top ────────────────────────
-  pts.push({ x: 0, y: deckY + 28*S + 2, z: 0, name: "barrel_red" });
+  // ── Rope coils on deck ────────────────────────────────────────────────────
+  pts.push({ x:  4 * S, y: deckY, z:  L/4 + 3, yaw: 0, name: "staticobj_misc_coil" });
+  pts.push({ x: -4 * S, y: deckY, z: -L/4 + 3, yaw: 0, name: "staticobj_misc_coil" });
+
+  // ── Lifeboats on sterncastle top ──────────────────────────────────────────
+  pts.push({ x:  3 * S, y: scTopY, z: scCZ + 2, yaw:  90, name: "staticobj_boat_small4" });
+  pts.push({ x: -3 * S, y: scTopY, z: scCZ + 2, yaw: 270, name: "staticobj_boat_small4" });
 
   return applyLimit(pts, 1100);
 }
