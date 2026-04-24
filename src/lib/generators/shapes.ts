@@ -4761,6 +4761,386 @@ export function gen_tower_of_london(p: GenParams): Point3D[] {
   return applyLimit(pts, 1100);
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+//  ALHAMBRA PALACE — Granada, Spain
+// ═══════════════════════════════════════════════════════════════════════════════
+/**
+ * 🏰 ALHAMBRA PALACE
+ *
+ * Moorish fortress-palace, Nasrid dynasty. Key features:
+ *  • Court of the Lions: 28m×16m open courtyard with CNC4 arcade columns
+ *    on all four sides, central drawRing fountain basin
+ *  • Comares Tower (Hall of Ambassadors): large IND10 square tower, 45m tall
+ *  • Outer defensive wall: STONE2 curtain wall with square MILCNC towers every 25m
+ *  • Palace body: STONE2 residential wings flanking the court
+ */
+export function gen_alhambra(p: GenParams): Point3D[] {
+  const pts: Point3D[] = [];
+  const S     = Math.max(0.25, p.scale ?? 0.5);
+  const s2stp = 1.572 * S;   // STONE2 flush row step
+  const c4stp = 2.324 * S;   // CNC4 step
+  const mstp  = 4.744 * S;   // MILCNC step
+  const istp  = 9.758 * S;   // IND10 step
+
+  // ── Outer defensive curtain wall (perimeter) ─────────────────────────────
+  const wallR = 55 * S;   // approx outer perimeter half-size
+  const wallH = 8 * S;
+  for (let y = 0; y < wallH; y += s2stp) {
+    drawWall(pts, -wallR, y, -wallR, wallR, y, -wallR, STONE2);   // north face
+    drawWall(pts,  wallR, y, -wallR, wallR, y,  wallR, STONE2);   // east face
+    drawWall(pts,  wallR, y,  wallR,-wallR, y,  wallR, STONE2);   // south face
+    drawWall(pts, -wallR, y,  wallR,-wallR, y, -wallR, STONE2);   // west face
+  }
+  // Battlement atop outer wall
+  drawWall(pts, -wallR, wallH, -wallR,  wallR, wallH, -wallR, CASTLE);
+  drawWall(pts,  wallR, wallH, -wallR,  wallR, wallH,  wallR, CASTLE);
+  drawWall(pts,  wallR, wallH,  wallR, -wallR, wallH,  wallR, CASTLE);
+  drawWall(pts, -wallR, wallH,  wallR, -wallR, wallH, -wallR, CASTLE);
+
+  // Square towers every 25m along the outer wall
+  const towerSpacing = 25 * S;
+  const tw = 4 * S;   // tower half-width
+  const tH = 12 * S;
+  const towerXs = [-wallR + towerSpacing, -wallR + towerSpacing * 2, -wallR + towerSpacing * 3];
+  for (const tx of towerXs) {
+    // North wall towers
+    for (let y = 0; y < tH; y += mstp) {
+      drawRect(pts, tx, y, -wallR, tw, tw, MILCNC);
+      pts.push({x:tx-tw,y,z:-wallR-tw,yaw:225,name:MILCNC},{x:tx+tw,y,z:-wallR-tw,yaw:135,name:MILCNC},{x:tx+tw,y,z:-wallR+tw,yaw:45,name:MILCNC},{x:tx-tw,y,z:-wallR+tw,yaw:315,name:MILCNC});
+    }
+    // South wall towers
+    for (let y = 0; y < tH; y += mstp) {
+      drawRect(pts, tx, y, wallR, tw, tw, MILCNC);
+      pts.push({x:tx-tw,y,z:wallR-tw,yaw:225,name:MILCNC},{x:tx+tw,y,z:wallR-tw,yaw:135,name:MILCNC},{x:tx+tw,y,z:wallR+tw,yaw:45,name:MILCNC},{x:tx-tw,y,z:wallR+tw,yaw:315,name:MILCNC});
+    }
+  }
+
+  // ── Court of the Lions (rectangular open courtyard) ───────────────────────
+  // 28m × 16m; colonnade of CNC4 arches on all 4 sides
+  const crtHW = 14 * S;   // court half-width  (28m)
+  const crtHD =  8 * S;   // court half-depth  (16m)
+  const crtBase = 2 * S;  // slight elevation
+  // Arcade columns — 2 rows high forming open colonnades
+  for (let row = 0; row < 2; row++) {
+    const y = crtBase + row * c4stp;
+    drawWall(pts, -crtHW, y, -crtHD,  crtHW, y, -crtHD, CNC4);  // north arcade
+    drawWall(pts, -crtHW, y,  crtHD,  crtHW, y,  crtHD, CNC4);  // south arcade
+    drawWall(pts, -crtHW, y, -crtHD, -crtHW, y,  crtHD, CNC4);  // west arcade
+    drawWall(pts,  crtHW, y, -crtHD,  crtHW, y,  crtHD, CNC4);  // east arcade
+  }
+  // Central fountain — small ring at ground level
+  drawRing(pts, 0, crtBase, 0, 3 * S, CNC4);
+  drawRing(pts, 0, crtBase + c4stp, 0, 1.5 * S, CNC4);
+
+  // ── Palace wings (Nasrid Palace body) ─────────────────────────────────────
+  // Two rectangular wings flanking the court, STONE2
+  const wingH = 10 * S;
+  // East wing
+  const ewCX =  crtHW + 10 * S;
+  for (let y = 0; y < wingH; y += s2stp) {
+    drawRect(pts, ewCX, y, 0, 9 * S, crtHD, STONE2);
+    pts.push({x:ewCX-9*S,y,z:-crtHD,yaw:225,name:STONE2},{x:ewCX+9*S,y,z:-crtHD,yaw:135,name:STONE2},{x:ewCX+9*S,y,z:crtHD,yaw:45,name:STONE2},{x:ewCX-9*S,y,z:crtHD,yaw:315,name:STONE2});
+  }
+  // West wing
+  const wwCX = -crtHW - 10 * S;
+  for (let y = 0; y < wingH; y += s2stp) {
+    drawRect(pts, wwCX, y, 0, 9 * S, crtHD, STONE2);
+    pts.push({x:wwCX-9*S,y,z:-crtHD,yaw:225,name:STONE2},{x:wwCX+9*S,y,z:-crtHD,yaw:135,name:STONE2},{x:wwCX+9*S,y,z:crtHD,yaw:45,name:STONE2},{x:wwCX-9*S,y,z:crtHD,yaw:315,name:STONE2});
+  }
+
+  // ── Comares Tower (Hall of Ambassadors) — tallest tower, 45m ─────────────
+  const ctCX = -wallR + 12 * S;  // positioned at NW inner corner
+  const ctCZ = -wallR + 12 * S;
+  const ctHW = 8 * S;
+  const ctH  = 45 * S;
+  for (let y = 0; y < ctH; y += istp) {
+    drawRect(pts, ctCX, y, ctCZ, ctHW, ctHW, IND10);
+    pts.push({x:ctCX-ctHW,y,z:ctCZ-ctHW,yaw:225,name:IND10},{x:ctCX+ctHW,y,z:ctCZ-ctHW,yaw:135,name:IND10},{x:ctCX+ctHW,y,z:ctCZ+ctHW,yaw:45,name:IND10},{x:ctCX-ctHW,y,z:ctCZ+ctHW,yaw:315,name:IND10});
+  }
+  // Battlements atop Comares Tower
+  drawRect(pts, ctCX, ctH, ctCZ, ctHW, ctHW, CASTLE);
+  pts.push({x:ctCX-ctHW,y:ctH,z:ctCZ-ctHW,yaw:225,name:CASTLE},{x:ctCX+ctHW,y:ctH,z:ctCZ-ctHW,yaw:135,name:CASTLE},{x:ctCX+ctHW,y:ctH,z:ctCZ+ctHW,yaw:45,name:CASTLE},{x:ctCX-ctHW,y:ctH,z:ctCZ+ctHW,yaw:315,name:CASTLE});
+
+  return applyLimit(pts, 1100);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  HAGIA SOPHIA — Istanbul, Turkey
+// ═══════════════════════════════════════════════════════════════════════════════
+/**
+ * 🕌 HAGIA SOPHIA
+ *
+ * Byzantine basilica (537 AD), later Ottoman mosque.
+ *  • Massive central dome: 31m diameter, 55m high — drawDome + ring tiers
+ *  • Two half-domes on E/W axis flanking the central dome
+ *  • Large IND10 rectangular nave body
+ *  • 4 minarets at outer corners — tapered MILCNC spires
+ */
+export function gen_hagia_sophia(p: GenParams): Point3D[] {
+  const pts: Point3D[] = [];
+  const S     = Math.max(0.25, p.scale ?? 0.5);
+  const istp  = 9.758 * S;   // IND10 step
+  const mstp  = 4.744 * S;   // MILCNC step
+  const s2stp = 1.572 * S;   // STONE2 step
+
+  // ── Nave body (rectangular) ────────────────────────────────────────────────
+  const naveHW = 28 * S;  // half-width  (E-W)
+  const naveHD = 20 * S;  // half-depth  (N-S)
+  const naveH  = 25 * S;  // wall height before dome drums
+  for (let y = 0; y < naveH; y += istp) {
+    drawRect(pts, 0, y, 0, naveHW, naveHD, IND10);
+    pts.push({x:-naveHW,y,z:-naveHD,yaw:225,name:IND10},{x:naveHW,y,z:-naveHD,yaw:135,name:IND10},{x:naveHW,y,z:naveHD,yaw:45,name:IND10},{x:-naveHW,y,z:naveHD,yaw:315,name:IND10});
+  }
+
+  // ── Drum ring below central dome ───────────────────────────────────────────
+  const drumY = naveH;
+  const mainR = 15.5 * S;
+  const drumH = 8 * S;
+  for (let y = drumY; y < drumY + drumH; y += s2stp)
+    drawRing(pts, 0, y, 0, mainR, STONE2);
+
+  // ── Central dome ───────────────────────────────────────────────────────────
+  drawDome(pts, 0, drumY + drumH, 0, mainR, STONE2);
+
+  // ── Two half-domes (E and W, flanking) ────────────────────────────────────
+  const halfDomeR = 11 * S;
+  const halfDomeY = naveH + 4 * S;
+  // East half-dome
+  for (let y = halfDomeY; y < halfDomeY + 4 * S; y += s2stp)
+    drawRing(pts, 0, y, naveHW - halfDomeR, halfDomeR, STONE2);
+  drawDome(pts, 0, halfDomeY + 4 * S, naveHW - halfDomeR, halfDomeR, STONE2);
+  // West half-dome
+  for (let y = halfDomeY; y < halfDomeY + 4 * S; y += s2stp)
+    drawRing(pts, 0, y, -(naveHW - halfDomeR), halfDomeR, STONE2);
+  drawDome(pts, 0, halfDomeY + 4 * S, -(naveHW - halfDomeR), halfDomeR, STONE2);
+
+  // ── 4 Minarets at outer corners — tapered MILCNC spires ───────────────────
+  const minaretH = 38 * S;
+  const minaretBaseR = 3 * S;
+  const corners: [number, number][] = [
+    [-naveHW - 4 * S, -naveHD - 4 * S],
+    [ naveHW + 4 * S, -naveHD - 4 * S],
+    [ naveHW + 4 * S,  naveHD + 4 * S],
+    [-naveHW - 4 * S,  naveHD + 4 * S],
+  ];
+  for (const [mx, mz] of corners) {
+    for (let y = 0; y < minaretH; y += mstp) {
+      const t = y / minaretH;
+      const r = minaretBaseR * Math.max(0.15, 1 - t * 0.85);
+      drawRing(pts, mx, y, mz, r, MILCNC);
+    }
+    // Minaret tip
+    drawRing(pts, mx, minaretH, mz, 0.8 * S, CNC4);
+  }
+
+  return applyLimit(pts, 1100);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  RIVENDELL — Last Homely House, LOTR
+// ═══════════════════════════════════════════════════════════════════════════════
+/**
+ * 🌿 RIVENDELL
+ *
+ * Elven valley refuge carved into a mountain gorge.
+ *  • 5 terraced levels stepping down into a valley (increasing -Z depth)
+ *  • Elegant white CNC4 towers at the outer terrace corners
+ *  • Arched bridge spanning the gorge centre (CNC4 ring arc + wall piers)
+ *  • Waterfall cascade column (STONE2 ring stack) at the cliff face rear
+ */
+export function gen_rivendell(p: GenParams): Point3D[] {
+  const pts: Point3D[] = [];
+  const S     = Math.max(0.25, p.scale ?? 0.5);
+  const s2stp = 1.572 * S;   // STONE2 step
+  const c4stp = 2.324 * S;   // CNC4 step
+
+  // ── 5 terraced levels ─────────────────────────────────────────────────────
+  // Each level is wider and deeper into the gorge, stepping downward
+  const tiers = 5;
+  for (let i = 0; i < tiers; i++) {
+    const tierW = (20 + i * 12) * S;  // half-width grows with depth
+    const tierZ = i * 14 * S;         // push further into gorge
+    const tierY = (tiers - 1 - i) * 6 * S;  // descend Y level
+    const nRows = 3;
+    for (let row = 0; row < nRows; row++) {
+      const y = tierY + row * s2stp;
+      // Front face (facing viewer)
+      drawWall(pts, -tierW, y, tierZ, tierW, y, tierZ, STONE2);
+      // Two side walls connecting to next tier
+      drawWall(pts, -tierW, y, tierZ, -tierW, y, tierZ + 14 * S, STONE2);
+      drawWall(pts,  tierW, y, tierZ,  tierW, y, tierZ + 14 * S, STONE2);
+    }
+    // Decorative CNC4 battlement / balcony rail on front
+    drawWall(pts, -tierW, tierY + nRows * s2stp, tierZ, tierW, tierY + nRows * s2stp, tierZ, CNC4);
+  }
+
+  // ── Elegant corner towers on outer terrace (tier 0) ───────────────────────
+  const outerW = 20 * S;
+  const outerZ = 0;
+  const outerY = (tiers - 1) * 6 * S;
+  const towerH = 22 * S;
+  const towerBaseR = 3 * S;
+  for (const [tx, tz] of [[-outerW, outerZ], [outerW, outerZ]] as [number,number][]) {
+    for (let y = outerY; y < outerY + towerH; y += c4stp) {
+      const t = (y - outerY) / towerH;
+      const r = towerBaseR * Math.max(0.2, 1 - t * 0.75);
+      drawRing(pts, tx, y, tz, r, CNC4);
+    }
+    // Tower tip
+    drawRing(pts, tx, outerY + towerH, tz, 0.5 * S, CNC4);
+  }
+
+  // ── Arched bridge spanning the gorge (middle tier Z) ──────────────────────
+  // Bridge deck — short STONE2 wall segments forming the span
+  const bridgeY = (tiers - 1) * 6 * S + 4 * S;  // elevated above gorge floor
+  const bridgeZ = 2 * 14 * S;   // midpoint of gorge
+  const bridgeSpan = 20 * S;
+  drawWall(pts, -bridgeSpan, bridgeY, bridgeZ, bridgeSpan, bridgeY, bridgeZ, STONE2);
+  // Bridge arch underpinning — CNC4 ring arcs below deck
+  const archR = bridgeSpan * 0.55;
+  const archCX = 0;
+  const archCZ = bridgeZ;
+  const archY  = bridgeY - archR * 0.4;
+  const nArch = 8;
+  for (let i = 0; i < nArch; i++) {
+    const a = (i / (nArch - 1)) * Math.PI;   // 0 → π (bottom half-circle)
+    const ax = archCX + archR * Math.cos(a);
+    const ay = archY  + archR * Math.sin(a) * 0.35;
+    pts.push({ x: ax, y: ay, z: archCZ, yaw: 0, name: CNC4 });
+  }
+  // Bridge piers
+  for (const px of [-bridgeSpan * 0.7, bridgeSpan * 0.7]) {
+    for (let y = 0; y < bridgeY; y += s2stp)
+      pts.push({ x: px, y, z: bridgeZ, yaw: 0, name: STONE2 });
+  }
+
+  // ── Waterfall cascade (cliff face at rear of deepest tier) ────────────────
+  const wfX = 0;
+  const wfZ = (tiers - 1) * 14 * S + 6 * S;
+  const wfTop = (tiers - 1) * 6 * S + 20 * S;
+  for (let y = 0; y < wfTop; y += s2stp) {
+    drawRing(pts, wfX, y, wfZ, 2 * S, STONE2);
+  }
+
+  return applyLimit(pts, 1100);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  ISENGARD / ORTHANC — Saruman's Fortress, LOTR
+// ═══════════════════════════════════════════════════════════════════════════════
+/**
+ * 🗼 ISENGARD / ORTHANC
+ *
+ * Saruman's industrial fortress.
+ *  • Orthanc: hexagonal IND10 tower (~150m scaled), slight taper, 4 MILCNC
+ *    horn pinnacles at the crown
+ *  • Outer ring wall: large drawRing of IND10 with gap sections (destroyed look)
+ *  • Industrial furnace pits: barrel_red rings scattered at base
+ */
+export function gen_isengard(p: GenParams): Point3D[] {
+  const pts: Point3D[] = [];
+  const S    = Math.max(0.25, p.scale ?? 0.5);
+  const istp = 9.758 * S;   // IND10 step
+  const mstp = 4.744 * S;   // MILCNC step
+
+  // ── Outer Ring Wall of Isengard (gap sections for destroyed look) ──────────
+  const outerR = 60 * S;
+  const ringH  = 10 * S;
+  const gapStart1 = 0.15;   // 15% angular start of first gap
+  const gapEnd1   = 0.22;
+  const gapStart2 = 0.62;
+  const gapEnd2   = 0.70;
+  // Draw outer wall in arcs, skipping the gap segments
+  for (let y = 0; y < ringH; y += istp) {
+    // We manually place panels around the ring, skipping gap fractions
+    const circ = 2 * Math.PI * outerR;
+    const nPanels = Math.max(8, Math.ceil(circ / (9.012 * S)));
+    for (let i = 0; i < nPanels; i++) {
+      const frac = i / nPanels;
+      if (frac > gapStart1 && frac < gapEnd1) continue;
+      if (frac > gapStart2 && frac < gapEnd2) continue;
+      const a = frac * 2 * Math.PI;
+      const x = outerR * Math.cos(a);
+      const z = outerR * Math.sin(a);
+      const yaw = (Math.atan2(x, z) * 180 / Math.PI + 180) % 360;
+      pts.push({ x, y, z, yaw, name: IND10 });
+    }
+  }
+
+  // Destroyed battlement atop intact sections of outer ring
+  for (let i = 0; i < 48; i++) {
+    const frac = i / 48;
+    if (frac > gapStart1 && frac < gapEnd1) continue;
+    if (frac > gapStart2 && frac < gapEnd2) continue;
+    const a = frac * 2 * Math.PI;
+    const x = outerR * Math.cos(a);
+    const z = outerR * Math.sin(a);
+    const yaw = (Math.atan2(x, z) * 180 / Math.PI + 180) % 360;
+    pts.push({ x, y: ringH, z, yaw, name: CASTLE });
+  }
+
+  // ── Orthanc Tower — hexagonal cross-section using 6-sided polygon per floor ─
+  const ortH   = 80 * S;   // total height of Orthanc
+  const ortR   = 8 * S;    // base "radius" of hexagonal tower
+  const sides  = 6;
+  for (let y = 0; y < ortH; y += istp) {
+    const t = y / ortH;
+    const r = ortR * Math.max(0.55, 1 - t * 0.35);  // slight taper
+    // Place IND10 panels around a regular hexagon
+    for (let i = 0; i < sides; i++) {
+      const a0 = (i / sides) * Math.PI * 2;
+      const a1 = ((i + 1) / sides) * Math.PI * 2;
+      const mx = (Math.cos(a0) + Math.cos(a1)) * 0.5 * r;
+      const mz = (Math.sin(a0) + Math.sin(a1)) * 0.5 * r;
+      const yaw = (Math.atan2(mx, mz) * 180 / Math.PI + 180) % 360;
+      pts.push({ x: mx, y, z: mz, yaw, name: IND10 });
+    }
+  }
+
+  // ── Orthanc Crown: MILCNC band + 4 horn pinnacles ─────────────────────────
+  const crownY = ortH;
+  // Crown band — 2 rows of MILCNC rings
+  for (let row = 0; row < 2; row++) {
+    const y = crownY + row * mstp;
+    const r = ortR * 0.7;
+    drawRing(pts, 0, y, 0, r, MILCNC);
+  }
+  // 4 horn pinnacles at cardinal orientations, tilting outward
+  const hornH  = 16 * S;
+  const hornOff = ortR * 0.6;
+  const hornPos: [number, number, number][] = [
+    [  hornOff,  0,      0   ],
+    [ -hornOff,  0,      0   ],
+    [  0,        0,  hornOff ],
+    [  0,        0, -hornOff ],
+  ];
+  for (const [hx, , hz] of hornPos) {
+    const hYaw = (Math.atan2(hx, hz) * 180 / Math.PI + 180) % 360;
+    for (let y = crownY; y < crownY + hornH; y += mstp) {
+      const t = (y - crownY) / hornH;
+      const r = (2 - t * 1.6) * S;
+      if (r > 0.2 * S) drawRing(pts, hx, y, hz, r, MILCNC);
+    }
+    // Pitch the horn outward with a slight lean panel at base
+    pts.push({ x: hx * 1.1, y: crownY, z: hz * 1.1, yaw: hYaw, pitch: -15, name: MILCNC });
+  }
+
+  // ── Industrial furnace pits — barrel_red rings at base ────────────────────
+  const BARREL = "barrel_red";
+  const pitPositions: [number, number][] = [
+    [20 * S,  15 * S], [-20 * S,  15 * S],
+    [20 * S, -15 * S], [-20 * S, -15 * S],
+    [ 0,      25 * S], [ 0,      -25 * S],
+  ];
+  for (const [px, pz] of pitPositions) {
+    pts.push({ x: px, y: 0, z: pz, yaw: 0, name: BARREL });
+    pts.push({ x: px + 2 * S, y: 0, z: pz, yaw: 0, name: BARREL });
+    pts.push({ x: px - 2 * S, y: 0, z: pz, yaw: 0, name: BARREL });
+  }
+
+  return applyLimit(pts, 1100);
+}
+
 // ── Great Wall of China ───────────────────────────────────────────────────────
 export function gen_great_wall(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];

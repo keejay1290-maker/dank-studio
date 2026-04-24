@@ -278,6 +278,30 @@ const MONUMENTS: BuildEntry[] = [
     defaultParams: { length: 160 },
     params: [{ key: "length", label: "Length (m)", min: 80, max: 300, step: 10, default: 160 }],
   },
+  {
+    key: "alhambra_palace", label: "Alhambra Palace", category: "Monuments",
+    description: "Nasrid Moorish fortress-palace, Granada — Court of the Lions CNC4 arcade, central fountain, Comares Tower (45m IND10), STONE2 outer curtain wall with MILCNC square towers every 25m",
+    defaultParams: { scale: 0.5 },
+    params: [{ key: "scale", label: "Scale", min: 0.25, max: 1, step: 0.25, default: 0.5 }],
+  },
+  {
+    key: "hagia_sophia", label: "Hagia Sophia", category: "Monuments",
+    description: "Byzantine basilica, Istanbul (537 AD) — IND10 nave, STONE2 central dome (31m dia), two flanking half-domes, 4 tapering MILCNC minarets at corners",
+    defaultParams: { scale: 0.5 },
+    params: [{ key: "scale", label: "Scale", min: 0.25, max: 1, step: 0.25, default: 0.5 }],
+  },
+  {
+    key: "rivendell", label: "Rivendell", category: "Monuments",
+    description: "LOTR Elven valley refuge — 5 STONE2 terraces stepping into a mountain gorge, CNC4 spire towers, arched bridge spanning the gorge, waterfall cascade column",
+    defaultParams: { scale: 0.5 },
+    params: [{ key: "scale", label: "Scale", min: 0.25, max: 1, step: 0.25, default: 0.5 }],
+  },
+  {
+    key: "isengard", label: "Isengard / Orthanc", category: "Monuments",
+    description: "LOTR Saruman's fortress — hexagonal IND10 Orthanc spire (80m, slight taper), 4 MILCNC horn pinnacles at crown, outer IND10 ring wall with Ent-breach gaps, barrel_red furnace pits",
+    defaultParams: { scale: 0.5 },
+    params: [{ key: "scale", label: "Scale", min: 0.25, max: 1, step: 0.25, default: 0.5 }],
+  },
 ];
 
 // ── Fantasy / Fiction ─────────────────────────────────────────────────────────

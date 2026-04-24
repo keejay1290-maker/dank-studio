@@ -152,6 +152,10 @@ const REGISTRY: Record<string, (p: GenParams) => Point3D[]> = {
   chrysler_building:       G.gen_chrysler_building,
   tower_of_london:         G.gen_tower_of_london,
   great_wall:              G.gen_great_wall,
+  alhambra_palace:         G.gen_alhambra,
+  hagia_sophia:            G.gen_hagia_sophia,
+  rivendell:               G.gen_rivendell,
+  isengard:                G.gen_isengard,
 
   // ── Naval / Industrial ──────────────────────────────────────────────────
   aircraft_carrier:        G.gen_carrier,
