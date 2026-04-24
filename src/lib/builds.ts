@@ -370,6 +370,46 @@ const FANTASY: BuildEntry[] = [
       { key: "scale", label: "Scale", min: 0.5, max: 2, step: 0.25, default: 1 },
     ],
   },
+  {
+    key: "camelot", label: "Camelot Castle", category: "Fantasy",
+    description: "Arthurian legend — concentric STONE2 outer & inner wards with D-shaped corner towers, central IND10 Great Hall (3 tiers), Round Table courtyard with CNC4 decorative ring",
+    defaultParams: { scale: 1 },
+    params: [
+      { key: "scale", label: "Scale", min: 0.5, max: 2, step: 0.25, default: 1 },
+    ],
+  },
+  {
+    key: "winterfell", label: "Winterfell (GoT)", category: "Fantasy",
+    description: "Stark ancestral seat from Game of Thrones — outer STONE2 walls with 4 corner towers, IND10 Great Keep, partially ruined Broken Tower, CNC4 Glass Gardens greenhouse, crypts entrance",
+    defaultParams: { scale: 1 },
+    params: [
+      { key: "scale", label: "Scale", min: 0.5, max: 2, step: 0.25, default: 1 },
+    ],
+  },
+  {
+    key: "black_gate", label: "Black Gate (Morannon)", category: "Fantasy",
+    description: "LOTR gates of Mordor — twin IND10 flanking towers (40m), portcullis frame wall with central gap, raised gate tower, secondary defence wall, barrel_red Orc fire pits",
+    defaultParams: { scale: 1 },
+    params: [
+      { key: "scale", label: "Scale", min: 0.5, max: 2, step: 0.25, default: 1 },
+    ],
+  },
+  {
+    key: "gondor_beacon", label: "Gondor Beacon Tower", category: "Fantasy",
+    description: "LOTR White Mountains signal beacon (Amon Dîn) — tall STONE2 watchtower, CASTLE crenellated parapet, barrel_red/yellow beacon pyre at summit, 4 buttress fins, CNC4 gateway arch",
+    defaultParams: { scale: 1 },
+    params: [
+      { key: "scale", label: "Scale", min: 0.5, max: 2, step: 0.25, default: 1 },
+    ],
+  },
+  {
+    key: "stormwind", label: "Stormwind City (WoW)", category: "Fantasy",
+    description: "World of Warcraft Alliance capital — CNC4 Cathedral of Light with Gothic spire, Trade District IND10 buildings around fountain, Stormwind Keep with 3 towers, STONE2 outer city walls, CNC8 Throne Room spire",
+    defaultParams: { scale: 0.5 },
+    params: [
+      { key: "scale", label: "Scale", min: 0.25, max: 1.5, step: 0.25, default: 0.5 },
+    ],
+  },
 ];
 
 // ── Container Builds ──────────────────────────────────────────────────────────
@@ -677,6 +717,34 @@ const PRIMITIVES: BuildEntry[] = [
   },
 ];
 
+// ── Creative Megastructures ───────────────────────────────────────────────────
+const CREATIVE: BuildEntry[] = [
+  {
+    key: "dyson_sphere", label: "Dyson Sphere", category: "Creative",
+    description: "Partial megastructure framework surrounding a central star — latitude rings, longitude struts and equatorial maintenance bays at enormous scale",
+    defaultParams: { r: 80 },
+    params: [
+      { key: "r", label: "Radius (m)", min: 40, max: 150, step: 5, default: 80 },
+    ],
+  },
+  {
+    key: "barad_dur", label: "Barad-dûr", category: "Creative",
+    description: "Sauron's Dark Tower — three IND10 base tiers, tapering MILCNC shaft, mid-shaft buttress fins, flared crown with Eye of Sauron and horn battlements",
+    defaultParams: { scale: 1 },
+    params: [
+      { key: "scale", label: "Scale", min: 0.25, max: 2, step: 0.25, default: 1 },
+    ],
+  },
+  {
+    key: "mass_effect_citadel", label: "Mass Effect Citadel", category: "Creative",
+    description: "Presidium ring torus with five radiating Ward arms at 72° intervals, CNC8 arm-tip terminals, Keeper hub spire, and barrel_blue navigation lights",
+    defaultParams: { scale: 1 },
+    params: [
+      { key: "scale", label: "Scale", min: 0.5, max: 2, step: 0.25, default: 1 },
+    ],
+  },
+];
+
 // ── Full catalogue ────────────────────────────────────────────────────────────
 export const ALL_BUILDS: BuildEntry[] = [
   ...SCI_FI,
@@ -687,6 +755,7 @@ export const ALL_BUILDS: BuildEntry[] = [
   ...NAVAL,
   ...GEOMETRIC,
   ...PRIMITIVES,
+  ...CREATIVE,
 ];
 
 export const CATEGORIES = ["All", ...Array.from(new Set(ALL_BUILDS.map(b => b.category)))];

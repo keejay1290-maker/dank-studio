@@ -126,6 +126,11 @@ const REGISTRY: Record<string, (p: GenParams) => Point3D[]> = {
   eye_of_sauron:           G.gen_eye_of_sauron,
   fortress_of_solitude:    G.gen_fortress_solitude,
   iron_throne:             G.gen_iron_throne,
+  camelot:                 G.gen_camelot,
+  winterfell:              G.gen_winterfell,
+  black_gate:              G.gen_black_gate,
+  gondor_beacon:           G.gen_gondor_beacon,
+  stormwind:               G.gen_stormwind,
 
   // ── Container Builds ────────────────────────────────────────────────────
   sky_fort:                G.gen_sky_fort,
@@ -163,6 +168,11 @@ const REGISTRY: Record<string, (p: GenParams) => Point3D[]> = {
   oil_rig:                 G.gen_oil_rig,
   pirate_ship:             G.gen_pirate_ship,
   bridge_truss:            G.gen_bridge_truss,
+
+  // ── Creative Megastructures ─────────────────────────────────────────────────
+  dyson_sphere:            G.gen_dyson_sphere,
+  barad_dur:               G.gen_barad_dur,
+  mass_effect_citadel:     G.gen_mass_effect_citadel,
 
   // ── Geometric / Unique ──────────────────────────────────────────────────
   celtic_ring:             G.gen_celtic_ring,
