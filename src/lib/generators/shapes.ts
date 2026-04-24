@@ -3758,56 +3758,163 @@ export function gen_alcatraz(_p: GenParams): Point3D[] {
 
 export function gen_carrier(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];
-  const L = Math.min(p.length ?? 200, 250);   // flight deck length
-  const W = 30;                                  // deck half-width
-  const step = 9.758;   // IND10 step (no S — length param controls size)
+  const L = Math.min(p.length ?? 200, 250);   // flight deck length (bow +Z, stern -Z)
 
-  // ── Hull — IND10 rings at each cross-section ─────────────────────────────
-  for (let x = -L/2; x <= L/2; x += 9.012) {
-    const t = Math.abs(x) / (L/2);
-    // Hull tapers at bow (+x) and stern (-x)
-    const hw = W * (1 - Math.pow(t, 3) * 0.4);
-    // Hull depth — 3 rows below deck
-    for (let y = -step * 2; y < 0; y += step)
-      drawWall(pts, x, y, -hw, x, y, hw, IND10);
-    // Hull sides
-    drawWall(pts, x, -step * 2, -hw, x, 0, -hw, IND10);
-    drawWall(pts, x, -step * 2,  hw, x, 0,  hw, IND10);
+  // ── Constants ─────────────────────────────────────────────────────────────
+  const CONT      = "land_container_1bo";
+  const CONT_H    = 2.782;   // vertical step — exact, never S-scale
+  const CONT_W    = 2.702;   // lateral step — exact
+  const HULL_ROWS = 4;       // container rows high (≈11.128m total hull height)
+  const deckY     = HULL_ROWS * CONT_H;  // 11.128 — flight deck surface
+
+  // Hull half-widths (port/starboard in X)
+  const HULL_X    = 16;      // containers placed at x=±16
+  // Bow taper cutoff: containers stop 20m from bow, replaced by IND10 cap ring
+  const bowTaperZ = L / 2 - 20;
+
+  // ── Hull sides — container stacks running Z axis ───────────────────────────
+  // Port side (x = -HULL_X), Starboard side (x = +HULL_X)
+  // Rows 0-3 stacked vertically using exact CONT_H step
+  for (const hullX of [-HULL_X, HULL_X]) {
+    for (let stack = 0; stack < HULL_ROWS; stack++) {
+      const y = stack * CONT_H;
+      for (let z = -L / 2; z <= bowTaperZ; z += CONT_W) {
+        pts.push({ x: hullX, y, z, yaw: 0, name: CONT });
+      }
+    }
   }
 
-  // ── Flight deck — MILCNC flat panels (pitch:-90 = lying flat) ─────────────
-  for (let x = -L/2; x <= L/2; x += 9.608) {
-    for (let z = -W; z <= W; z += 9.608)
-      pts.push({ x, y: 0, z, yaw: 0, pitch: -90, name: MILCNC });
+  // Hull lateral fill — containers laid across (yaw=90) filling the hull floor
+  // 1 layer at y=0 as keel reinforcement, spaced CONT_W apart along X
+  for (let stack = 0; stack < 2; stack++) {
+    const y = stack * CONT_H;
+    for (let x = -HULL_X + CONT_W; x < HULL_X; x += CONT_W) {
+      for (let z = -L / 2 + 5; z <= bowTaperZ - 5; z += CONT_H) {
+        pts.push({ x, y, z, yaw: 90, name: CONT });
+      }
+    }
   }
 
-  // ── Island superstructure — starboard side (z = W + 3) ────────────────────
-  const islandX = L/2 - 30;
-  const islandZ = W + 3;
-  for (let y = 0; y < step * 3; y += 2.3) {
-    drawRect(pts, islandX, y, islandZ, 12, 5, CNC8);
-    pts.push({ x: islandX-12, y, z: islandZ-5, yaw: 225, name: CNC8 });
-    pts.push({ x: islandX+12, y, z: islandZ-5, yaw: 135, name: CNC8 });
-    pts.push({ x: islandX+12, y, z: islandZ+5, yaw:  45, name: CNC8 });
-    pts.push({ x: islandX-12, y, z: islandZ+5, yaw: 315, name: CNC8 });
+  // ── Bow cap ring — IND10 panels forming the rounded bow profile ────────────
+  const bowR = HULL_X;
+  const bowZ = L / 2;
+  const nBow = Math.max(6, Math.ceil(Math.PI * bowR / 9.012));
+  for (let i = 0; i < nBow; i++) {
+    const ang  = (i / nBow) * Math.PI;          // 0..π (port to starboard arc)
+    const bx   = bowR * Math.cos(ang - Math.PI / 2);   // maps 0→-R..π→+R
+    const bz   = bowZ + Math.abs(Math.sin(ang)) * 8;   // bulge forward
+    const yaw  = (ang - Math.PI / 2) * (180 / Math.PI) + 90;
+    for (let row = 0; row < HULL_ROWS; row++) {
+      pts.push({ x: bx, y: row * CONT_H, z: bz, yaw, name: CONT });
+    }
   }
-  // Radar mast
-  for (let y = step * 3; y < step * 5; y += 4.744)
-    drawRing(pts, islandX, y, islandZ, 2, MILCNC);
-  // Radar dish
-  pts.push({ x: islandX, y: step * 5 + 2, z: islandZ, yaw: 0, pitch: -90, name: CNC4 });
+  // Bow face — IND10 flat front panels at bowZ
+  for (let row = 0; row < HULL_ROWS; row++) {
+    pts.push({ x: 0, y: row * CONT_H, z: bowZ + 10, yaw: 0, name: IND10 });
+  }
 
-  // ── Catapult tracks — 2 forward, 1 angled ─────────────────────────────────
-  // Forward cats along X-axis on deck
-  for (let x = -L/2 + 10; x <= -L/2 + 80; x += 8)
-    pts.push({ x, y: 0.5, z: -W * 0.4, yaw: 90, name: CNC4 });
-  for (let x = -L/2 + 10; x <= -L/2 + 80; x += 8)
-    pts.push({ x, y: 0.5, z:  W * 0.4, yaw: 90, name: CNC4 });
+  // ── Flight deck — IND10 flat panels (pitch:-90) ────────────────────────────
+  // Main deck: x = -HULL_X to +HULL_X+2 (slight starboard overhang for island)
+  // z = -L/2 to L/2+5 (flush with bow end)
+  const deckPanW = 9.012;
+  const deckPanD = 9.758;
+  for (let dx = -HULL_X; dx <= HULL_X + 2; dx += deckPanW) {
+    for (let dz = -L / 2; dz <= L / 2 + 5; dz += deckPanD) {
+      pts.push({ x: dx, y: deckY, z: dz, yaw: 0, pitch: -90, name: IND10 });
+    }
+  }
 
-  // ── Bow anchor deck ───────────────────────────────────────────────────────
-  pts.push({ x: -L/2 + 5, y: 0, z: 0, yaw: 0, pitch: -90, name: CNC8 });
+  // Angled deck section — 8° to port at bow (standard angled deck)
+  // 4 rows of IND10 panels extending port side at 8° yaw from bow end
+  const angStart = L / 2 - 90;   // start z
+  const angEnd   = L / 2 - 10;   // end z (bow)
+  const angYaw   = 8;             // 8° port
+  for (let dz = angStart; dz <= angEnd; dz += deckPanD) {
+    for (let row = 0; row < 4; row++) {
+      const ox = -(HULL_X + 2 + row * deckPanW);   // extends to port
+      pts.push({ x: ox, y: deckY, z: dz, yaw: angYaw, pitch: -90, name: IND10 });
+    }
+  }
 
-  return applyLimit(pts, 1100);
+  // ── Island superstructure — starboard side, 2/3 from stern ────────────────
+  // Real Nimitz: island at ~2/3 from stern = z = -L/2 + L*2/3 = L/6
+  const islandZ  = L / 6;
+  const islandX  = HULL_X + 5;   // just outboard of starboard hull
+  const islandHW = 8;             // island half-width along X
+  const islandHD = 5;             // island half-depth along Z
+  const cncStep  = 2.300;         // CNC8 panel height
+
+  // Island base: 3 rows of CNC8 walls
+  for (let row = 0; row < 3; row++) {
+    const iy = deckY + row * cncStep;
+    drawRect(pts, islandX, iy, islandZ, islandHW, islandHD, CNC8);
+    pts.push({ x: islandX - islandHW, y: iy, z: islandZ - islandHD, yaw: 225, name: CNC8 });
+    pts.push({ x: islandX + islandHW, y: iy, z: islandZ - islandHD, yaw: 135, name: CNC8 });
+    pts.push({ x: islandX + islandHW, y: iy, z: islandZ + islandHD, yaw:  45, name: CNC8 });
+    pts.push({ x: islandX - islandHW, y: iy, z: islandZ + islandHD, yaw: 315, name: CNC8 });
+  }
+
+  // Control tower object on island top
+  const towerY = deckY + 3 * cncStep;
+  pts.push({ x: islandX, y: towerY, z: islandZ, yaw: 0, name: "land_mil_controltower" });
+
+  // Radar tower behind control tower
+  pts.push({ x: islandX, y: towerY, z: islandZ - 12, yaw: 0, name: "land_airfield_radar_tall" });
+
+  // Mobile radar unit beside island base
+  pts.push({ x: islandX, y: deckY, z: islandZ + 10, yaw: 90, name: "land_mil_radar_mobile1" });
+
+  // Flagpoles on island (3 along X edge)
+  for (let fi = -1; fi <= 1; fi++) {
+    pts.push({ x: islandX + fi * 3, y: towerY + 18, z: islandZ - islandHD - 1, yaw: 0, name: "staticobj_misc_flagpole" });
+  }
+
+  // ── Catapult tracks — 4 tracks at bow ─────────────────────────────────────
+  // 2 tracks port side, 2 starboard side of centreline, along Z axis
+  const catStart = L / 2 - 90;
+  const catEnd   = L / 2 + 2;
+  const catStep  = 4.017;   // CNC4 width
+  const catZList = [-8, -4, 4, 8];  // 4 tracks offset from X centreline
+  for (const catX of catZList) {
+    for (let cz = catStart; cz <= catEnd; cz += catStep) {
+      pts.push({ x: catX, y: deckY + 0.3, z: cz, yaw: 0, name: CNC4 });
+    }
+  }
+
+  // ── Arresting wire gear — 3 at stern ──────────────────────────────────────
+  const wireStep = 12;
+  for (let wi = 0; wi < 3; wi++) {
+    const wz = -L / 2 + 30 + wi * wireStep;
+    // CNC4 panels across deck (yaw=90) marking each wire
+    for (let wx = -HULL_X + 2; wx <= HULL_X - 2; wx += 4.017) {
+      pts.push({ x: wx, y: deckY + 0.2, z: wz, yaw: 90, name: CNC4 });
+    }
+  }
+
+  // ── Stern crane ───────────────────────────────────────────────────────────
+  pts.push({ x: 0, y: deckY, z: -L / 2 + 20, yaw: 180, name: "staticobj_pier_crane_a" });
+
+  // ── Lifeboats — 8 along port side at deck level ────────────────────────────
+  const lbCount  = 8;
+  const lbSpan   = L * 0.6;          // spread over 60% of ship length
+  const lbStart  = -lbSpan / 2;
+  for (let li = 0; li < lbCount; li++) {
+    const lz = lbStart + (li / (lbCount - 1)) * lbSpan;
+    pts.push({ x: -(HULL_X + 2), y: deckY - CONT_H, z: lz, yaw: 90, name: "staticobj_boat_small4" });
+  }
+
+  // ── Flight deck spotlights — 4 near edges ─────────────────────────────────
+  const spotPositions: [number, number][] = [
+    [-HULL_X + 4, L / 2 - 20],   // port bow
+    [ HULL_X - 4, L / 2 - 20],   // starboard bow
+    [-HULL_X + 4, -L / 2 + 30],  // port stern
+    [ HULL_X - 4, -L / 2 + 30],  // starboard stern
+  ];
+  for (const [sx, sz] of spotPositions) {
+    pts.push({ x: sx, y: deckY + 0.5, z: sz, yaw: 0, name: "staticobj_misc_spotlight" });
+  }
+
+  return applyLimit(pts, 1150);
 }
 
 export function gen_submarine(p: GenParams): Point3D[] {
