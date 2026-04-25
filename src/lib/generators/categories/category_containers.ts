@@ -399,18 +399,8 @@ export function gen_container_fortress(p: GenParams): Point3D[] {
   for (let dx = -12; dx <= 12; dx += 6) {
     pts.push({ x: gateX + dx, y: 0, z: -8, yaw: 0, name: "staticobj_mil_hbarrier_6m", scale: 1 });
   }
-  // Searchlights on each corner tower roof
-  const lightY = (tiers + 2) * _CH;
-  for (const [cx, cz] of [[0,0],[side,0],[0,side],[side,side]] as [number,number][]) {
-    pts.push({ x: cx, y: lightY, z: cz, yaw: 45, name: "staticobj_misc_spotlight", scale: 1 });
-  }
-  // Industrial lamp poles along the front wall
-  for (let i = 1; i < sideC; i++) {
-    pts.push({ x: i * _CD, y: 0, z: -2, yaw: 0, name: "staticobj_lamp_ind", scale: 1 });
-  }
-  // Courtyard supplies — fuel drums + crates + a military tent
+  // Courtyard fuel drums
   const cyX = side / 2, cyZ = side / 2;
-  pts.push({ x: cyX - 6, y: 0, z: cyZ, yaw: 0, name: "staticobj_mil_mil_tent_big1_3", scale: 1 });
   for (const [dx, dz] of [[6, -2], [6, 2], [8, 0], [-8, 4], [-8, -4]] as [number, number][]) {
     pts.push({ x: cyX + dx, y: 0, z: cyZ + dz, yaw: 0, name: "barrel_red", scale: 1 });
   }
@@ -537,19 +527,15 @@ export function gen_container_barracks(p: GenParams): Point3D[] {
     }
   }
 
-  // Rooftop sandbag wall + spotlights every 2 containers
+  // Rooftop sandbag wall (no spotlight clutter — those render at 2m fallback
+  // and dominate the silhouette out of proportion with the containers below)
   const roofY = tiers * _CH;
   for (let i = 0; i < length; i++) {
     const x = i * _CD + _CD/2;
-    pts.push({ x, y: roofY, z: -_CW - alley/2, yaw: 0,  name: "staticobj_mil_hbarrier_6m", scale: 1 });
-    pts.push({ x, y: roofY, z:  _CW + alley/2, yaw: 0,  name: "staticobj_mil_hbarrier_6m", scale: 1 });
-    if (i % 2 === 0) pts.push({ x, y: roofY, z: 0, yaw: 0, name: "staticobj_misc_spotlight", scale: 1 });
+    pts.push({ x, y: roofY, z: -_CW - alley/2, yaw: 0, name: "staticobj_mil_hbarrier_6m", scale: 1 });
+    pts.push({ x, y: roofY, z:  _CW + alley/2, yaw: 0, name: "staticobj_mil_hbarrier_6m", scale: 1 });
   }
 
-  // Front gate hbarriers + lamp posts
-  for (let i = -1; i <= length; i++) {
-    pts.push({ x: i * _CD + _CD/2, y: 0, z: -alley - _CW * 2, yaw: 0, name: "staticobj_lamp_ind", scale: 1 });
-  }
   // Flagpole at front-center
   pts.push({ x: length * _CD / 2, y: roofY, z: 0, yaw: 0, name: "staticobj_misc_flagpole", scale: 1 });
 
@@ -590,12 +576,6 @@ export function gen_container_arena(p: GenParams): Point3D[] {
     pts.push({ x: Math.cos(a) * 4, y: 0, z: Math.sin(a) * 4, yaw: 0, name: i % 2 === 0 ? "barrel_red" : "barrel_blue", scale: 1 });
   }
   pts.push({ x: 0, y: 0, z: 0, yaw: 0, name: "staticobj_misc_flagpole", scale: 1 });
-
-  // 4 spotlight floodlights on rim cardinals
-  for (let k = 0; k < 4; k++) {
-    const a = (k / 4) * Math.PI * 2;
-    pts.push({ x: Math.cos(a) * (r - 1), y: tiers * _CH + _CH, z: Math.sin(a) * (r - 1), yaw: a * 180 / Math.PI, name: "staticobj_misc_spotlight", scale: 1 });
-  }
 
   return applyLimit(pts, 1100);
 }
@@ -649,10 +629,6 @@ export function gen_container_bunker(p: GenParams): Point3D[] {
   for (const [vx, vz] of [[2, 2], [W - 2, 2], [2, D - 2], [W - 2, D - 2]] as [number, number][]) {
     pts.push({ x: vx, y: roofY, z: vz, yaw: 0, name: "barrel_red", scale: 1 });
   }
-  // Spotlight on roof corners
-  for (const [sx, sz] of [[2, 2], [W - 2, D - 2]] as [number, number][]) {
-    pts.push({ x: sx, y: roofY + 1, z: sz, yaw: 0, name: "staticobj_misc_spotlight", scale: 1 });
-  }
 
   return applyLimit(pts, 1100);
 }
@@ -686,10 +662,6 @@ export function gen_container_watchtower(p: GenParams): Point3D[] {
       pts.push({ x: dx * 2, y: topY, z: dz * 2, yaw: 0, name: "staticobj_mil_hbarrier_6m", scale: 0.5 });
     }
   }
-  // Spotlight on top
-  pts.push({ x: 0, y: topY + _CH, z: 0, yaw: 0, name: "staticobj_misc_spotlight", scale: 1 });
-  // Lamp at base
-  pts.push({ x: 4, y: 0, z: 0, yaw: 0, name: "staticobj_lamp_ind", scale: 1 });
 
   return applyLimit(pts, 600);
 }
@@ -845,15 +817,12 @@ export function gen_container_compound(p: GenParams): Point3D[] {
     }
   }
 
-  // Corner watchtowers — extra 2 tiers above wall, 4 containers each
+  // Corner watchtowers — extra 2 tiers above wall (kept slim, 1 container each)
   for (const [cx, cz] of [[0,0],[side,0],[0,side],[side,side]] as [number,number][]) {
-    for (let t = tiers; t < tiers + 3; t++) {
+    for (let t = tiers; t < tiers + 2; t++) {
       const y = t * _CH;
-      pts.push({ x: cx - _CW/2, y, z: cz, yaw: 0,  name: _cpick(t),     scale: 1 });
-      pts.push({ x: cx + _CW/2, y, z: cz, yaw: 0,  name: _cpick(t + 1), scale: 1 });
+      pts.push({ x: cx, y, z: cz, yaw: 0, name: _cpick(t), scale: 1 });
     }
-    // Spotlight on each tower top
-    pts.push({ x: cx, y: (tiers + 3) * _CH, z: cz, yaw: 0, name: "staticobj_misc_spotlight", scale: 1 });
   }
 
   // Central command — single 2-tier square structure
@@ -873,13 +842,8 @@ export function gen_container_compound(p: GenParams): Point3D[] {
   for (let dx = -10; dx <= 10; dx += 5) {
     pts.push({ x: gateX + dx, y: 0, z: -6, yaw: 0, name: "staticobj_mil_hbarrier_6m", scale: 1 });
   }
-  // Lamps along south wall
-  for (let i = 1; i < sideC; i++) {
-    if (i === gateIdx) continue;
-    pts.push({ x: i * _CD, y: 0, z: -2, yaw: 0, name: "staticobj_lamp_ind", scale: 1 });
-  }
   // Tent + barrels in courtyard
-  pts.push({ x: cx + 12, y: 0, z: cz, yaw: 0, name: "staticobj_mil_mil_tent_big1_3", scale: 1 });
+  pts.push({ x: cx + 12, y: 0, z: cz, yaw: 0, name: "Land_Mil_Tent_Big1_1", scale: 1 });
   for (const [bx, bz] of [[10, 8], [10, -8], [-10, 8], [-10, -8]] as [number, number][]) {
     pts.push({ x: cx + bx, y: 0, z: cz + bz, yaw: 0, name: "barrel_red", scale: 1 });
   }

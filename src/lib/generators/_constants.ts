@@ -20,9 +20,13 @@ export const _CH  = 2.782;    // container height
 export const _CW  = 2.702;    // container width
 
 // ── Container colour palette (deterministic _cpick rotation) ─────────────────
+// All entries MUST share the same physical shape (2.702 W × 2.782 H × 10.000 D)
+// so generator yaw assumptions hold. Do NOT add land_container_1a/1b/1c here —
+// those are a different short-fat shape (6.7 × 2.66 × 2.7) that breaks layouts.
 export const _C_PALETTE = [
-  "land_container_1bo", "land_container_1mo",  "land_container_1moh",
-  "land_container_1a",  "land_container_1b",   "land_container_1c",
+  "land_container_1bo",
+  "land_container_1mo",
+  "land_container_1moh",
   "land_containerlocked",
 ] as const;
 

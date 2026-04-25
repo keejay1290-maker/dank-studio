@@ -1,6 +1,6 @@
 # Build Validation Report
 
-Generated: 2026-04-25T17:33:41.834Z
+Generated: 2026-04-25T22:54:12.499Z
 
 **95 builds total**: 95 pass · 0 fail · 0 errors
 
@@ -12,6 +12,7 @@ None — all builds pass ≥ 8/10. ✅
 
 | Build | N | Min | Span (m) | Height (m) |
 |-------|---|-----|----------|------------|
+| container_watchtower | 33 | 8 | 4 | 17 |
 | wall_line | 8 | 9 | 56 | 0 |
 | death_star | 365 | 10 | 79 | 80 |
 | atat_walker | 250 | 10 | 56 | 31 |
@@ -67,14 +68,13 @@ None — all builds pass ≥ 8/10. ✅
 | container_drum | 95 | 10 | 40 | 17 |
 | container_helix | 56 | 10 | 30 | 97 |
 | container_station | 128 | 10 | 150 | 6 |
-| container_fortress | 142 | 10 | 58 | 17 |
+| container_fortress | 133 | 10 | 58 | 14 |
 | container_starport | 337 | 10 | 80 | 19 |
 | container_shantytown | 22 | 10 | 37 | 3 |
-| container_barracks | 52 | 10 | 70 | 6 |
-| container_arena | 208 | 10 | 50 | 11 |
-| container_bunker | 66 | 10 | 46 | 7 |
-| container_watchtower | 35 | 10 | 6 | 19 |
-| container_compound | 98 | 10 | 66 | 14 |
+| container_barracks | 41 | 10 | 60 | 6 |
+| container_arena | 204 | 10 | 50 | 8 |
+| container_bunker | 64 | 10 | 46 | 6 |
+| container_compound | 74 | 10 | 66 | 8 |
 | dayz_castle | 29 | 10 | 88 | 0 |
 | dayz_bunker | 39 | 10 | 73 | 8 |
 | bunker_complex | 174 | 10 | 40 | 12 |
