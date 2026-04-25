@@ -5,7 +5,9 @@ import { NpcLoadoutBuilder } from "./components/NpcLoadoutBuilder";
 import { AirdropBuilder } from "./components/AirdropBuilder";
 import { ConsoleTools } from "./components/ConsoleTools";
 import { ToastStack, toast } from "./components/Toast";
+import { HelpOverlay } from "./components/HelpOverlay";
 import { useFavorites } from "./hooks/useFavorites";
+import { useRecentBuilds } from "./hooks/useRecentBuilds";
 import { ALL_BUILDS, CATEGORIES } from "./lib/builds";
 import {
   exportCombinedDraw,
@@ -27,7 +29,9 @@ function App() {
   const [copied, setCopied] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [helpOpen, setHelpOpen] = useState(false);
   const { isFavorite, toggle: toggleFavorite, favs } = useFavorites();
+  const { recent, push: pushRecent } = useRecentBuilds();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [manualPoints, setManualPoints] = useState<Point3D[]>([]);
   const [nodeOverrides, setNodeOverrides] = useState<Record<string, string>>({});
@@ -52,6 +56,7 @@ function App() {
   // ── Library: handle selection ───────────────────────────────────────────
   function selectBuild(build: BuildEntry) {
     setSelectedBuild(build);
+    pushRecent(build.key);
     const initialParams: Record<string, number> = {};
     build.params.forEach(p => initialParams[p.key] = p.default);
     setParams(initialParams);
@@ -59,6 +64,18 @@ function App() {
     const pts = generate(build.key, { ...initialParams, container_mode: containerMode ? 1 : 0 });
     setPoints(pts);
     updateCode(pts);
+  }
+
+  // Reset all params on the active build to their defaults and re-generate
+  function resetParams() {
+    if (!selectedBuild) return;
+    const initialParams: Record<string, number> = {};
+    selectedBuild.params.forEach(p => initialParams[p.key] = p.default);
+    setParams(initialParams);
+    const pts = generate(selectedBuild.key, { ...initialParams, container_mode: containerMode ? 1 : 0 });
+    setPoints(pts);
+    updateCode(pts);
+    toast.info("Params reset to defaults");
   }
 
   // ── Generate from current params ────────────────────────────────────────
@@ -217,6 +234,11 @@ function App() {
       const t = e.target as HTMLElement | null;
       const inField = t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
 
+      if (e.key === "?" && !inField) {
+        e.preventDefault();
+        setHelpOpen(prev => !prev);
+        return;
+      }
       if (e.key === "/" && !inField && mode === "library") {
         e.preventDefault();
         const search = document.querySelector<HTMLInputElement>('input[placeholder*="SEARCH"]');
@@ -242,7 +264,14 @@ function App() {
 
       {/* ── Top bar ───────────────────────────────────────────────────────── */}
       <header className="flex items-center gap-0 px-4 glass h-12 flex-shrink-0 z-20">
-        <span className="text-sm font-black text-white tracking-[0.2em] mr-8">DANK STUDIO</span>
+        <span className="text-sm font-black text-white tracking-[0.2em] mr-6">DANK STUDIO</span>
+        {selectedBuild && (
+          <span className="hidden md:flex items-center gap-2 mr-6 text-[10px] font-mono">
+            <span className="text-zinc-600">›</span>
+            <span className="text-indigo-300 truncate max-w-[180px]">{selectedBuild.label}</span>
+            <span className="px-1.5 py-0.5 rounded bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">{points.length}</span>
+          </span>
+        )}
 
         {(["library", "draw", "panel", "npc", "loadout", "airdrop", "console"] as AppMode[]).map(m => (
           <button
@@ -268,6 +297,12 @@ function App() {
         ))}
 
         <div className="flex-1" />
+
+        <button
+          onClick={() => setHelpOpen(true)}
+          title="Help & shortcuts (?)"
+          className="mr-3 w-7 h-7 rounded-full border border-white/10 bg-white/5 hover:bg-indigo-500/20 hover:border-indigo-500/50 hover:text-indigo-300 text-zinc-500 text-xs font-bold transition-all"
+        >?</button>
 
         <div className="flex items-center gap-3 glass-hover px-3 py-1 rounded-full border border-white/5">
           <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-tighter">Origin</span>
@@ -305,17 +340,23 @@ function App() {
           {mode === "library" && (
             <>
               <div className="flex flex-wrap gap-1 p-3 border-b border-white/5 bg-white/5">
-                {CATEGORIES.map(cat => (
-                  <button
-                    key={cat}
-                    onClick={() => { setSelectedCategory(cat); setSearch(""); }}
-                    className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md transition-all ${
-                      selectedCategory === cat
-                        ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/40"
-                        : "bg-white/5 text-zinc-500 hover:bg-white/10 hover:text-zinc-300"
-                    }`}
-                  >{cat}</button>
-                ))}
+                {CATEGORIES.map(cat => {
+                  const count = cat === "All" ? ALL_BUILDS.length : ALL_BUILDS.filter(b => b.category === cat).length;
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => { setSelectedCategory(cat); setSearch(""); }}
+                      className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md transition-all flex items-center gap-1.5 ${
+                        selectedCategory === cat
+                          ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/40"
+                          : "bg-white/5 text-zinc-500 hover:bg-white/10 hover:text-zinc-300"
+                      }`}
+                    >
+                      <span>{cat}</span>
+                      <span className={`text-[9px] font-mono ${selectedCategory === cat ? "text-indigo-200" : "text-zinc-600"}`}>{count}</span>
+                    </button>
+                  );
+                })}
               </div>
 
               <div className="px-3 py-2 border-b border-white/5">
@@ -329,6 +370,28 @@ function App() {
               </div>
 
               <div className="flex-1 overflow-y-auto py-2 custom-scrollbar">
+                {/* Recent group — last 5 selected builds, only in unfiltered "All" view */}
+                {selectedCategory === "All" && !search.trim() && recent.length > 0 && (
+                  <div className="mb-4">
+                    <div className="px-4 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-cyan-400 border-l-2 border-cyan-500/40 ml-1">↻ Recent</div>
+                    <div className="mt-1">
+                      {recent
+                        .map(k => ALL_BUILDS.find(b => b.key === k))
+                        .filter(Boolean)
+                        .map(b => b as unknown as BuildEntry)
+                        .map(build => (
+                          <BuildRow
+                            key={`recent-${build.key}`}
+                            build={build}
+                            selected={selectedBuild?.key === build.key}
+                            favorite={isFavorite(build.key)}
+                            onSelect={() => selectBuild(build)}
+                            onToggleFavorite={() => toggleFavorite(build.key)}
+                          />
+                        ))}
+                    </div>
+                  </div>
+                )}
                 {/* Favorites group — only in unfiltered "All" view, only if any are starred */}
                 {selectedCategory === "All" && !search.trim() && favs.size > 0 && (
                   <div className="mb-4">
@@ -459,6 +522,11 @@ function App() {
                   }`}
                 >📦 Containers</button>
                 <button
+                  onClick={resetParams}
+                  className="px-3 py-2 bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-xl border border-white/10 transition-all"
+                  title="Reset params to defaults"
+                >Reset</button>
+                <button
                   onClick={() => handleGenerate()}
                   className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-xl shadow-lg transition-all"
                 >Re-Gen</button>
@@ -575,6 +643,7 @@ function App() {
       )}
 
       <ToastStack />
+      <HelpOverlay open={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
 }
