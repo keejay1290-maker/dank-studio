@@ -485,6 +485,68 @@ const CONTAINER_BUILDS: BuildEntry[] = [
       { key: "height",  label: "Max Stack Height", min: 1, max: 5, step: 1, default: 3 },
     ],
   },
+  {
+    key: "container_barracks", label: "Container Barracks", category: "Containers",
+    description: "Military barracks: two parallel container rows with central alley, rooftop sandbag wall, spotlights, lamp posts and flagpole",
+    defaultParams: { length: 6, tiers: 2 },
+    params: [
+      { key: "length", label: "Building Length (containers)", min: 3, max: 12, step: 1, default: 6 },
+      { key: "tiers",  label: "Tiers",                         min: 1, max: 4,  step: 1, default: 2 },
+    ],
+  },
+  {
+    key: "container_arena", label: "Container Arena", category: "Containers",
+    description: "Circular fighting arena: container ring with crenellations, south gate gap, central pit with barrels and flagpole, 4 cardinal floodlights",
+    defaultParams: { r: 25, tiers: 3 },
+    params: [
+      { key: "r",     label: "Arena Radius (m)", min: 15, max: 50, step: 2, default: 25 },
+      { key: "tiers", label: "Wall Height",       min: 2,  max: 5,  step: 1, default: 3  },
+    ],
+  },
+  {
+    key: "container_bunker", label: "Container Bunker", category: "Containers",
+    description: "Low-profile blast bunker: 2-tier double-thick walls, IND10 roof slabs, hbarrier blast wall at south entrance, vent barrels and corner spotlights",
+    defaultParams: { width: 4, depth: 4, tiers: 2 },
+    params: [
+      { key: "width", label: "Width (containers)", min: 3, max: 7, step: 1, default: 4 },
+      { key: "depth", label: "Depth (containers)", min: 3, max: 7, step: 1, default: 4 },
+      { key: "tiers", label: "Wall Tiers",          min: 1, max: 3, step: 1, default: 2 },
+    ],
+  },
+  {
+    key: "container_watchtower", label: "Container Watchtower", category: "Containers",
+    description: "Tall slim observation tower: 1×1 footprint of 4 containers per layer, IND10 roof platform with sandbag rim and rooftop spotlight",
+    defaultParams: { tiers: 6 },
+    params: [
+      { key: "tiers", label: "Tower Height (tiers)", min: 3, max: 12, step: 1, default: 6 },
+    ],
+  },
+  {
+    key: "container_compound", label: "Container Compound", category: "Containers",
+    description: "Square military compound with south gate gap, raised corner watchtowers, central command structure, courtyard tent, lamps and barriers",
+    defaultParams: { side: 6, tiers: 2 },
+    params: [
+      { key: "side",  label: "Wall Length (containers)", min: 4, max: 10, step: 1, default: 6 },
+      { key: "tiers", label: "Wall Tiers",                min: 2, max: 4,  step: 1, default: 2 },
+    ],
+  },
+  {
+    key: "dayz_castle", label: "DayZ Authentic Castle", category: "Containers",
+    description: "Real DayZ castle classnames (Land_Castle_Bergfrit/Wall1_20/Gate/Stairs/Wall2_Corner1) — community-validated, drops onto Chernarus without a mod. Includes fortified nests, medical tent, wreck queue.",
+    defaultParams: { scale: 1, side: 4 },
+    params: [
+      { key: "scale", label: "Scale",          min: 0.5, max: 2, step: 0.1, default: 1 },
+      { key: "side",  label: "Walls Per Side", min: 3,   max: 6, step: 1,   default: 4 },
+    ],
+  },
+  {
+    key: "dayz_bunker", label: "DayZ Underground Bunker", category: "Containers",
+    description: "Real Land_Underground_* corridor system from Livonia — central + intersection with 4 storage rooms (Ammo, Hospital, Workshop, Barracks) and surface entrance",
+    defaultParams: { scale: 1 },
+    params: [
+      { key: "scale", label: "Scale", min: 0.5, max: 2, step: 0.1, default: 1 },
+    ],
+  },
 ];
 
 // ── Structures / Military ─────────────────────────────────────────────────────

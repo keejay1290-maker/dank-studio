@@ -141,6 +141,14 @@ const REGISTRY: Record<string, (p: GenParams) => Point3D[]> = {
   container_fortress:      G.gen_container_fortress,
   container_starport:      G.gen_container_starport,
   container_shantytown:    G.gen_container_shantytown,
+  container_barracks:      G.gen_container_barracks,
+  container_arena:         G.gen_container_arena,
+  container_bunker:        G.gen_container_bunker,
+  container_watchtower:    G.gen_container_watchtower,
+  container_compound:      G.gen_container_compound,
+  // ── Authentic DayZ classnames (community-validated, vanilla-compatible) ──
+  dayz_castle:             G.gen_dayz_castle,
+  dayz_bunker:             G.gen_dayz_bunker,
 
   // ── Structures / Military ───────────────────────────────────────────────
   bunker_complex:          G.gen_bunker,

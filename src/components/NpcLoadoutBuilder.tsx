@@ -3,8 +3,9 @@
 
 import { useMemo, useState } from "react";
 import { ROLE_TEMPLATES } from "../lib/dayz/roles";
-import { ALL_SURVIVORS, SURVIVORS_MALE, SURVIVORS_FEMALE, CLOTHING_SET_INDEX, WEAPON_INDEX } from "../lib/dayz/items";
+import { ALL_SURVIVORS, SURVIVORS_MALE, SURVIVORS_FEMALE, CLOTHING_SET_INDEX } from "../lib/dayz/items";
 import { buildLoadout, toCfgSpawnableXml, toPlayerSpawnGearJson } from "../lib/dayz/build";
+import { toast } from "./Toast";
 
 export type BuilderMode = "npc" | "loadout";
 
@@ -39,7 +40,10 @@ export function NpcLoadoutBuilder({ mode }: { mode: BuilderMode }) {
   const role = ROLE_TEMPLATES.find(r => r.id === roleId)!;
   const outfit = CLOTHING_SET_INDEX[role.outfitSet];
 
-  const copy = () => navigator.clipboard.writeText(exportText);
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(exportText); toast.success(`Copied ${mode === "npc" ? "XML" : "JSON"} to clipboard`); }
+    catch { toast.error("Clipboard access denied"); }
+  };
   const download = () => {
     const ext = mode === "npc" ? "xml" : "json";
     const blob = new Blob([exportText], { type: mode === "npc" ? "application/xml" : "application/json" });
@@ -49,6 +53,7 @@ export function NpcLoadoutBuilder({ mode }: { mode: BuilderMode }) {
     a.download = `${loadout?.name.replace(/\s+/g, "_") ?? "loadout"}.${ext}`;
     a.click();
     URL.revokeObjectURL(url);
+    toast.success(`Downloaded ${a.download}`);
   };
 
   return (
@@ -132,7 +137,33 @@ export function NpcLoadoutBuilder({ mode }: { mode: BuilderMode }) {
           <Summary label="Sidearm"   value={loadout?.sidearm.classname} sub={loadout?.sidearm.attachments.join(", ")} />
           <Summary label="Outfit"    value={outfit?.label} />
           <Summary label="NVG"       value={loadout?.nvg ? "Yes (Headstrap + Goggles + Battery9V)" : "No"} />
+          <Summary
+            label="Storage"
+            value={loadout ? `${loadout.usedSlots} / ${loadout.totalSlots} slots` : "—"}
+            sub={loadout?.totalSlots === 0 ? "Ghillie — no backpack storage" : undefined}
+          />
         </div>
+
+        {/* Storage fill bar */}
+        {loadout && loadout.totalSlots > 0 && (
+          <div className="mt-1">
+            <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all"
+                style={{
+                  width: `${Math.min(100, (loadout.usedSlots / loadout.totalSlots) * 100)}%`,
+                  background: loadout.usedSlots >= loadout.totalSlots
+                    ? "rgb(34 197 94)"   // full → green
+                    : "rgb(99 102 241)", // partial → indigo
+                }}
+              />
+            </div>
+            <p className="text-[9px] text-zinc-600 mt-0.5">
+              {loadout.usedSlots >= loadout.totalSlots ? "100% full" : `${loadout.totalSlots - loadout.usedSlots} slots unfilled`}
+              {" · "}{loadout.filler.length} filler items · {loadout.extraMags.length}× primary mags · {loadout.extraSidearmMags.length}× sidearm mags
+            </p>
+          </div>
+        )}
 
         <div className="flex gap-2 pt-2">
           <button onClick={copy}
@@ -197,5 +228,3 @@ function Summary({ label, value, sub }: { label: string; value?: string | null; 
   );
 }
 
-// Tiny helper export for TS type check of WEAPON_INDEX usage (prevents tree-shake warning)
-export const __weaponCount = Object.keys(WEAPON_INDEX).length;

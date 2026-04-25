@@ -8,7 +8,9 @@ export type RoleId =
   | "sniper_ghillie" | "sniper_mosin"
   | "police_tactical" | "prison_guard"
   | "bandit_raider" | "bandit_cannibal"
-  | "hunter_woods";
+  | "hunter_woods"
+  // ── Community-sourced (scalespeeder, PaPaSc0oBy42o GitHub repos) ───────────
+  | "winter_operator" | "russian_spec" | "nbc_medic";
 
 export interface RoleTemplate {
   id: RoleId;
@@ -91,6 +93,28 @@ export const ROLE_TEMPLATES: RoleTemplate[] = [
     secondary: ["Mp133Shotgun"],
     sidearm:   ["MakarovIJ70", "Colt1911"],
     outfitSet: "hunter", pvp: false,
+  },
+  // ── Community-sourced loadouts (validated against PaPaSc0oBy42o + scalespeeder GitHub repos) ──
+  {
+    id: "winter_operator", label: "Winter Operator (Frostline)", description: "Sakhal-style: M4A1 + AKM + FNX45, full winter kit (PlateCarrierVest_Winter, GorkaEJacket_Winter)",
+    primary:   ["M4A1_Black", "M4A1_Green"],
+    secondary: ["AKM"],
+    sidearm:   ["FNX45", "Glock19"],
+    outfitSet: "winter_operator", pvp: true,
+  },
+  {
+    id: "russian_spec", label: "Russian Spec-Ops (Gorka)", description: "AKM + VSS + CZ75 — Gorka uniform, Ssh68 helmet, AssaultBag_Ttsko (validated AKM loadout)",
+    primary:   ["AKM", "AK74"],
+    secondary: ["VSS", "ASVAL"],
+    sidearm:   ["CZ75", "MakarovIJ70"],
+    outfitSet: "russian_spec", pvp: true,
+  },
+  {
+    id: "nbc_medic", label: "NBC Medical Team", description: "M16A2 + Scout + Glock19 — full NBC hazmat kit, MountainBag, gas mask filters (validated NBC Medic loadout)",
+    primary:   ["M16A2", "M4A1"],
+    secondary: ["Scout_Chernarus", "Scout"],
+    sidearm:   ["Glock19", "FNX45"],
+    outfitSet: "nbc_medic", pvp: true,
   },
 ];
 

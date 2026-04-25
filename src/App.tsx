@@ -2,6 +2,10 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { Preview3D } from "./components/Preview3D";
 import { ObjectPicker } from "./components/ObjectPicker";
 import { NpcLoadoutBuilder } from "./components/NpcLoadoutBuilder";
+import { AirdropBuilder } from "./components/AirdropBuilder";
+import { ConsoleTools } from "./components/ConsoleTools";
+import { ToastStack, toast } from "./components/Toast";
+import { useFavorites } from "./hooks/useFavorites";
 import { ALL_BUILDS, CATEGORIES } from "./lib/builds";
 import {
   exportCombinedDraw,
@@ -11,7 +15,7 @@ import {
 import type { Point3D, DrawnWall, DrawnObject, BuildEntry } from "./lib/types";
 import "./App.css";
 
-type AppMode = "library" | "draw" | "panel" | "npc" | "loadout";
+type AppMode = "library" | "draw" | "panel" | "npc" | "loadout" | "airdrop" | "console";
 type DrawMode = "wall" | "place" | "select";
 
 function App() {
@@ -23,6 +27,7 @@ function App() {
   const [copied, setCopied] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const { isFavorite, toggle: toggleFavorite, favs } = useFavorites();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [manualPoints, setManualPoints] = useState<Point3D[]>([]);
   const [nodeOverrides, setNodeOverrides] = useState<Record<string, string>>({});
@@ -86,6 +91,9 @@ function App() {
   }
 
   function ptsToEditorJSON(pts: Point3D[]): string {
+    // Output matches scalespeeder/DayZ-Editor "object spawner" JSON format —
+    // drops directly into a community server's "custom/" folder and is loaded
+    // via cfggameplay.json's "objectSpawnersArr".
     return JSON.stringify({
       Objects: pts.map(pt => ({
         name:  pt.name ?? "staticobj_castle_wall3",
@@ -96,6 +104,7 @@ function App() {
         ],
         ypr:   [pt.yaw ?? 0, pt.pitch ?? 0, pt.roll ?? 0],
         scale: pt.scale ?? 1,
+        enableCEPersistency: 0,
       })),
     }, null, 4);
   }
@@ -113,9 +122,14 @@ function App() {
 
   // ── Utils ───────────────────────────────────────────────────────────────
   async function handleCopy(text: string) {
-    await navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast.success(`Copied ${points.length} objects to clipboard`);
+    } catch {
+      toast.error("Clipboard access denied");
+    }
   }
 
   function handleDownloadJSON() {
@@ -129,6 +143,7 @@ function App() {
         ],
         ypr:   [p.yaw ?? 0, p.pitch ?? 0, p.roll ?? 0],
         scale: p.scale ?? 1,
+        enableCEPersistency: 0,
       }))
     };
     const blob = new Blob([JSON.stringify(data, null, 4)], { type: "application/json" });
@@ -137,6 +152,8 @@ function App() {
     a.href = url;
     a.download = `dank_masterpiece_${selectedBuild?.key || "custom"}.json`;
     a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Downloaded ${points.length} objects as ${a.download}`);
   }
 
   // ── Free Draw: internal state management ──────────────────────────────────
@@ -191,6 +208,35 @@ function App() {
     );
   }, [selectedCategory, search]);
 
+  // ── Keyboard shortcuts ──────────────────────────────────────────────────
+  // /         → focus search (library mode)
+  // Ctrl+C    → copy generated JSON to clipboard (when build active)
+  // Ctrl+S    → download generated JSON
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      const inField = t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
+
+      if (e.key === "/" && !inField && mode === "library") {
+        e.preventDefault();
+        const search = document.querySelector<HTMLInputElement>('input[placeholder*="SEARCH"]');
+        search?.focus();
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s" && code) {
+        e.preventDefault();
+        handleDownloadJSON();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "c" && code && !inField && !window.getSelection()?.toString()) {
+        e.preventDefault();
+        handleCopy(code);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, code, points.length, originX, originY, originZ]);
+
   return (
     <div className="h-screen w-screen flex flex-col bg-zinc-950 text-zinc-200 overflow-hidden select-none">
 
@@ -198,7 +244,7 @@ function App() {
       <header className="flex items-center gap-0 px-4 glass h-12 flex-shrink-0 z-20">
         <span className="text-sm font-black text-white tracking-[0.2em] mr-8">DANK STUDIO</span>
 
-        {(["library", "draw", "panel", "npc", "loadout"] as AppMode[]).map(m => (
+        {(["library", "draw", "panel", "npc", "loadout", "airdrop", "console"] as AppMode[]).map(m => (
           <button
             key={m}
             onClick={() => setMode(m)}
@@ -212,7 +258,9 @@ function App() {
              : m === "draw" ? "Free Draw"
              : m === "panel" ? "Panel Builder"
              : m === "npc" ? "NPC Builder"
-             : "Loadout Builder"}
+             : m === "loadout" ? "Loadout Builder"
+             : m === "airdrop" ? "Airdrop"
+             : "Console"}
             {mode === m && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500 shadow-[0_0_8px_var(--accent)]" />
             )}
@@ -244,6 +292,10 @@ function App() {
       {/* ── Body ─────────────────────────────────────────────────────────── */}
       {(mode === "npc" || mode === "loadout") ? (
         <NpcLoadoutBuilder mode={mode} />
+      ) : mode === "airdrop" ? (
+        <AirdropBuilder />
+      ) : mode === "console" ? (
+        <ConsoleTools />
       ) : (
       <div className="flex flex-1 overflow-hidden relative">
 
@@ -277,6 +329,24 @@ function App() {
               </div>
 
               <div className="flex-1 overflow-y-auto py-2 custom-scrollbar">
+                {/* Favorites group — only in unfiltered "All" view, only if any are starred */}
+                {selectedCategory === "All" && !search.trim() && favs.size > 0 && (
+                  <div className="mb-4">
+                    <div className="px-4 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-amber-500 border-l-2 border-amber-500/40 ml-1">★ Favorites ({favs.size})</div>
+                    <div className="mt-1">
+                      {ALL_BUILDS.filter(b => favs.has(b.key)).map(build => (
+                        <BuildRow
+                          key={`fav-${build.key}`}
+                          build={build}
+                          selected={selectedBuild?.key === build.key}
+                          favorite={true}
+                          onSelect={() => selectBuild(build)}
+                          onToggleFavorite={() => toggleFavorite(build.key)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {selectedCategory === "All" && !search.trim()
                   ? CATEGORIES.slice(1).map(cat => {
                       const catBuilds = ALL_BUILDS.filter(b => b.category === cat);
@@ -285,22 +355,14 @@ function App() {
                           <div className="px-4 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 border-l-2 border-indigo-900/30 ml-1">{cat}</div>
                           <div className="mt-1">
                             {catBuilds.map(build => (
-                              <button
+                              <BuildRow
                                 key={build.key}
-                                onClick={() => selectBuild(build)}
-                                className={`w-full text-left px-5 py-2.5 transition-all group ${
-                                  selectedBuild?.key === build.key 
-                                    ? "bg-indigo-600/10 border-r-4 border-indigo-500" 
-                                    : "hover:bg-white/5"
-                                }`}
-                              >
-                                <span className={`block text-xs font-semibold ${selectedBuild?.key === build.key ? "text-indigo-300" : "text-zinc-300 group-hover:text-white"}`}>
-                                  {build.label}
-                                </span>
-                                {build.description && (
-                                  <span className="block text-[10px] text-zinc-600 truncate group-hover:text-zinc-500">{build.description}</span>
-                                )}
-                              </button>
+                                build={build}
+                                selected={selectedBuild?.key === build.key}
+                                favorite={isFavorite(build.key)}
+                                onSelect={() => selectBuild(build)}
+                                onToggleFavorite={() => toggleFavorite(build.key)}
+                              />
                             ))}
                           </div>
                         </div>
@@ -309,22 +371,14 @@ function App() {
                   : (
                     <div className="mt-2">
                       {categoryBuilds.map(build => (
-                        <button
+                        <BuildRow
                           key={build.key}
-                          onClick={() => selectBuild(build)}
-                          className={`w-full text-left px-5 py-2.5 transition-all group ${
-                            selectedBuild?.key === build.key 
-                              ? "bg-indigo-600/10 border-r-4 border-indigo-500" 
-                              : "hover:bg-white/5"
-                          }`}
-                        >
-                          <span className={`block text-xs font-semibold ${selectedBuild?.key === build.key ? "text-indigo-300" : "text-zinc-300 group-hover:text-white"}`}>
-                            {build.label}
-                          </span>
-                          {build.description && (
-                            <span className="block text-[10px] text-zinc-600 truncate group-hover:text-zinc-500">{build.description}</span>
-                          )}
-                        </button>
+                          build={build}
+                          selected={selectedBuild?.key === build.key}
+                          favorite={isFavorite(build.key)}
+                          onSelect={() => selectBuild(build)}
+                          onToggleFavorite={() => toggleFavorite(build.key)}
+                        />
                       ))}
                     </div>
                   )
@@ -519,6 +573,38 @@ function App() {
           onClose={() => setShowObjectPicker(false)}
         />
       )}
+
+      <ToastStack />
+    </div>
+  );
+}
+
+// Library row — single build entry with favorite star.
+function BuildRow({ build, selected, favorite, onSelect, onToggleFavorite }: {
+  build: BuildEntry;
+  selected: boolean;
+  favorite: boolean;
+  onSelect: () => void;
+  onToggleFavorite: () => void;
+}) {
+  return (
+    <div className={`flex items-stretch group transition-all ${selected ? "bg-indigo-600/10 border-r-4 border-indigo-500" : "hover:bg-white/5"}`}>
+      <button onClick={onSelect} className="flex-1 text-left px-5 py-2.5 min-w-0">
+        <span className={`block text-xs font-semibold ${selected ? "text-indigo-300" : "text-zinc-300 group-hover:text-white"}`}>
+          {build.label}
+        </span>
+        {build.description && (
+          <span className="block text-[10px] text-zinc-600 truncate group-hover:text-zinc-500">{build.description}</span>
+        )}
+      </button>
+      <button
+        onClick={(e) => { e.stopPropagation(); onToggleFavorite(); }}
+        className={`px-2 text-base transition-all ${favorite ? "text-amber-400 animate-star-pop" : "text-zinc-700 hover:text-amber-400/60"}`}
+        title={favorite ? "Remove from favorites" : "Add to favorites"}
+        aria-label={favorite ? "Unfavorite" : "Favorite"}
+      >
+        {favorite ? "★" : "☆"}
+      </button>
     </div>
   );
 }

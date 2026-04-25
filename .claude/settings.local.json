@@ -61,7 +61,8 @@
       "Bash(node -e \"const {ToneMappingMode} = require\\('postprocessing'\\); console.log\\(ToneMappingMode\\)\")",
       "Bash(node -e \"const p = require\\('@react-three/postprocessing'\\); console.log\\(Object.keys\\(p\\).filter\\(k=>k.includes\\('SSA'\\)||k.includes\\('Tone'\\)||k.includes\\('Bloom'\\)\\)\\)\")",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(node tools/validate_builds.mjs)"
     ]
   }
 }

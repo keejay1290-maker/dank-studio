@@ -79,3 +79,17 @@ input[type="range"]:hover::-webkit-slider-thumb {
 }
 
 body { overscroll-behavior: none; }
+
+/* Toast slide-up animation */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up { animation: fade-in-up 180ms ease-out; }
+
+/* Favorite star — pulse when added */
+@keyframes star-pop {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.35); }
+}
+.animate-star-pop { animation: star-pop 240ms ease-out; }

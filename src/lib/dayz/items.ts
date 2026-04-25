@@ -21,7 +21,7 @@ export interface WeaponDef {
 export interface ClothingSet {
   id: string;
   label: string;
-  theme: "military" | "sniper" | "bandit" | "police" | "civilian" | "cowboy" | "hunter" | "prison" | "firefighter";
+  theme: "military" | "sniper" | "bandit" | "police" | "civilian" | "cowboy" | "hunter" | "prison" | "firefighter" | "winter" | "russian" | "nbc";
   items: Partial<Record<SlotName, string[]>>; // slot → item classnames (pick 1 per slot)
 }
 
@@ -37,7 +37,7 @@ export const WEAPONS: WeaponDef[] = [
   { name: "AUG",         caliber: "556x45", kind: "rifle", mags: ["Mag_Aug_30Rnd", "Mag_STANAG_60Rnd"], ammo: ["AmmoBox_556x45_20Rnd"], attachments: ["ReflexOptic", "AugOptic"] },
 
   // 7.62x39
-  { name: "AKM",         caliber: "762x39", kind: "rifle", mags: ["Mag_AKM_30Rnd"], ammo: ["AmmoBox_762x39_20Rnd", "AmmoBox_762x39Tracer_20Rnd"], attachments: ["AK_WoodBttstck", "AK_WoodHndgrd", "AK_Suppressor", "KobraOptic", "PSO1Optic"] },
+  { name: "AKM",         caliber: "762x39", kind: "rifle", mags: ["Mag_AKM_30Rnd", "Mag_AKM_Drum75Rnd"], ammo: ["AmmoBox_762x39_20Rnd", "AmmoBox_762x39Tracer_20Rnd"], attachments: ["AK_WoodBttstck", "AK_PlasticBttstck", "AK_WoodHndgrd", "AK_PlasticHndgrd", "AK_Suppressor", "AK_Bayonet", "KobraOptic", "PSO1Optic", "PSO11Optic"] },
   { name: "SKS",         caliber: "762x39", kind: "rifle", mags: [], ammo: ["AmmoBox_762x39_20Rnd"], attachments: ["PUScopeOptic"] },
   { name: "AK101",       caliber: "556x45", kind: "rifle", mags: ["Mag_AK101_30Rnd"], ammo: ["AmmoBox_556x45_20Rnd"], attachments: ["AK_PlasticBttstck", "AK_PlasticHndgrd"] },
 
@@ -55,8 +55,9 @@ export const WEAPONS: WeaponDef[] = [
   // 7.62x54
   { name: "Mosin9130",   caliber: "762x54", kind: "sniper", mags: [], ammo: ["AmmoBox_762x54_20Rnd"], attachments: ["PUScopeOptic"] },
   { name: "Mosin9130_Camo", caliber: "762x54", kind: "sniper", mags: [], ammo: ["AmmoBox_762x54_20Rnd"], attachments: ["PUScopeOptic", "GhillieAtt_Mossy"] },
-  { name: "VSD",         caliber: "762x54", kind: "sniper", mags: ["Mag_SVD_10Rnd"], ammo: ["AmmoBox_762x54_20Rnd"], attachments: ["PSO6Optic"] },
-  { name: "SVD_Wooden",  caliber: "762x54", kind: "sniper", mags: ["Mag_SVD_10Rnd"], ammo: ["AmmoBox_762x54_20Rnd"], attachments: ["PSO6Optic"] },
+  { name: "VSD",         caliber: "762x54", kind: "sniper", mags: ["Mag_SVD_10Rnd"], ammo: ["AmmoBox_762x54_20Rnd"], attachments: ["PSO1Optic", "PSO6Optic", "GhillieAtt_Mossy", "AK_Suppressor"] },
+  { name: "SVD",         caliber: "762x54", kind: "sniper", mags: ["Mag_SVD_10Rnd"], ammo: ["AmmoBox_762x54_20Rnd"], attachments: ["PSO1Optic", "PSO6Optic", "GhillieAtt_Mossy", "AK_Suppressor"] },
+  { name: "SVD_Wooden",  caliber: "762x54", kind: "sniper", mags: ["Mag_SVD_10Rnd"], ammo: ["AmmoBox_762x54_20Rnd"], attachments: ["PSO6Optic", "GhillieAtt_Mossy"] },
   { name: "SV98",        caliber: "762x54", kind: "sniper", mags: ["Mag_SV98_10Rnd"], ammo: ["AmmoBox_762x54_20Rnd"], attachments: ["MK4Optic_Black"] },
 
   // Subsonic / 9x39
@@ -193,9 +194,140 @@ export const CLOTHING_SETS: ClothingSet[] = [
       Belt:     ["CivilianBelt"],
     }
   },
+  // ── Community-sourced sets (PaPaSc0oBy42o, scalespeeder Frostline, NBC Medic) ──
+  {
+    id: "winter_operator", label: "Winter Operator (Frostline)", theme: "winter",
+    items: {
+      Headgear: ["BallisticHelmet_Winter", "BallisticHelmet_Navy"],
+      Mask:     ["Balaclava3Holes_White"],
+      Body:     ["GorkaEJacket_Winter", "OMKJacket_Navy"],
+      Legs:     ["GorkaPants_Winter", "OMKPants_Navy"],
+      Feet:     ["MilitaryBoots_Bluerock", "MilitaryBoots_Black", "MilitaryBoots_Brown"],
+      Gloves:   ["WoolGloves_White", "WoolGlovesFingerless_White"],
+      Vest:     ["PlateCarrierVest_Winter"],
+      Back:     ["CoyoteBag_Winter"],
+      Eyewear:  ["NVGHeadstrap"],
+      Belt:     ["MilitaryBelt"],
+      Armband:  ["Armband_Chernarus", "Armband_Livonia"],
+    }
+  },
+  {
+    id: "russian_spec", label: "Russian Spec-Ops (Gorka)", theme: "russian",
+    items: {
+      Headgear: ["Ssh68Helmet", "GorkaHelmet"],
+      Mask:     ["BalaclavaMask_Green", "BalaclavaMask_Black"],
+      Body:     ["GorkaEJacket_Flat", "GorkaEJacket_Autumn", "GorkaEJacket_PautRev"],
+      Legs:     ["GorkaPants_Flat", "GorkaPants_Autumn", "GorkaPants_PautRev"],
+      Feet:     ["MilitaryBoots_Bluerock", "MilitaryBoots_Black", "MilitaryBoots_Brown", "TTSKOBoots"],
+      Gloves:   ["TacticalGloves_Black", "TacticalGloves_Green"],
+      Vest:     ["PlateCarrierVest", "PlateCarrierVest_Camo", "PlateCarrierVest_Green", "PlateCarrierVest_Black"],
+      Back:     ["AssaultBag_Ttsko", "AssaultBag_Green", "AliceBag_Camo"],
+      Eyewear:  ["NVGHeadstrap"],
+      Belt:     ["MilitaryBelt"],
+      Armband:  ["Armband_Chernarus", "Armband_Livonia"],
+    }
+  },
+  {
+    id: "nbc_medic", label: "NBC Medical Team", theme: "nbc",
+    items: {
+      Headgear: ["BallisticHelmet_UN", "BallisticHelmet_Black"],
+      Mask:     ["AirborneMask"],
+      Body:     ["NBCJacketGray", "NBCJacketYellow"],
+      Legs:     ["NBCPantsGray", "NBCPantsYellow"],
+      Feet:     ["NBCBootsGray", "NBCBootsYellow", "MilitaryBoots_Black"],
+      Gloves:   ["NBCGlovesGray", "NBCGlovesYellow"],
+      Vest:     ["PlateCarrierVest", "PlateCarrierVest_Black", "PlateCarrierVest_Camo", "PlateCarrierVest_Green"],
+      Back:     ["MountainBag_Blue", "MountainBag_Green", "MountainBag_Red"],
+      Eyewear:  ["NVGHeadstrap"],
+      Belt:     ["MilitaryBelt"],
+      Armband:  ["Armband_CDF", "Armband_LivoniaArmy"],
+    }
+  },
 ];
 
 export const CLOTHING_SET_INDEX: Record<string, ClothingSet> = Object.fromEntries(CLOTHING_SETS.map(s => [s.id, s]));
+
+// ── CONTAINER STORAGE CAPACITY (inventory slot counts) ───────────────────────
+// Back slot: real backpacks have slots; GhillieSuit occupies Back but stores nothing.
+// Vest, Body, Legs: pockets. Weapons/NVG/worn items don't consume these slots.
+export const CONTAINER_SLOTS: Record<string, number> = {
+  // ── BACKPACKS ────────────────────────
+  AliceBag: 64, AliceBag_Camo: 64, AliceBag_Green: 64, AliceBag_Black: 64,
+  AssaultBag: 64, AssaultBag_Black: 64, AssaultBag_Green: 64, AssaultBag_Ttsko: 64,
+  CoyoteBag_Green: 42, CoyoteBag_Brown: 42, CoyoteBag_Winter: 42,
+  HuntingBag: 32,
+  MountainBag_Blue: 35, MountainBag_Green: 35, MountainBag_Red: 35, MountainBag_Orange: 35,
+  TaloonBag_Blue: 35, TaloonBag_Green: 35, TaloonBag_Orange: 35, TaloonBag_Violet: 35,
+  DryBag_Black: 20, DryBag_Blue: 20, DryBag_Red: 20, DryBag_Yellow: 20, DryBag_Orange: 20,
+  LeatherSack_Brown: 12, LeatherSack_Natural: 12,
+  // GhillieSuits occupy the Back slot but are camouflage — zero storage
+  GhillieSuit_Mossy: 0, GhillieSuit_Woodland: 0, GhillieSuit_Tan: 0,
+  // ── VESTS ─────────────────────────────
+  PlateCarrierVest: 12, PlateCarrierVest_Camo: 12, PlateCarrierVest_Black: 12,
+  PlateCarrierVest_Green: 12, PlateCarrierVest_Winter: 12,
+  SmershVest: 12, HuntingVest: 12, HighCapacityVest_Black: 12,
+  PressVest_Blue: 12, PressVest_LightBlue: 12,
+  // ── JACKETS / BODY ────────────────────
+  BDUJacket: 8,
+  M65Jacket_Olive: 8, M65Jacket_Khaki: 8, M65Jacket_Black: 8, M65Jacket_Tan: 8,
+  TacticalShirt_Olive: 4, TacticalShirt_Tan: 4, TacticalShirt_Grey: 4, TacticalShirt_Black: 4,
+  HuntingJacket_Autumn: 8, HuntingJacket_Brown: 8, HuntingJacket_Spring: 8, HuntingJacket_Summer: 8,
+  PoliceJacket: 8, PoliceJacketOrel: 8, USMCJacket_Desert: 8,
+  GorkaEJacket_Flat: 8, GorkaEJacket_Autumn: 8, GorkaEJacket_PautRev: 8, GorkaEJacket_Winter: 8,
+  OMKJacket_Navy: 8,
+  NBCJacketGray: 8, NBCJacketYellow: 8,
+  // ── PANTS ─────────────────────────────
+  BDUPants: 8, USMCPants_Woodland: 8, USMCPants_Desert: 8,
+  CargoPants_Green: 8, CargoPants_Black: 8, CargoPants_Beige: 8,
+  HunterPants_Spring: 6, HunterPants_Autumn: 6, HunterPants_Brown: 6,
+  PolicePants: 8, PolicePantsOrel: 8,
+  GorkaPants_Flat: 8, GorkaPants_Autumn: 8, GorkaPants_PautRev: 8, GorkaPants_Winter: 8,
+  OMKPants_Navy: 8,
+  NBCPantsGray: 8, NBCPantsYellow: 8,
+};
+
+// ── ITEM SIZE IN INVENTORY (slots consumed when placed in a container) ────────
+// Most small items = 1×1 (1 slot). Rifle mags/ammo boxes = 1×2 (2 slots).
+export const ITEM_SIZE: Record<string, number> = {
+  // Rifle / DMR magazines — 1×2 = 2 slots
+  Mag_STANAG_30Rnd: 2, Mag_STANAG_60Rnd: 2, Mag_CMAG_30Rnd: 2, Mag_CMAG_40Rnd: 2,
+  Mag_STANAGCoupled_30Rnd: 2,
+  Mag_AKM_30Rnd: 2, Mag_AKM_Drum75Rnd: 4, Mag_AK74_30Rnd: 2, Mag_AK74_45Rnd: 2, Mag_AK101_30Rnd: 2,
+  Mag_M14_20Rnd: 2, Mag_FAL_20Rnd: 2,
+  Mag_SVD_10Rnd: 2, Mag_SV98_10Rnd: 2,
+  Mag_Vikhr_30Rnd: 2, Mag_VAL_20Rnd: 2,
+  Mag_Aug_30Rnd: 2, Mag_Saiga_Drum20Rnd: 2, Mag_PP19_64Rnd: 2,
+  // Scout / pistol / SMG magazines — 1×1 = 1 slot
+  Mag_Scout_5Rnd: 1,
+  Mag_MP5_30Rnd: 1, Mag_UMP_25Rnd: 1, Mag_CZ61_20Rnd: 1,
+  Mag_Glock_15Rnd: 1, Mag_FNX45_15Rnd: 1, Mag_1911_7Rnd: 1,
+  Mag_CZ75_15Rnd: 1, Mag_IJ70_8Rnd: 1, Mag_Deagle_9rnd: 1, Mag_P1_8Rnd: 1,
+  // Ammo boxes — 1×2 = 2 slots
+  AmmoBox_556x45_20Rnd: 2, AmmoBox_556x45Tracer_20Rnd: 2,
+  AmmoBox_762x39_20Rnd: 2, AmmoBox_762x39Tracer_20Rnd: 2,
+  AmmoBox_545x39_20Rnd: 2, AmmoBox_545x39Tracer_20Rnd: 2,
+  AmmoBox_308Win_20Rnd: 2, AmmoBox_308WinTracer_20Rnd: 2,
+  AmmoBox_762x54_20Rnd: 2,
+  AmmoBox_9x39_20Rnd: 2, AmmoBox_9x39AP_20Rnd: 2,
+  AmmoBox_9x19_25rnd: 2, AmmoBox_45ACP_25Rnd: 2,
+  AmmoBox_00buck_10rnd: 2, AmmoBox_12gaSlug_10Rnd: 2,
+  // Medical — 1×1 = 1 slot each, SalineBagIV = 2
+  BandageDressing: 1, Morphine: 1, Epinephrine: 1,
+  TetracyclineAntibiotics: 1, VitaminBottle: 1,
+  SalineBagIV: 2, Splint: 1,
+  // Food — 1 slot each; TacticalBaconCan = 2
+  PeachesCan: 1, BakedBeansCan: 1, SpaghettiCan: 1, TacticalBaconCan: 2, SardinesCan: 1,
+  // Other consumables
+  Canteen: 2,
+  CanabisSeedsPack: 1, CannabisSeedsPack: 1,
+  ChemLightYellow: 1, ChemLightRed: 1, RoadFlare: 1, Rag: 1, Matchbox: 1,
+  Battery9V: 1,
+};
+
+// Filler rotation used to pad containers to 100% capacity
+export const FILLER_POOL = [
+  "BandageDressing", "ChemLightYellow", "Rag", "RoadFlare", "CanabisSeedsPack",
+] as const;
 
 // ── SURVIVOR CHARACTER TYPES ──────────────────────────────────────────────────
 export const SURVIVORS_MALE = [
@@ -210,10 +342,9 @@ export const SURVIVORS_FEMALE = [
 ];
 export const ALL_SURVIVORS = [...SURVIVORS_MALE, ...SURVIVORS_FEMALE];
 
-// ── STANDARD MED/FOOD FILLERS ─────────────────────────────────────────────────
+// ── STANDARD MED/FOOD KITS ────────────────────────────────────────────────────
 export const PVP_MEDICAL_KIT = ["BandageDressing", "BandageDressing", "TetracyclineAntibiotics", "VitaminBottle", "Morphine", "Epinephrine", "SalineBagIV", "Splint"];
 export const FOOD_CANS       = ["PeachesCan", "BakedBeansCan", "SpaghettiCan", "TacticalBaconCan"];
-export const FILLER_CANNABIS = ["CanabisSeedsPack", "CannabisSeedsPack"];
 
 // ── NVG KIT (MANDATORY per hard rules) ─────────────────────────────────────────
 export const NVG_KIT = { headstrap: "NVGHeadstrap", goggles: "NVGoggles", battery: "Battery9V" };
