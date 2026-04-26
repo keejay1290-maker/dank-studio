@@ -14,6 +14,12 @@ export const CNC4    = "staticobj_wall_cncsmall_4";   // 4.017m × 2.324m concre
 export const MILCNC  = "staticobj_wall_milcnc_4";     // 4.052m × 4.744m military
 export const IND10   = "staticobj_wall_indcnc_10";    // 9.012m × 9.758m industrial
 
+// ── Timber & Logs ────────────────────────────────────────────────────────────
+export const TIMBERS1 = "staticobj_misc_timbers1";      // 4.010m x 3.556m
+export const TIMBERS2 = "staticobj_misc_timbers2";      // 4.001m x 2.203m
+export const LOG1     = "staticobj_misc_timbers_log1";  // 11.838m long (Z axis)
+export const LOG5     = "staticobj_misc_timbers_log5";  // 3.156m tall (Y axis)
+
 // ── Container dimensions (long axis Z at yaw=0) ──────────────────────────────
 export const _CD  = 10.000;   // container depth (long axis)
 export const _CH  = 2.782;    // container height

@@ -37,11 +37,14 @@ export function ToastStack() {
     <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
       {items.map(t => (
         <div key={t.id}
-          className={`px-4 py-2.5 rounded-lg backdrop-blur-md border text-[11px] font-bold uppercase tracking-widest shadow-2xl pointer-events-auto animate-fade-in-up ${
+          className={`flex items-center gap-2.5 px-4 py-2.5 rounded-lg backdrop-blur-md border text-[11px] font-bold uppercase tracking-widest shadow-2xl pointer-events-auto animate-fade-in-up ${
             t.kind === "success" ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-200"
             : t.kind === "error" ? "bg-rose-500/20    border-rose-500/50    text-rose-200"
             :                       "bg-amber-500/15   border-amber-500/40   text-amber-200"
           }`}>
+          <span className="text-base leading-none flex-shrink-0">
+            {t.kind === "success" ? "✅" : t.kind === "error" ? "❌" : "ℹ️"}
+          </span>
           {t.msg}
         </div>
       ))}

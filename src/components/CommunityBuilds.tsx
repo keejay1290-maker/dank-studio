@@ -19,26 +19,64 @@ interface Manifest {
 // ── Category grouping ─────────────────────────────────────────────────────────
 
 const CATEGORY_GROUPS: Record<string, string[]> = {
-  "Structures": ["bases", "bennetts_builds", "bunkers", "castles", "caves", "faction_bases", "houses_cabins", "military", "oil_rigs", "ships", "treehouses", "walls_structures"],
-  "Events":     ["air_drops", "missions_events", "pvp_events", "racing", "safezones", "seasonal", "ufc_fighting"],
-  "Content":    ["building_supplies", "loadouts", "loot_configs", "points_of_interest", "traders", "weapons"],
-  "Config":     ["npc_ai", "other_configs", "overhauls", "server_config", "teleporters", "vehicles"],
-  "Maps":       ["livonia", "sakhal", "winter_maps"],
+  "🏗️ Structures": ["bases", "bennetts_builds", "bunkers", "castles", "caves", "faction_bases", "houses_cabins", "military", "oil_rigs", "ships", "treehouses", "walls_structures", "hospitals_medical", "police_stations", "banks_economy", "water_sources", "industry_factory", "bridges_roads", "trains_railway"],
+  "⚡ Events":      ["air_drops", "missions_events", "pvp_events", "racing", "safezones", "seasonal", "ufc_fighting"],
+  "📦 Content":     ["building_supplies", "loadouts", "loot_configs", "points_of_interest", "traders", "weapons", "explosives_boom", "food_drinks", "clothing_gear", "decorations", "furniture_interior", "signs", "flags"],
+  "⚙️ Config":      ["npc_ai", "other_configs", "overhauls", "server_config", "teleporters", "vehicles"],
+  "🗺️ Maps":        ["livonia", "sakhal", "winter_maps", "nature_foliage"],
 };
 
 const CAT_LABEL: Record<string, string> = {
-  air_drops: "Air Drops", bases: "Bases", bennetts_builds: "Bennett's Builds",
-  building_supplies: "Building Supplies", bunkers: "Bunkers", castles: "Castles",
-  caves: "Caves", faction_bases: "Faction Bases", houses_cabins: "Houses & Cabins",
-  junk_test: "Junk / Test", livonia: "Livonia", loadouts: "Loadouts",
-  loot_configs: "Loot Configs", military: "Military", missions_events: "Missions & Events",
-  npc_ai: "NPC / AI", oil_rigs: "Oil Rigs", other_configs: "Other Configs",
-  overhauls: "Overhauls", points_of_interest: "Points of Interest",
-  pvp_events: "PvP Events", racing: "Racing", safezones: "Safe Zones",
-  sakhal: "Sakhal", seasonal: "Seasonal", server_config: "Server Config",
-  ships: "Ships", teleporters: "Teleporters", traders: "Traders",
-  treehouses: "Treehouses", ufc_fighting: "UFC / Fighting", vehicles: "Vehicles",
-  walls_structures: "Walls & Structures", weapons: "Weapons", winter_maps: "Winter Maps",
+  air_drops:        "✈️ Air Drops",
+  bases:            "🏠 Bases",
+  bennetts_builds:  "⭐ Bennett's Builds",
+  building_supplies:"🧱 Building Supplies",
+  bunkers:          "🔒 Bunkers",
+  castles:          "🏰 Castles",
+  caves:            "🌑 Caves",
+  faction_bases:    "⚔️ Faction Bases",
+  houses_cabins:    "🏡 Houses & Cabins",
+  junk_test:        "🗑️ Junk / Test",
+  livonia:          "🌿 Livonia",
+  loadouts:         "🎒 Loadouts",
+  loot_configs:     "💰 Loot Configs",
+  military:         "🪖 Military",
+  missions_events:  "🎯 Missions & Events",
+  npc_ai:           "🤖 NPC / AI",
+  oil_rigs:         "🛢️ Oil Rigs",
+  other_configs:    "⚙️ Other Configs",
+  overhauls:        "🔧 Overhauls",
+  points_of_interest:"📍 Points of Interest",
+  pvp_events:       "🔥 PvP Events",
+  racing:           "🏎️ Racing",
+  safezones:        "🛡️ Safe Zones",
+  sakhal:           "❄️ Sakhal",
+  seasonal:         "🎄 Seasonal",
+  server_config:    "🖥️ Server Config",
+  ships:            "⛵ Ships",
+  teleporters:      "🌀 Teleporters",
+  traders:          "💼 Traders",
+  treehouses:       "🌲 Treehouses",
+  ufc_fighting:     "🥊 UFC / Fighting",
+  vehicles:         "🚗 Vehicles",
+  walls_structures: "🏗️ Walls & Structures",
+  weapons:          "🔫 Weapons",
+  winter_maps:      "❄️ Winter Maps",
+  hospitals_medical: "🏥 Hospitals & Medical",
+  police_stations:   "👮 Police & Prisons",
+  banks_economy:     "🏦 Banks & Economy",
+  water_sources:     "⛲ Water Sources",
+  industry_factory:  "🏭 Industrial & Factory",
+  bridges_roads:     "🌉 Bridges & Roads",
+  trains_railway:    "🚂 Railway & Trains",
+  decorations:       "🎀 Decorations",
+  furniture_interior:"🛋️ Interior & Furniture",
+  nature_foliage:    "🌳 Nature & Foliage",
+  food_drinks:       "🍎 Food & Drinks",
+  explosives_boom:   "💥 Explosives & Boom",
+  clothing_gear:     "👕 Clothing & Gear",
+  signs:             "🪧 Signs & Billboards",
+  flags:             "🚩 Flags",
 };
 
 const IMG_URL = (build: BuildMeta, img: string) =>
@@ -92,8 +130,11 @@ export function CommunityBuilds() {
   if (loading) return (
     <div className="flex-1 flex items-center justify-center">
       <div className="text-center">
-        <div className="w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-        <p className="text-xs text-zinc-500 uppercase tracking-widest">Loading community builds…</p>
+        <div className="text-4xl mb-4 animate-spin" style={{ display: "inline-block" }}>⚙️</div>
+        <div className="w-32 h-0.5 bg-zinc-800 rounded-full mx-auto mb-3 overflow-hidden">
+          <div className="h-full bg-[var(--accent)] rounded-full animate-pulse w-1/2" />
+        </div>
+        <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Loading community builds…</p>
       </div>
     </div>
   );
@@ -101,9 +142,10 @@ export function CommunityBuilds() {
   if (error) return (
     <div className="flex-1 flex items-center justify-center text-center px-8">
       <div>
-        <p className="text-sm font-bold text-rose-400">Community folder not found</p>
-        <p className="text-xs text-zinc-600 mt-2">Expected at: C:\Users\Shadow\Desktop\dayz community</p>
-        <p className="text-xs text-zinc-600 mt-1">Make sure the dev server is running (npm run dev)</p>
+        <div className="text-4xl mb-4">❌</div>
+        <p className="text-sm font-bold text-rose-400 mb-2">Community folder not found</p>
+        <p className="text-[11px] text-zinc-600 font-mono">C:\Users\Shadow\Desktop\dayz community</p>
+        <p className="text-[10px] text-zinc-700 mt-2 uppercase tracking-widest">Make sure dev server is running</p>
       </div>
     </div>
   );
@@ -130,7 +172,7 @@ export function CommunityBuilds() {
               selectedCat === "All" ? "text-[var(--accent)] bg-amber-400/8" : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
             }`}
           >
-            <span>All</span>
+            <span>🌐 All</span>
             <span className="text-[9px] font-mono text-zinc-600">{catCounts.All ?? 0}</span>
           </button>
 
@@ -138,18 +180,21 @@ export function CommunityBuilds() {
             const groupCats = cats.filter(c => catCounts[c]);
             if (!groupCats.length) return null;
             return (
-              <div key={group} className="mt-2">
-                <div className="px-3 py-1 text-[8px] font-black uppercase tracking-[0.25em] text-zinc-700 border-l-2 border-amber-900/30 ml-1 mb-0.5">{group}</div>
+              <div key={group} className="mt-4 first:mt-2 pt-2 first:pt-0 border-t first:border-t-0 border-white/5">
+                <div className="px-3 py-1 text-[9px] font-black uppercase tracking-[0.25em] text-amber-500/90 shadow-sm mb-1 flex items-center gap-2">
+                  <span className="w-1 h-3 bg-amber-600/30 rounded-full" />
+                  {group}
+                </div>
                 {groupCats.map(cat => (
                   <button
                     key={cat}
                     onClick={() => setSelectedCat(cat)}
-                    className={`w-full text-left px-3 py-1.5 text-[10px] font-medium transition-all flex items-center justify-between ${
-                      selectedCat === cat ? "text-[var(--accent)] bg-amber-400/8 border-r-2 border-[var(--accent)]" : "text-zinc-500 hover:text-zinc-300 hover:bg-white/5"
+                    className={`w-full text-left px-3 py-1.5 text-[10px] font-medium transition-all flex items-center justify-between group ${
+                      selectedCat === cat ? "text-amber-100 bg-amber-500/10 border-r-2 border-amber-500" : "text-zinc-500 hover:text-zinc-300 hover:bg-white/5"
                     }`}
                   >
                     <span className="truncate">{CAT_LABEL[cat] ?? cat}</span>
-                    <span className="text-[9px] font-mono text-zinc-700 flex-shrink-0 ml-1">{catCounts[cat]}</span>
+                    <span className={`text-[9px] font-mono flex-shrink-0 ml-1 ${selectedCat === cat ? "text-amber-400/60" : "text-zinc-600 group-hover:text-zinc-400"}`}>{catCounts[cat]}</span>
                   </button>
                 ))}
               </div>
@@ -180,7 +225,11 @@ export function CommunityBuilds() {
         {/* Grid */}
         <div className="flex-1 overflow-y-auto p-3 custom-scrollbar">
           {paged.length === 0 ? (
-            <div className="h-full flex items-center justify-center text-zinc-700 text-sm">No builds match</div>
+            <div className="h-full flex flex-col items-center justify-center gap-3 text-center py-20">
+              <span className="text-5xl opacity-20">🏗️</span>
+              <p className="text-[11px] font-bold text-zinc-600 uppercase tracking-widest">No builds match your filter</p>
+              <p className="text-[10px] text-zinc-700">Try a different category or clear the search</p>
+            </div>
           ) : (
             <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3">
               {paged.map(build => (
@@ -258,7 +307,7 @@ function BuildCard({ build, onSelect }: { build: BuildMeta; onSelect: (b: BuildM
 
   return (
     <div
-      className="bg-zinc-900/60 border border-white/5 hover:border-amber-500/25 rounded-xl overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-lg hover:shadow-black/40 group"
+      className="bg-zinc-900/60 border border-white/5 hover:border-amber-500/30 rounded-xl overflow-hidden cursor-pointer transition-all duration-200 card-hover-glow group"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={() => onSelect(build)}

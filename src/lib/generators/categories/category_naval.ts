@@ -3,12 +3,11 @@
 // shapes.ts barrel.
 import type { Point3D } from "../../types";
 import {
-  drawWall, drawRing, drawRect, drawDisk, drawSphere, drawDome,
-  drawSphereBudgeted, _drawSphereRings, applyLimit,
+  drawWall, drawRing, drawRect, drawDisk, applyLimit,
 } from "../../draw";
 import {
-  CASTLE, STONE, STONE2, CNC8, CNC4, MILCNC, IND10,
-  _CD, _CH, _CW, _C_PALETTE, _cpick,
+  STONE2, CNC8, CNC4, MILCNC, IND10,
+  LOG1,
 } from "../_constants";
 import type { GenParams } from "../_constants";
 
@@ -395,133 +394,108 @@ export function gen_oil_rig(p: GenParams): Point3D[] {
 }
 
 export function gen_pirate_ship(p: GenParams): Point3D[] {
-  // 17th-century galleon (Spanish/English, ~50-70m)
-  // Bow at +Z, stern at -Z. CASTLE walls = wooden plank appearance.
-  // Features: tapered hull, forecastle, tall sterncastle, 3 masts with yardarms,
-  // crow's nests, bowsprit, gun ports, flagpole, rope coils, lifeboats.
+  // Mastercraft Pirate Ship - Built entirely from individual LOG1 segments
+  // Dimensions: LOG1: 1.476 (W), 0.352 (H), 11.838 (L/Depth)
   const pts: Point3D[] = [];
-  const L    = Math.min(p.length ?? 70, 100);
-  const S    = Math.max(0.5, L / 70);
+  const L = Math.min(p.length ?? 70, 100);
+  const S = Math.max(0.5, L / 70);
 
-  // ── Hull sides — CASTLE panels stepping along Z every 8m (face width), 3 rows high ──
-  // Beam tapers: 8*S amidships → 2*S at bow/stern via quadratic profile.
-  // Port (yaw=270) and starboard (yaw=90) panels placed individually for outward facing.
-  const CASTLE_W = 8.0;   // CASTLE face width  → Z step
-  const CASTLE_H = 2.0;   // CASTLE panel height → Y step
-  const hullRows = 3;     // 3 strakes: y=0, 2, 4
+  const LOG_L = 11.838;
+  const LOG_H = 0.352;
+  const LOG_W = 1.476;
 
-  for (let z = -L/2 + CASTLE_W/2; z <= L/2 - CASTLE_W/2 + 0.01; z += CASTLE_W) {
-    const zt = Math.abs(z) / (L / 2);
-    const hw = Math.max(2.0, (8 - 6 * zt * zt) * S);
-    for (let row = 0; row < hullRows; row++) {
-      const y = row * CASTLE_H;
-      pts.push({ x: -hw, y, z, yaw: 270, name: CASTLE });  // port
-      pts.push({ x:  hw, y, z, yaw:  90, name: CASTLE });  // starboard
+  /** Accurate log placement helper */
+  function addLogPath(x1: number, y1: number, z1: number, x2: number, y2: number, z2: number) {
+    const dx = x2 - x1, dy = y2 - y1, dz = z2 - z1;
+    const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    if (d < 0.1) return;
+
+    const n = Math.max(1, Math.round(d / LOG_L));
+    const sx = dx / n, sy = dy / n, sz = dz / n;
+    const sc = (d / n) / LOG_L;
+    
+    const yaw = Math.atan2(dx, dz) * 180 / Math.PI;
+    const pitch = -Math.atan2(dy, Math.sqrt(dx * dx + dz * dz)) * 180 / Math.PI;
+
+    for (let i = 0; i < n; i++) {
+        pts.push({
+            x: x1 + sx * (i + 0.5),
+            y: y1 + sy * (i + 0.5),
+            z: z1 + sz * (i + 0.5),
+            yaw, pitch, scale: +sc.toFixed(4),
+            name: LOG1
+        });
     }
   }
 
-  const deckY = hullRows * CASTLE_H;  // main deck level = top of hull strakes
+  const getBeam = (z: number) => {
+    const t = Math.abs(z) / (L / 2);
+    return Math.max(2.5, (8 - 6 * t * t) * S);
+  };
 
-  // ── Main deck — MILCNC flat tiles, step=4.052 along X, 4.052 along Z ──────
-  for (let dz = -L/2 + 4; dz <= L/2 - 4; dz += 4.052)
-    for (let dx = -6 * S; dx <= 6 * S; dx += 4.052)
-      pts.push({ x: dx, y: deckY, z: dz, yaw: 0, pitch: -90, name: MILCNC });
+  // 1. Hull Strakes (Longitudinal)
+  const hullHeighRows = 16;
+  const zFacets = Math.ceil(L / LOG_L);
+  const zFDist = L / zFacets;
 
-  // ── Forecastle (raised bow platform) — bow +Z side ────────────────────────
-  // z from L/2 - 18*S to L/2, 3 rows CASTLE from deckY to deckY + 3*CASTLE_H
-  const fcCZ = L/2 - 9 * S;
-  const fcHW = 5.5 * S;
-  const fcHD = 8.5 * S;
-  for (let row = 0; row < 3; row++) {
-    const fy = deckY + row * CASTLE_H;
-    drawRect(pts, 0, fy, fcCZ, fcHW, fcHD, CASTLE);
-    pts.push({ x: -fcHW, y: fy, z: fcCZ - fcHD, yaw: 225, name: CASTLE });
-    pts.push({ x:  fcHW, y: fy, z: fcCZ - fcHD, yaw: 135, name: CASTLE });
-    pts.push({ x:  fcHW, y: fy, z: fcCZ + fcHD, yaw:  45, name: CASTLE });
-    pts.push({ x: -fcHW, y: fy, z: fcCZ + fcHD, yaw: 315, name: CASTLE });
-  }
-  const fcDeckY = deckY + 3 * CASTLE_H;
+  for (let row = 0; row < hullHeighRows; row++) {
+    const y = row * LOG_H;
+    for (let f = 0; f < zFacets; f++) {
+        const z1 = -L / 2 + f * zFDist;
+        const z2 = z1 + zFDist;
+        const b1 = getBeam(z1);
+        const b2 = getBeam(z2);
 
-  // ── Sterncastle (high captain's quarters) — stern -Z side ─────────────────
-  // 5 rows CASTLE — much taller than forecastle
-  const scCZ = -L/2 + 11 * S;
-  const scHW = 6.5 * S;
-  const scHD = 11 * S;
-  for (let row = 0; row < 5; row++) {
-    const sy = deckY + row * CASTLE_H;
-    drawRect(pts, 0, sy, scCZ, scHW, scHD, CASTLE);
-    pts.push({ x: -scHW, y: sy, z: scCZ - scHD, yaw: 225, name: CASTLE });
-    pts.push({ x:  scHW, y: sy, z: scCZ - scHD, yaw: 135, name: CASTLE });
-    pts.push({ x:  scHW, y: sy, z: scCZ + scHD, yaw:  45, name: CASTLE });
-    pts.push({ x: -scHW, y: sy, z: scCZ + scHD, yaw: 315, name: CASTLE });
-  }
-  const scTopY = deckY + 5 * CASTLE_H;
-  // Stern gallery windows (CNC4 panels on stern face)
-  for (let i = -1; i <= 1; i++)
-    pts.push({ x: i * 3 * S, y: deckY + 3 * CASTLE_H, z: scCZ - scHD, yaw: 180, name: CNC4 });
-
-  // ── 3 Masts — MILCNC rings stacked vertically (step=4.744 fixed) ──────────
-  // Foremast:   z = L/4  (toward bow)
-  // Mainmast:   z = 0    (amidships — tallest)
-  // Mizzenmast: z = -L/4 (toward stern)
-  const mastDefs: { mz: number; mastH: number }[] = [
-    { mz:  L / 4, mastH: 24 * S },  // foremast
-    { mz:  0,     mastH: 34 * S },  // mainmast — tallest
-    { mz: -L / 4, mastH: 20 * S },  // mizzenmast
-  ];
-
-  for (const { mz, mastH } of mastDefs) {
-    const mastBaseY = mz > 0 ? fcDeckY : (mz < -L/8 ? scTopY : deckY);
-    // Mast column — single MILCNC panel per step, facing yaw=0
-    for (let y = mastBaseY; y < mastBaseY + mastH; y += 4.744)
-      pts.push({ x: 0, y, z: mz, yaw: 0, name: MILCNC });
-
-    const mastTopY = mastBaseY + mastH;
-
-    // Crow's nest platform at 70% mast height (CNC8 ring)
-    const nestY = mastBaseY + mastH * 0.68;
-    drawRing(pts, 0, nestY, mz, 2 * S, CNC8);
-
-    // Lower yardarm at 40% mast height — CNC8 horizontal boom
-    const yard1Y = mastBaseY + mastH * 0.38;
-    const yard1W = mz === 0 ? 9 * S : 7 * S;
-    drawWall(pts, -yard1W, yard1Y, mz, yard1W, yard1Y, mz, CNC8);
-
-    // Upper yardarm at 65% mast height (foremast and mainmast only)
-    if (mz >= 0) {
-      const yard2Y = mastBaseY + mastH * 0.60;
-      const yard2W = yard1W * 0.65;
-      drawWall(pts, -yard2W, yard2Y, mz, yard2W, yard2Y, mz, CNC8);
+        addLogPath(-b1, y, z1, -b2, y, z2); // Port
+        addLogPath( b1, y, z1,  b2, y, z2); // Starboard
     }
-
-    // Flagpole at mainmast top
-    if (mz === 0)
-      pts.push({ x: 0, y: mastTopY, z: 0, yaw: 0, name: "staticobj_misc_flagpole" });
   }
 
-  // ── Bowsprit — diagonal forward spar projecting from bow ─────────────────
-  // From bow forecastle deck, angling up and forward at ~30°
-  drawWall(pts, 0, fcDeckY, L/2 - 4, 0, fcDeckY + 8 * S, L/2 + 12 * S, CNC8);
+  const deckY = hullHeighRows * LOG_H;
 
-  // ── Gun ports — barrel_red as cannon muzzles, 6 per side ─────────────────
-  const gunY = deckY * 0.5;
-  for (let i = 0; i < 6; i++) {
-    const gz = -L/4 + i * (L / 2 / 5.5);
-    const ghw = Math.max(2.0, (8 - 6 * Math.pow(Math.abs(gz) / (L/2), 2)) * S) + 0.5;
-    pts.push({ x: -ghw, y: gunY, z: gz, yaw: 270, name: "barrel_red" });  // port
-    pts.push({ x:  ghw, y: gunY, z: gz, yaw:  90, name: "barrel_red" });  // starboard
+  // 2. Deck (Transversal/Longitudinal mix for detail)
+  // Longitudinal main boards
+  for (let z = -L / 2 + LOG_L / 2; z <= L / 2; z += LOG_L) {
+    const b = getBeam(z);
+    for (let x = -b + LOG_W; x <= b - LOG_W; x += LOG_W) {
+        pts.push({ x, y: deckY, z, yaw: 0, name: LOG1 });
+    }
   }
 
-  // ── Rope coils on deck ────────────────────────────────────────────────────
-  pts.push({ x:  4 * S, y: deckY, z:  L/4 + 3, yaw: 0, name: "staticobj_misc_coil" });
-  pts.push({ x: -4 * S, y: deckY, z: -L/4 + 3, yaw: 0, name: "staticobj_misc_coil" });
+  // 3. Forecastle & Sterncastle
+  const fcCZ = L / 2 - 9 * S, fcHW = 5 * S, fcHD = 8 * S;
+  for (let row = 0; row < 6; row++) {
+    const y = deckY + row * LOG_H;
+    addLogPath(-fcHW, y, fcCZ - fcHD, -fcHW, y, fcCZ + fcHD);
+    addLogPath( fcHW, y, fcCZ - fcHD,  fcHW, y, fcCZ + fcHD);
+    addLogPath(-fcHW, y, fcCZ - fcHD,  fcHW, y, fcCZ - fcHD);
+    addLogPath(-fcHW, y, fcCZ + fcHD,  fcHW, y, fcCZ + fcHD);
+  }
 
-  // ── Lifeboats on sterncastle top ──────────────────────────────────────────
-  pts.push({ x:  3 * S, y: scTopY, z: scCZ + 2, yaw:  90, name: "staticobj_boat_small4" });
-  pts.push({ x: -3 * S, y: scTopY, z: scCZ + 2, yaw: 270, name: "staticobj_boat_small4" });
+  const scCZ = -L / 2 + 11 * S, scHW = 6 * S, scHD = 11 * S;
+  for (let row = 0; row < 12; row++) {
+    const y = deckY + row * LOG_H;
+    addLogPath(-scHW, y, scCZ - scHD, -scHW, y, scCZ + scHD);
+    addLogPath( scHW, y, scCZ - scHD,  scHW, y, scCZ + scHD);
+    addLogPath(-scHW, y, scCZ - scHD,  scHW, y, scCZ - scHD);
+    addLogPath(-scHW, y, scCZ + scHD,  scHW, y, scCZ + scHD);
+  }
+  const scTopY = deckY + 12 * LOG_H;
 
-  return applyLimit(pts, 1100);
+  // 4. Masts
+  const mastZs = [L / 4, 0, -L / 4];
+  for (const mz of mastZs) {
+    const mBasY = mz > 0 ? deckY + 6 * LOG_H : (mz < -L / 8 ? scTopY : deckY);
+    const layers = mz === 0 ? 3 : 2;
+    for (let i = 0; i < layers; i++) {
+        pts.push({ x: 0, y: mBasY + i * 11.5, z: mz, yaw: 0, pitch: -90, name: LOG1 });
+    }
+  }
+
+  return applyLimit(pts, 1200);
 }
+
+
 
 export function gen_bridge_truss(p: GenParams): Point3D[] {
   const pts: Point3D[] = [];

@@ -5,6 +5,7 @@ import { NpcLoadoutBuilder } from "./components/NpcLoadoutBuilder";
 import { AirdropBuilder } from "./components/AirdropBuilder";
 import { ConsoleTools } from "./components/ConsoleTools";
 import { CommunityBuilds } from "./components/CommunityBuilds";
+import { LogScanner } from "./components/LogScanner";
 import { ToastStack, toast } from "./components/Toast";
 import { HelpOverlay } from "./components/HelpOverlay";
 import { useFavorites } from "./hooks/useFavorites";
@@ -18,8 +19,14 @@ import {
 import type { Point3D, DrawnWall, DrawnObject, BuildEntry } from "./lib/types";
 import "./App.css";
 
-type AppMode = "library" | "draw" | "panel" | "npc" | "loadout" | "airdrop" | "console" | "community";
+type AppMode = "library" | "draw" | "panel" | "npc" | "loadout" | "airdrop" | "console" | "community" | "log";
 type DrawMode = "wall" | "place" | "select";
+
+const CAT_EMOJI: Record<string, string> = {
+  All: "🌐", "Sci-Fi": "🚀", Fantasy: "🏰", Containers: "📦",
+  Structures: "🏗️", Naval: "⚓", Monuments: "🏛️", Geometric: "🔷",
+  Primitives: "🔲", Creative: "🎨", Standard: "🧱",
+};
 
 function App() {
   const [mode, setMode] = useState<AppMode>("library");
@@ -261,14 +268,14 @@ function App() {
   }, [mode, code, points.length, originX, originY, originZ]);
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-zinc-950 text-zinc-200 overflow-hidden select-none">
+    <div className="h-screen w-screen flex flex-col app-bg text-zinc-200 overflow-hidden select-none">
 
       {/* ── Top bar ───────────────────────────────────────────────────────── */}
       <header className="flex items-center gap-0 px-4 glass h-12 flex-shrink-0 z-20">
 
         {/* Wordmark */}
         <div className="flex items-baseline gap-1.5 mr-4 flex-shrink-0 select-none">
-          <span className="text-[19px] font-black tracking-tight leading-none" style={{ color: "var(--accent)", textShadow: "0 0 18px var(--accent-glow)" }}>DANK</span>
+          <span className="dank-shimmer text-[19px] font-black tracking-tight leading-none">DANK</span>
           <span className="text-[8px] font-bold tracking-[0.35em] text-zinc-600 uppercase pb-px">STUDIO</span>
         </div>
 
@@ -286,7 +293,7 @@ function App() {
           {(["library", "draw", "panel"] as AppMode[]).map(m => (
             <button key={m} onClick={() => setMode(m)}
               className={`px-3.5 h-full text-[10px] font-bold uppercase tracking-widest transition-colors relative ${mode === m ? "text-[var(--accent)]" : "text-zinc-500 hover:text-zinc-300"}`}>
-              {m === "library" ? "Library" : m === "draw" ? "Draw" : "Panel"}
+              {m === "library" ? "📚 Library" : m === "draw" ? "✏️ Draw" : "⚙️ Panel"}
               {mode === m && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--accent)] shadow-[0_0_8px_var(--accent-glow)]" />}
             </button>
           ))}
@@ -296,17 +303,17 @@ function App() {
         <div className="flex items-stretch h-full border-l border-white/5 pl-2">
           <button onClick={() => setMode("community")}
             className={`px-3.5 h-full text-[10px] font-bold uppercase tracking-widest transition-colors relative ${mode === "community" ? "text-[var(--accent)]" : "text-zinc-500 hover:text-zinc-300"}`}>
-            Community
+            🌍 Community
             {mode === "community" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--accent)] shadow-[0_0_8px_var(--accent-glow)]" />}
           </button>
         </div>
 
         {/* XML tools group */}
         <div className="flex items-stretch h-full border-l border-white/5 pl-2">
-          {(["npc", "loadout", "airdrop", "console"] as AppMode[]).map(m => (
+          {(["npc", "loadout", "airdrop", "console", "log"] as AppMode[]).map(m => (
             <button key={m} onClick={() => setMode(m)}
               className={`px-3.5 h-full text-[10px] font-bold uppercase tracking-widest transition-colors relative ${mode === m ? "text-[var(--accent)]" : "text-zinc-500 hover:text-zinc-300"}`}>
-              {m === "npc" ? "NPC" : m === "loadout" ? "Loadout" : m === "airdrop" ? "Airdrop" : "Console"}
+              {m === "npc" ? "🤖 NPC" : m === "loadout" ? "🎒 Loadout" : m === "airdrop" ? "✈️ Airdrop" : m === "console" ? "⌨️ Console" : "🔦 Log Scanner"}
               {mode === m && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--accent)] shadow-[0_0_8px_var(--accent-glow)]" />}
             </button>
           ))}
@@ -349,6 +356,8 @@ function App() {
         <ConsoleTools />
       ) : mode === "community" ? (
         <CommunityBuilds />
+      ) : mode === "log" ? (
+        <LogScanner />
       ) : (
       <div className="flex flex-1 overflow-hidden relative">
 
@@ -370,7 +379,7 @@ function App() {
                           : "bg-white/5 text-zinc-500 hover:bg-white/10 hover:text-zinc-300"
                       }`}
                     >
-                      <span>{cat}</span>
+                      <span>{CAT_EMOJI[cat] ? `${CAT_EMOJI[cat]} ${cat}` : cat}</span>
                       <span className={`text-[9px] font-mono ${selectedCategory === cat ? "text-black/60" : "text-zinc-600"}`}>{count}</span>
                     </button>
                   );
@@ -433,7 +442,7 @@ function App() {
                       const catBuilds = ALL_BUILDS.filter(b => b.category === cat);
                       return (
                         <div key={cat} className="mb-4">
-                          <div className="px-4 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 border-l-2 border-amber-900/30 ml-1">{cat}</div>
+                          <div className="px-4 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 border-l-2 border-amber-900/30 ml-1">{CAT_EMOJI[cat] ? `${CAT_EMOJI[cat]} ${cat}` : cat}</div>
                           <div className="mt-1">
                             {catBuilds.map(build => (
                               <BuildRow

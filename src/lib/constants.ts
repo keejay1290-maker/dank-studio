@@ -188,6 +188,14 @@ export const OBJECT_CATALOGUE: ObjectDef[] = [
   { classname: "land_airfield_hangar_green",   label: "Airfield Hangar Green",    category: "Props",    width:31.816, height:13.710, depth:51.593, color: "#4a6050" },
   { classname: "land_airfield_servicehangar_l",label: "Service Hangar Left",      category: "Props",    width:43.649, height:16.381, depth:50.185, color: "#5a6050" },
 
+  // ── TIMBERS & LOGS ────────────────────────────────────────────────────────
+  { classname: "staticobj_misc_timbers1",      label: "Timber Logs 4m",           category: "Props",    width: 4.010, height: 3.556, depth: 1.611, color: "#8d6e40" },
+  { classname: "staticobj_misc_timbers2",      label: "Timber Logs Stack",        category: "Props",    width: 4.001, height: 2.203, depth: 2.055, color: "#8d6e40" },
+  { classname: "staticobj_misc_timbers3",      label: "Timber Logs Short",        category: "Props",    width: 4.001, height: 2.173, depth: 1.641, color: "#8d6e40" },
+  { classname: "staticobj_misc_timbers4",      label: "Timber Planks",            category: "Props",    width: 4.019, height: 2.188, depth: 1.327, color: "#8d6e40" },
+  { classname: "staticobj_misc_timbers_log1",  label: "Timber Log Long 11.8m",    category: "Props",    width: 1.476, height: 0.352, depth:11.838, color: "#8d6e40" },
+  { classname: "staticobj_misc_timbers_log5",  label: "Timber Pole Vert 3m",      category: "Props",    width: 0.258, height: 3.156, depth: 0.295, color: "#8d6e40" },
+
   // ── PROPS ─────────────────────────────────────────────────────────────────
   { classname: "barrel_blue",                  label: "Barrel (Blue)",            category: "Props",    width: 0.70,  height: 0.9,  depth: 0.70,  color: "#2980b9" },
   { classname: "barrel_red",                   label: "Barrel (Red)",             category: "Props",    width: 0.70,  height: 0.9,  depth: 0.70,  color: "#c0392b" },
