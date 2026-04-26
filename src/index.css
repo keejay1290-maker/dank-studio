@@ -3,13 +3,17 @@
 
 /* ── Design System ────────────────────────────────────────────────────────── */
 :root {
-  --bg-deep: #050507;
-  --bg-card: rgba(18, 18, 22, 0.7);
-  --accent: #6366f1;
-  --accent-glow: rgba(99, 102, 241, 0.3);
-  --border: rgba(255, 255, 255, 0.08);
-  --text-main: #e4e4e7;
-  --text-dim: #a1a1aa;
+  --bg-deep: #050503;
+  --bg-card: rgba(12, 10, 8, 0.88);
+  --accent: #d4af37;
+  --accent-bright: #f0c850;
+  --accent-glow: rgba(212, 175, 55, 0.35);
+  --green: #22c55e;
+  --green-dim: rgba(34, 197, 94, 0.15);
+  --border: rgba(212, 175, 55, 0.10);
+  --border-dim: rgba(255, 255, 255, 0.06);
+  --text-main: #f0ede6;
+  --text-dim: #a09070;
 }
 
 /* ── Base reset ──────────────────────────────────────────────────────────── */
@@ -37,8 +41,8 @@ html, body, #root {
 }
 
 .glass-hover:hover {
-  background: rgba(24, 24, 28, 0.8);
-  border-color: rgba(99, 102, 241, 0.4);
+  background: rgba(20, 17, 10, 0.9);
+  border-color: rgba(212, 175, 55, 0.3);
 }
 
 /* ── Custom scrollbar ────────────────────────────────────────────────────── */

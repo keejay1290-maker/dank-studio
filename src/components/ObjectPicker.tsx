@@ -46,7 +46,7 @@ export function ObjectPicker({ current, onSelect, onClose }: Props) {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search objects…"
-            className="w-full bg-zinc-800 text-zinc-200 text-sm rounded px-3 py-1.5 outline-none placeholder-zinc-500 focus:ring-1 focus:ring-indigo-500"
+            className="w-full bg-zinc-800 text-zinc-200 text-sm rounded px-3 py-1.5 outline-none placeholder-zinc-500 focus:ring-1 focus:ring-amber-500"
           />
         </div>
 
@@ -102,7 +102,7 @@ function ObjectRow({
     <button
       onClick={() => onSelect(def.classname)}
       className={`w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-zinc-800 transition-colors ${
-        selected ? "bg-indigo-900/40" : ""
+        selected ? "bg-amber-900/30" : ""
       }`}
     >
       {/* Color swatch */}
@@ -115,7 +115,7 @@ function ObjectRow({
         <span className="block text-xs text-zinc-500">{def.classname}</span>
       </span>
       <span className="text-xs text-zinc-600">{def.width}m</span>
-      {selected && <span className="text-indigo-400 text-xs">✓</span>}
+      {selected && <span className="text-amber-400 text-xs">✓</span>}
     </button>
   );
 }

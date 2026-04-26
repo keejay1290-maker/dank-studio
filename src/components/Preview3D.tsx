@@ -401,7 +401,7 @@ export function Preview3D({
       </Canvas>
 
       <div className="absolute top-4 left-4 flex flex-col gap-1 pointer-events-none">
-        <div className="px-3 py-1.5 glass rounded text-[10px] uppercase tracking-widest font-bold text-indigo-400">
+        <div className="px-3 py-1.5 glass rounded text-[10px] uppercase tracking-widest font-bold text-amber-400/70">
           Render Engine V6.5 Extreme
         </div>
         <div className="px-3 py-1 text-xs text-zinc-400 glass rounded flex items-center gap-2">

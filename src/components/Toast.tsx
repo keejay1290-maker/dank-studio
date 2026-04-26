@@ -40,7 +40,7 @@ export function ToastStack() {
           className={`px-4 py-2.5 rounded-lg backdrop-blur-md border text-[11px] font-bold uppercase tracking-widest shadow-2xl pointer-events-auto animate-fade-in-up ${
             t.kind === "success" ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-200"
             : t.kind === "error" ? "bg-rose-500/20    border-rose-500/50    text-rose-200"
-            :                       "bg-indigo-500/20  border-indigo-500/50  text-indigo-200"
+            :                       "bg-amber-500/15   border-amber-500/40   text-amber-200"
           }`}>
           {t.msg}
         </div>

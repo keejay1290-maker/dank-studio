@@ -60,7 +60,7 @@ export function NpcLoadoutBuilder({ mode }: { mode: BuilderMode }) {
     <div className="flex flex-1 overflow-hidden">
       {/* ── Left controls ──────────────────────────────────────────────────── */}
       <aside className="w-[380px] flex-shrink-0 border-r border-white/5 overflow-y-auto p-4 space-y-4">
-        <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-400">
+        <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-amber-400">
           {mode === "npc" ? "NPC BUILDER" : "LOADOUT BUILDER"}
         </h2>
 
@@ -68,7 +68,7 @@ export function NpcLoadoutBuilder({ mode }: { mode: BuilderMode }) {
           <select
             value={roleId}
             onChange={e => setRoleId(e.target.value as any)}
-            className="w-full bg-black/20 text-zinc-200 text-xs rounded px-2 py-2 border border-white/5 focus:border-indigo-500/50 outline-none"
+            className="w-full bg-black/20 text-zinc-200 text-xs rounded px-2 py-2 border border-white/5 focus:border-amber-500/40 outline-none"
           >
             {ROLE_TEMPLATES.map(r => (
               <option key={r.id} value={r.id}>{r.label}</option>
@@ -82,7 +82,7 @@ export function NpcLoadoutBuilder({ mode }: { mode: BuilderMode }) {
             value={name}
             onChange={e => setName(e.target.value)}
             placeholder={role.label}
-            className="w-full bg-black/20 text-zinc-200 text-xs rounded px-2 py-2 border border-white/5 focus:border-indigo-500/50 outline-none"
+            className="w-full bg-black/20 text-zinc-200 text-xs rounded px-2 py-2 border border-white/5 focus:border-amber-500/40 outline-none"
           />
         </Field>
 
@@ -94,7 +94,7 @@ export function NpcLoadoutBuilder({ mode }: { mode: BuilderMode }) {
                 onClick={() => setCharSel(opt)}
                 className={`flex-1 px-2 py-1.5 rounded border ${
                   charSel === opt
-                    ? "bg-indigo-500/20 border-indigo-500/50 text-indigo-300"
+                    ? "bg-amber-500/15 border-amber-500/40 text-amber-300"
                     : "bg-black/20 border-white/5 text-zinc-500 hover:text-zinc-300"
                 }`}
               >{opt}</button>
@@ -126,7 +126,7 @@ export function NpcLoadoutBuilder({ mode }: { mode: BuilderMode }) {
         <Field label={`Seed (${seed})`}>
           <input type="range" min={0} max={100} value={seed}
             onChange={e => setSeed(Number(e.target.value))}
-            className="w-full accent-indigo-500"
+            className="w-full accent-amber-500"
           />
         </Field>
 
@@ -154,7 +154,7 @@ export function NpcLoadoutBuilder({ mode }: { mode: BuilderMode }) {
                   width: `${Math.min(100, (loadout.usedSlots / loadout.totalSlots) * 100)}%`,
                   background: loadout.usedSlots >= loadout.totalSlots
                     ? "rgb(34 197 94)"   // full → green
-                    : "rgb(99 102 241)", // partial → indigo
+                    : "rgb(212 175 55)",  // partial → gold
                 }}
               />
             </div>
@@ -167,7 +167,7 @@ export function NpcLoadoutBuilder({ mode }: { mode: BuilderMode }) {
 
         <div className="flex gap-2 pt-2">
           <button onClick={copy}
-            className="flex-1 py-2 text-[10px] font-bold uppercase tracking-widest bg-indigo-500/20 hover:bg-indigo-500/40 border border-indigo-500/50 rounded text-indigo-300">
+            className="flex-1 py-2 text-[10px] font-bold uppercase tracking-widest bg-amber-500/15 hover:bg-amber-500/30 border border-amber-500/40 rounded text-amber-300">
             Copy
           </button>
           <button onClick={download}

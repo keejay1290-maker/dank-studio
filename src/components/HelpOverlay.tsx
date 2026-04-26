@@ -40,7 +40,7 @@ export function HelpOverlay({ open, onClose }: { open: boolean; onClose: () => v
         className="w-[min(640px,90vw)] max-h-[85vh] overflow-y-auto bg-zinc-950 border border-white/10 rounded-2xl shadow-2xl p-6"
       >
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-xs font-black uppercase tracking-[0.25em] text-indigo-400">Help · Shortcuts</h2>
+          <h2 className="text-xs font-black uppercase tracking-[0.25em] text-amber-400">Help · Shortcuts</h2>
           <button onClick={onClose}
             className="text-zinc-500 hover:text-white text-xl leading-none">×</button>
         </div>
@@ -53,7 +53,7 @@ export function HelpOverlay({ open, onClose }: { open: boolean; onClose: () => v
                 <span className="text-xs text-zinc-300">{s.label}</span>
                 <span className="flex gap-1">
                   {s.keys.map(k => (
-                    <kbd key={k} className="px-2 py-0.5 text-[10px] font-mono font-bold bg-black/40 border border-white/10 rounded text-indigo-300">{k}</kbd>
+                    <kbd key={k} className="px-2 py-0.5 text-[10px] font-mono font-bold bg-black/40 border border-amber-500/20 rounded text-amber-300">{k}</kbd>
                   ))}
                 </span>
               </div>
@@ -77,7 +77,7 @@ export function HelpOverlay({ open, onClose }: { open: boolean; onClose: () => v
         </section>
 
         <p className="text-[9px] text-zinc-600 mt-5 text-center">
-          Press <kbd className="px-1.5 py-0.5 text-[9px] font-mono bg-black/40 border border-white/10 rounded text-zinc-400">Esc</kbd> or click outside to close
+          Press <kbd className="px-1.5 py-0.5 text-[9px] font-mono bg-black/40 border border-amber-500/20 rounded text-amber-400/70">Esc</kbd> or click outside to close
         </p>
       </div>
     </div>

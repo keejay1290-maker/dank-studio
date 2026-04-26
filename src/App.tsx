@@ -264,44 +264,50 @@ function App() {
 
       {/* ── Top bar ───────────────────────────────────────────────────────── */}
       <header className="flex items-center gap-0 px-4 glass h-12 flex-shrink-0 z-20">
-        <span className="text-sm font-black text-white tracking-[0.2em] mr-6">DANK STUDIO</span>
+
+        {/* Wordmark */}
+        <div className="flex items-baseline gap-1.5 mr-4 flex-shrink-0 select-none">
+          <span className="text-[19px] font-black tracking-tight leading-none" style={{ color: "var(--accent)", textShadow: "0 0 18px var(--accent-glow)" }}>DANK</span>
+          <span className="text-[8px] font-bold tracking-[0.35em] text-zinc-600 uppercase pb-px">STUDIO</span>
+        </div>
+
+        {/* Build indicator */}
         {selectedBuild && (
-          <span className="hidden md:flex items-center gap-2 mr-6 text-[10px] font-mono">
-            <span className="text-zinc-600">›</span>
-            <span className="text-indigo-300 truncate max-w-[180px]">{selectedBuild.label}</span>
-            <span className="px-1.5 py-0.5 rounded bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">{points.length}</span>
+          <span className="hidden lg:flex items-center gap-1.5 mr-4 text-[10px] font-mono flex-shrink-0">
+            <span className="text-zinc-700">›</span>
+            <span className="text-amber-300/70 truncate max-w-[160px]">{selectedBuild.label}</span>
+            <span className="px-1.5 py-0.5 rounded text-[9px] bg-amber-500/10 text-amber-400 border border-amber-500/20">{points.length}</span>
           </span>
         )}
 
-        {(["library", "draw", "panel", "npc", "loadout", "airdrop", "console"] as AppMode[]).map(m => (
-          <button
-            key={m}
-            onClick={() => setMode(m)}
-            className={`px-4 h-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 relative ${
-              mode === m
-                ? "text-indigo-400"
-                : "text-zinc-500 hover:text-zinc-300"
-            }`}
-          >
-            {m === "library" ? "Library"
-             : m === "draw" ? "Free Draw"
-             : m === "panel" ? "Panel Builder"
-             : m === "npc" ? "NPC Builder"
-             : m === "loadout" ? "Loadout Builder"
-             : m === "airdrop" ? "Airdrop"
-             : "Console"}
-            {mode === m && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500 shadow-[0_0_8px_var(--accent)]" />
-            )}
-          </button>
-        ))}
+        {/* Build tools group */}
+        <div className="flex items-stretch h-full border-l border-white/5 pl-2">
+          {(["library", "draw", "panel"] as AppMode[]).map(m => (
+            <button key={m} onClick={() => setMode(m)}
+              className={`px-3.5 h-full text-[10px] font-bold uppercase tracking-widest transition-colors relative ${mode === m ? "text-[var(--accent)]" : "text-zinc-500 hover:text-zinc-300"}`}>
+              {m === "library" ? "Library" : m === "draw" ? "Draw" : "Panel"}
+              {mode === m && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--accent)] shadow-[0_0_8px_var(--accent-glow)]" />}
+            </button>
+          ))}
+        </div>
+
+        {/* XML tools group */}
+        <div className="flex items-stretch h-full border-l border-white/5 pl-2">
+          {(["npc", "loadout", "airdrop", "console"] as AppMode[]).map(m => (
+            <button key={m} onClick={() => setMode(m)}
+              className={`px-3.5 h-full text-[10px] font-bold uppercase tracking-widest transition-colors relative ${mode === m ? "text-[var(--accent)]" : "text-zinc-500 hover:text-zinc-300"}`}>
+              {m === "npc" ? "NPC" : m === "loadout" ? "Loadout" : m === "airdrop" ? "Airdrop" : "Console"}
+              {mode === m && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--accent)] shadow-[0_0_8px_var(--accent-glow)]" />}
+            </button>
+          ))}
+        </div>
 
         <div className="flex-1" />
 
         <button
           onClick={() => setHelpOpen(true)}
           title="Help & shortcuts (?)"
-          className="mr-3 w-7 h-7 rounded-full border border-white/10 bg-white/5 hover:bg-indigo-500/20 hover:border-indigo-500/50 hover:text-indigo-300 text-zinc-500 text-xs font-bold transition-all"
+          className="mr-3 w-7 h-7 rounded-full border border-white/10 bg-white/5 hover:bg-amber-500/15 hover:border-amber-500/40 hover:text-amber-300 text-zinc-500 text-xs font-bold transition-all"
         >?</button>
 
         <div className="flex items-center gap-3 glass-hover px-3 py-1 rounded-full border border-white/5">
@@ -316,7 +322,7 @@ function App() {
                   type="number"
                   value={val}
                   onChange={e => setV(Number(e.target.value))}
-                  className="w-14 bg-transparent text-zinc-300 text-xs outline-none font-mono focus:text-indigo-400"
+                  className="w-14 bg-transparent text-zinc-300 text-xs outline-none font-mono focus:text-amber-300"
                 />
               </label>
             );
@@ -348,12 +354,12 @@ function App() {
                       onClick={() => { setSelectedCategory(cat); setSearch(""); }}
                       className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md transition-all flex items-center gap-1.5 ${
                         selectedCategory === cat
-                          ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/40"
+                          ? "bg-[var(--accent)] text-black shadow-lg shadow-amber-900/30"
                           : "bg-white/5 text-zinc-500 hover:bg-white/10 hover:text-zinc-300"
                       }`}
                     >
                       <span>{cat}</span>
-                      <span className={`text-[9px] font-mono ${selectedCategory === cat ? "text-indigo-200" : "text-zinc-600"}`}>{count}</span>
+                      <span className={`text-[9px] font-mono ${selectedCategory === cat ? "text-black/60" : "text-zinc-600"}`}>{count}</span>
                     </button>
                   );
                 })}
@@ -365,7 +371,7 @@ function App() {
                   placeholder="SEARCH CATALOGUE..."
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  className="w-full bg-black/20 text-indigo-100 text-[10px] font-bold uppercase tracking-widest rounded-lg px-3 py-2 outline-none border border-white/5 focus:border-indigo-500/50 transition-colors placeholder-zinc-700"
+                  className="w-full bg-black/20 text-amber-100 text-[10px] font-bold uppercase tracking-widest rounded-lg px-3 py-2 outline-none border border-white/5 focus:border-amber-500/40 transition-colors placeholder-zinc-700"
                 />
               </div>
 
@@ -415,7 +421,7 @@ function App() {
                       const catBuilds = ALL_BUILDS.filter(b => b.category === cat);
                       return (
                         <div key={cat} className="mb-4">
-                          <div className="px-4 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 border-l-2 border-indigo-900/30 ml-1">{cat}</div>
+                          <div className="px-4 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600 border-l-2 border-amber-900/30 ml-1">{cat}</div>
                           <div className="mt-1">
                             {catBuilds.map(build => (
                               <BuildRow
@@ -458,7 +464,7 @@ function App() {
                   key={dm}
                   onClick={() => setDrawMode(dm)}
                   className={`w-full text-left text-[11px] font-bold uppercase tracking-wider px-3 py-2.5 rounded-lg mb-0.5 transition-all ${
-                    drawMode === dm ? "bg-indigo-600 text-white shadow-lg" : "bg-white/5 text-zinc-400 hover:bg-white/10"
+                    drawMode === dm ? "bg-[var(--accent)] text-black shadow-lg" : "bg-white/5 text-zinc-400 hover:bg-white/10"
                   }`}
                 >
                   {dm === "wall" ? "Draw Wall Line" : dm === "place" ? "Place Single Object" : "Select & Replace"}
@@ -467,7 +473,7 @@ function App() {
               <div className="flex-1" />
               <button
                 onClick={exportDraw}
-                className="w-full text-xs font-black uppercase tracking-widest py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-xl transition-all"
+                className="w-full text-xs font-black uppercase tracking-widest py-3 bg-[var(--accent)] hover:bg-[var(--accent-bright)] text-black rounded-xl shadow-xl transition-all"
               >Export To Preview</button>
               <button
                 onClick={() => { setWalls([]); setObjects([]); setPoints([]); setCode(""); }}
@@ -488,7 +494,7 @@ function App() {
                     <div key={pd.key} className="flex flex-col gap-1 w-32">
                       <div className="flex justify-between items-center px-1">
                         <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500">{pd.label}</span>
-                        <span className="text-[10px] font-bold text-indigo-400 font-mono">{val}</span>
+                        <span className="text-[10px] font-bold text-amber-400 font-mono">{val}</span>
                       </div>
                       <input
                         type="range"
@@ -528,7 +534,7 @@ function App() {
                 >Reset</button>
                 <button
                   onClick={() => handleGenerate()}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-xl shadow-lg transition-all"
+                  className="px-4 py-2 bg-[var(--accent)] hover:bg-[var(--accent-bright)] text-black text-[10px] font-black uppercase tracking-[0.2em] rounded-xl shadow-lg transition-all"
                 >Re-Gen</button>
               </div>
             </div>
@@ -545,9 +551,9 @@ function App() {
             {/* ── Selection HUD ─────────────────────────────────────────── */}
             {selectedId && (
               <div className="absolute top-4 right-4 z-40 animate-in">
-                <div className="glass p-5 rounded-2xl w-64 shadow-2xl border-indigo-500/30">
+                <div className="glass p-5 rounded-2xl w-64 shadow-2xl border-amber-500/20">
                   <div className="flex justify-between items-center mb-4">
-                    <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Active Selection</span>
+                    <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest">Active Selection</span>
                     <button onClick={() => setSelectedId(null)} className="text-zinc-600 hover:text-white transition-colors">✕</button>
                   </div>
                   
@@ -558,7 +564,7 @@ function App() {
                         type="text"
                         value={points.find(p => p.id === selectedId)?.name || ""}
                         onChange={(e) => updateSelectedClass(e.target.value)}
-                        className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs font-mono focus:border-indigo-500 outline-none transition-all"
+                        className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs font-mono focus:border-amber-500/50 outline-none transition-all"
                       />
                     </div>
                     
@@ -579,7 +585,7 @@ function App() {
             
             {/* ── Instruction Overlay ───────────────────────────────────── */}
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 glass rounded-full text-[10px] font-bold text-zinc-500 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-              <span className="text-indigo-400">Shift + Click</span> to Place • <span className="text-indigo-400">Click</span> to Select
+              <span className="text-amber-400">Shift + Click</span> to Place • <span className="text-amber-400">Click</span> to Select
             </div>
           </div>
         </main>
@@ -587,7 +593,7 @@ function App() {
         {/* ── Right sidebar ─────────────────────────────────────────────── */}
         <aside className="w-80 flex-shrink-0 glass flex flex-col overflow-hidden m-2 rounded-xl z-10 shadow-2xl">
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-white/5">
-            <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em]">Live Export</span>
+            <span className="text-[10px] font-black text-amber-400 uppercase tracking-[0.2em]">Live Export</span>
             {code && (
               <button
                 onClick={() => handleCopy(code)}
@@ -598,7 +604,7 @@ function App() {
 
           <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-black/40">
             {code ? (
-              <pre className="text-[10px] text-indigo-100/60 font-mono whitespace-pre-wrap leading-relaxed break-all">
+              <pre className="text-[10px] text-amber-100/50 font-mono whitespace-pre-wrap leading-relaxed break-all">
                 {code}
               </pre>
             ) : (
@@ -657,9 +663,9 @@ function BuildRow({ build, selected, favorite, onSelect, onToggleFavorite }: {
   onToggleFavorite: () => void;
 }) {
   return (
-    <div className={`flex items-stretch group transition-all ${selected ? "bg-indigo-600/10 border-r-4 border-indigo-500" : "hover:bg-white/5"}`}>
+    <div className={`flex items-stretch group transition-all ${selected ? "bg-amber-400/8 border-r-2 border-[var(--accent)]" : "hover:bg-white/5"}`}>
       <button onClick={onSelect} className="flex-1 text-left px-5 py-2.5 min-w-0">
-        <span className={`block text-xs font-semibold ${selected ? "text-indigo-300" : "text-zinc-300 group-hover:text-white"}`}>
+        <span className={`block text-xs font-semibold ${selected ? "text-amber-300" : "text-zinc-300 group-hover:text-white"}`}>
           {build.label}
         </span>
         {build.description && (

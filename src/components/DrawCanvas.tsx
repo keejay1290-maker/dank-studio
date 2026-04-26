@@ -418,7 +418,7 @@ export const DrawCanvas = forwardRef<DrawCanvasHandle, Props>(function DrawCanva
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-zinc-900/95 border border-zinc-700 rounded-lg px-3 py-2 shadow-xl">
           <button
             onClick={() => setShowPicker(true)}
-            className="text-xs text-indigo-400 hover:text-indigo-200 px-2 py-1 bg-zinc-800 rounded"
+            className="text-xs text-amber-400 hover:text-amber-200 px-2 py-1 bg-zinc-800 rounded"
           >Replace Object</button>
           <button
             onClick={() => {

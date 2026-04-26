@@ -224,11 +224,11 @@ export function PanelBuilder({ state, onChange, onExport }: Props) {
         <span className="text-xs text-zinc-400 font-semibold mr-1">Tool:</span>
         <button
           onClick={() => setTool("floor")}
-          className={`text-xs px-2 py-1 rounded ${tool === "floor" ? "bg-indigo-700 text-white" : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"}`}
+          className={`text-xs px-2 py-1 rounded ${tool === "floor" ? "bg-[var(--accent)] text-black" : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"}`}
         >Floor</button>
         <button
           onClick={() => setTool("wall")}
-          className={`text-xs px-2 py-1 rounded ${tool === "wall" ? "bg-indigo-700 text-white" : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"}`}
+          className={`text-xs px-2 py-1 rounded ${tool === "wall" ? "bg-[var(--accent)] text-black" : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"}`}
         >Wall</button>
 
         <div className="w-px h-4 bg-zinc-700 mx-1" />
@@ -255,7 +255,7 @@ export function PanelBuilder({ state, onChange, onExport }: Props) {
 
         <button
           onClick={() => onExport(state)}
-          className="text-xs px-3 py-1 bg-indigo-700 hover:bg-indigo-600 text-white rounded font-semibold"
+          className="text-xs px-3 py-1 bg-[var(--accent)] hover:bg-[var(--accent-bright)] text-black rounded font-semibold"
         >Export</button>
       </div>
 
