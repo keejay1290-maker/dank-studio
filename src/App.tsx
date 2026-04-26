@@ -4,6 +4,7 @@ import { ObjectPicker } from "./components/ObjectPicker";
 import { NpcLoadoutBuilder } from "./components/NpcLoadoutBuilder";
 import { AirdropBuilder } from "./components/AirdropBuilder";
 import { ConsoleTools } from "./components/ConsoleTools";
+import { CommunityBuilds } from "./components/CommunityBuilds";
 import { ToastStack, toast } from "./components/Toast";
 import { HelpOverlay } from "./components/HelpOverlay";
 import { useFavorites } from "./hooks/useFavorites";
@@ -17,7 +18,7 @@ import {
 import type { Point3D, DrawnWall, DrawnObject, BuildEntry } from "./lib/types";
 import "./App.css";
 
-type AppMode = "library" | "draw" | "panel" | "npc" | "loadout" | "airdrop" | "console";
+type AppMode = "library" | "draw" | "panel" | "npc" | "loadout" | "airdrop" | "console" | "community";
 type DrawMode = "wall" | "place" | "select";
 
 function App() {
@@ -291,6 +292,15 @@ function App() {
           ))}
         </div>
 
+        {/* Community tab */}
+        <div className="flex items-stretch h-full border-l border-white/5 pl-2">
+          <button onClick={() => setMode("community")}
+            className={`px-3.5 h-full text-[10px] font-bold uppercase tracking-widest transition-colors relative ${mode === "community" ? "text-[var(--accent)]" : "text-zinc-500 hover:text-zinc-300"}`}>
+            Community
+            {mode === "community" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--accent)] shadow-[0_0_8px_var(--accent-glow)]" />}
+          </button>
+        </div>
+
         {/* XML tools group */}
         <div className="flex items-stretch h-full border-l border-white/5 pl-2">
           {(["npc", "loadout", "airdrop", "console"] as AppMode[]).map(m => (
@@ -337,6 +347,8 @@ function App() {
         <AirdropBuilder />
       ) : mode === "console" ? (
         <ConsoleTools />
+      ) : mode === "community" ? (
+        <CommunityBuilds />
       ) : (
       <div className="flex flex-1 overflow-hidden relative">
 

@@ -17,8 +17,9 @@ const TABS: { key: string; label: string; hint: string }[] = [
   { key: "panel",    label: "Panel Builder",   hint: "Spreadsheet-style numerical placement" },
   { key: "npc",      label: "NPC Builder",     hint: "cfgspawnabletypes.xml for NPC spawns (Josie format)" },
   { key: "loadout",  label: "Loadout Builder", hint: "playerspawngear.json for player kits" },
-  { key: "airdrop",  label: "Airdrop",         hint: "events.xml + cfgeventspawns.xml + types.xml for dynamic events" },
-  { key: "console",  label: "Console",         hint: "init.c snippets, GiveItem, SetPos, kill-zones" },
+  { key: "airdrop",    label: "Airdrop",           hint: "events.xml + cfgeventspawns.xml + types.xml for dynamic events" },
+  { key: "console",    label: "Console",           hint: "init.c snippets, GiveItem, SetPos, kill-zones" },
+  { key: "community",  label: "Community Builds",  hint: "3,845 community JSONs with image previews — browse, hover to flip images, download instantly" },
 ];
 
 export function HelpOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
